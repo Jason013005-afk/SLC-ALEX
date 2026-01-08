@@ -1,43 +1,48 @@
 import { createClient } from '@supabase/supabase-js'
 
-const SUPABASE_URL = process.env.SUPABASE_URL
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+    )
 
-export default async function handler(req, res) {
-  try {
-      const { address, interestRate } = req.query
-          if (!address) return res.status(400).json({ error: 'Address required' })
+    export default async function handler(req, res) {
+      if (req.method !== 'POST') {
+          return res.status(405).json({ error: 'Method not allowed' })
+            }
 
-              // --- Mock data until APIs are wired ---
-                  const mockValue = 250000 + Math.floor(Math.random() * 50000)
-                      const mockRent  = 1800 + Math.floor(Math.random() * 400)
-                          const mockTaxes = mockValue * 0.021
-                              const capRate   = (mockRent * 12) / mockValue
-                                  const dscr      = (mockRent * 12) / ((mockValue * interestRate) / 100)
-                                      const verdict   = dscr >= 1.25 ? 'GREEN' : dscr >= 1.0 ? 'AMBER' : 'RED'
+              try {
+                  const { address, interestRate } = req.body
 
-                                          const { data, error } = await supabase
-                                                .from('properties_extended')
-                                                      .insert([
-                                                              {
-                                                                        address,
-                                                                                  est_value: mockValue,
-                                                                                            est_rent: mockRent,
-                                                                                                      tax_assessed: mockTaxes,
-                                                                                                                cap_rate: capRate,
-                                                                                                                          dscr,
-                                                                                                                                    risk_band: verdict,
-                                                                                                                                              summary: `Est. Value $${mockValue}, Rent $${mockRent}, DSCR ${dscr.toFixed(2)}, Verdict ${verdict}`,
-                                                                                                                                                        api_source: 'ALEX Mock Engine'
-                                                                                                                                                                }
-                                                                                                                                                                      ])
-                                                                                                                                                                            .select()
+                      // Simple AI-style estimation logic
+                          const baseValue = 200000 + Math.random() * 250000
+                              const rateFactor = 1 - (interestRate / 100) * 0.05
+                                  const estimatedValue = baseValue * rateFactor
+                                      const taxAssessment = estimatedValue * 0.012
+                                          const estRent = estimatedValue * 0.006
 
-                                                                                                                                                                                if (error) throw error
-                                                                                                                                                                                    return res.status(200).json({ success: true, result: data[0] })
-                                                                                                                                                                                      } catch (err) {
-                                                                                                                                                                                          console.error(err)
-                                                                                                                                                                                              res.status(500).json({ error: err.message })
-                                                                                                                                                                                                }
-                                                                                                                                                                                                }
+                                              // Save to Supabase table
+                                                  const { data, error } = await supabase
+                                                        .from('properties_extended')
+                                                              .insert([
+                                                                      {
+                                                                                address,
+                                                                                          est_value: estimatedValue,
+                                                                                                    tax_assessment: taxAssessment,
+                                                                                                              est_rent: estRent
+                                                                                                                      }
+                                                                                                                            ])
+
+                                                                                                                                if (error) throw error
+
+                                                                                                                                    return res.status(200).json({
+                                                                                                                                          success: true,
+                                                                                                                                                address,
+                                                                                                                                                      estimatedValue: Math.round(estimatedValue),
+                                                                                                                                                            taxAssessment: Math.round(taxAssessment),
+                                                                                                                                                                  estRent: Math.round(estRent)
+                                                                                                                                                                      })
+                                                                                                                                                                        } catch (err) {
+                                                                                                                                                                            console.error(err)
+                                                                                                                                                                                return res.status(500).json({ error: 'Server error', details: err.message })
+                                                                                                                                                                                  }
+                                                                                                                                                                                  }
