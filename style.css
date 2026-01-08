@@ -1,145 +1,66 @@
-/* === Global Styles === */
 body {
-  margin: 0;
-  font-family: "Inter", Arial, sans-serif;
-  background-color: #000;
-  color: #fff;
-  line-height: 1.6;
-  text-align: center;
-}
+      font-family: 'Poppins', sans-serif;
+        margin: 0;
+          background: #000 url('kitchen-bg.jpg') no-repeat center center/cover;
+            color: white;
+              text-align: center;
+              }
 
-/* === Header === */
-header {
-  padding: 20px;
-  background: #111;
-  border-bottom: 2px solid #222;
-}
+              header {
+                background: rgba(0, 0, 0, 0.8);
+                  padding: 20px;
+                  }
 
-header h1 {
-  font-size: 1.8rem;
-  margin: 0;
-  color: #f1f1f1;
-}
+                  nav a {
+                    color: #FFD700;
+                      margin: 0 10px;
+                        text-decoration: none;
+                          font-weight: 500;
+                          }
 
-header .subtitle {
-  color: #ffd700;
-  margin: 5px 0 15px;
-  font-size: 1rem;
-}
+                          nav a.active {
+                            border-bottom: 2px solid #FFD700;
+                            }
 
-nav {
-  margin-top: 10px;
-}
+                            .hero {
+                              padding: 100px 20px;
+                                background: rgba(0, 0, 0, 0.6);
+                                }
 
-nav a {
-  color: #ccc;
-  text-decoration: none;
-  margin: 0 10px;
-  font-weight: 500;
-}
+                                button {
+                                  background: #FFD700;
+                                    border: none;
+                                      padding: 12px 24px;
+                                        border-radius: 5px;
+                                          font-size: 1rem;
+                                            cursor: pointer;
+                                            }
 
-nav a.active,
-nav a:hover {
-  color: #ffd700;
-}
+                                            button:hover {
+                                              background: #ffcc00;
+                                              }
 
-/* === Hero Section === */
-.hero {
-  padding: 60px 20px;
-  background: linear-gradient(180deg, #111 0%, #000 100%);
-}
+                                              .features, .pricing, .contact, .form-section {
+                                                padding: 50px 20px;
+                                                }
 
-.hero h2 {
-  color: #ffd700;
-  font-size: 1.6rem;
-  margin-bottom: 15px;
-}
+                                                .plan {
+                                                  background: rgba(0, 0, 0, 0.6);
+                                                    border: 1px solid #FFD700;
+                                                      border-radius: 8px;
+                                                        padding: 20px;
+                                                          margin: 20px auto;
+                                                            max-width: 300px;
+                                                            }
 
-.hero p {
-  color: #eee;
-  max-width: 600px;
-  margin: 0 auto 25px;
-  font-size: 1.05rem;
-}
+                                                            .plan.highlight {
+                                                              background: rgba(255, 215, 0, 0.1);
+                                                                border-color: #ffcc00;
+                                                                }
 
-/* === Buttons === */
-.buttons {
-  display: flex;
-  justify-content: center;
-  gap: 15px;
-  flex-wrap: wrap;
-}
-
-.btn-primary,
-.btn-secondary {
-  text-decoration: none;
-  padding: 12px 24px;
-  border-radius: 5px;
-  font-weight: 600;
-  transition: all 0.3s ease;
-}
-
-.btn-primary {
-  background-color: #ffd700;
-  color: #000;
-}
-
-.btn-primary:hover {
-  background-color: #ffea4d;
-}
-
-.btn-secondary {
-  border: 2px solid #ffd700;
-  color: #ffd700;
-}
-
-.btn-secondary:hover {
-  background-color: #ffd700;
-  color: #000;
-}
-
-/* === Features === */
-.features {
-  padding: 40px 20px;
-  background-color: #111;
-}
-
-.features ul {
-  list-style: none;
-  padding: 0;
-  margin: 0 auto;
-  max-width: 600px;
-  text-align: left;
-}
-
-.features li {
-  margin: 10px 0;
-  font-size: 1.05rem;
-}
-
-/* === Demo Section === */
-.demo {
-  padding: 40px 20px;
-  background-color: #000;
-}
-
-.demo h3 {
-  color: #ffd700;
-  font-size: 1.3rem;
-}
-
-.demo ol {
-  text-align: left;
-  display: inline-block;
-  max-width: 600px;
-  margin: 15px auto;
-}
-
-/* === Footer === */
-footer {
-  padding: 15px;
-  font-size: 0.9rem;
-  color: #aaa;
-  border-top: 2px solid #222;
-  background: #111;
+                                                                footer {
+                                                                  background: rgba(0, 0, 0, 0.8);
+                                                                    padding: 15px;
+                                                                      font-size: 0.9rem;
+                                                                      }
 }
