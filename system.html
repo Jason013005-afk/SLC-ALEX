@@ -2,354 +2,65 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>ALEX™ Real Estate Decision Engine • Silver Lining Consulting LLC</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="styles.css" />
-</head>
-<body>
-  <header class="site-header">
-    <div class="logo">
-      <span class="logo-main">Silver Lining Consulting LLC</span>
-      <span class="logo-sub">ALEX™ Decision Engine</span>
-    </div>
-    <nav class="nav">
-      <a href="index.html">Home</a>
-      <a href="system.html" class="active">The System</a>
-      <a href="pricing.html">Pricing</a>
-      <a href="contact.html">Contact</a>
-    </nav>
-  </header>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>ALEX | Deal Stress Test</title>
+        <link rel="stylesheet" href="style.css" />
+          <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+          </head>
 
-  <main class="page">
-    <section class="page-intro">
-      <h1>ALEX™ Deal Stress Test</h1>
-      <p>
-        This page shows a simplified, browser-based version of your real estate system.
-        It runs everything in your browser — no login, no database — so you can demo the logic instantly
-        or deploy it as a static site.
-      </p>
-      <p class="disclaimer">
-        All outputs are <strong>decision-support only</strong> and do not constitute investment, legal,
-        tax, or financial advice. You are always the final decision-maker.
-      </p>
-    </section>
+          <body>
+            <div class="overlay">
+                <header>
+                      <h1>Silver Lining Consulting LLC</h1>
+                            <p class="subtitle">ALEX™ Real Estate Deal Stress Test</p>
+                                  <nav>
+                                          <a href="index.html">Home</a>
+                                                  <a href="system.html" class="active">The System</a>
+                                                          <a href="pricing.html">Pricing</a>
+                                                                  <a href="contact.html">Contact</a>
+                                                                        </nav>
+                                                                            </header>
 
-    <section class="system-layout">
-      <div class="system-form">
-        <h2>Deal Inputs</h2>
-        <form id="deal-form" onsubmit="event.preventDefault(); runStressTest();">
-          <div class="field-row">
-            <label>Strategy</label>
-            <select id="strategy">
-              <option value="wholesale">Wholesale</option>
-              <option value="flip">Fix & Flip</option>
-              <option value="buy_hold">Buy & Hold</option>
-              <option value="cash">Cash Buyer</option>
-            </select>
-          </div>
+                                                                                <main>
+                                                                                      <h2>Run Your Silver Lining Scan</h2>
+                                                                                            <p>Enter a live or potential deal below to test it against the ALEX™ discipline framework.</p>
 
-          <div class="field-row">
-            <label>Purchase Price ($)</label>
-            <input type="number" id="purchasePrice" required />
-          </div>
+                                                                                                  <input id="dealInput" type="text" placeholder="Enter deal address or key numbers" />
+                                                                                                        <button id="analyzeBtn" class="button">Run Stress Test</button>
 
-          <div class="field-row">
-            <label>After-Repair Value (ARV) ($)</label>
-            <input type="number" id="arv" required />
-          </div>
+                                                                                                              <div id="result"></div>
 
-          <div class="field-row">
-            <label>Rehab Cost ($)</label>
-            <input type="number" id="rehabCost" required />
-          </div>
+                                                                                                                    <p class="disclaimer">
+                                                                                                                            All results are decision-support only and never investment, legal, or financial advice.
+                                                                                                                                  </p>
+                                                                                                                                      </main>
+                                                                                                                                        </div>
 
-          <div class="field-row">
-            <label>Monthly Rent (if rental) ($)</label>
-            <input type="number" id="rent" />
-          </div>
+                                                                                                                                          <footer>
+                                                                                                                                              © 2026 Silver Lining Consulting LLC | ALEX™ Decision Infrastructure
+                                                                                                                                                </footer>
 
-          <div class="field-row">
-            <label>Annual Taxes ($)</label>
-            <input type="number" id="taxes" />
-          </div>
+                                                                                                                                                  <script>
+                                                                                                                                                      const btn = document.getElementById("analyzeBtn");
+                                                                                                                                                          btn.addEventListener("click", () => {
+                                                                                                                                                                const input = document.getElementById("dealInput").value.trim();
+                                                                                                                                                                      const result = document.getElementById("result");
 
-          <div class="field-row">
-            <label>Annual Insurance ($)</label>
-            <input type="number" id="insurance" />
-          </div>
+                                                                                                                                                                            if (!input) {
+                                                                                                                                                                                    result.innerHTML = "<p>Please enter a deal to analyze.</p>";
+                                                                                                                                                                                            return;
+                                                                                                                                                                                                  }
 
-          <div class="field-row">
-            <label>Interest Rate (%)</label>
-            <input type="number" id="rate" step="0.01" />
-          </div>
+                                                                                                                                                                                                        // Simple mock analyzer
+                                                                                                                                                                                                              const score = Math.random();
+                                                                                                                                                                                                                    let verdict;
 
-          <div class="field-row">
-            <label>Down Payment (%)</label>
-            <input type="number" id="downPercent" value="20" step="0.1" />
-          </div>
+                                                                                                                                                                                                                          if (score > 0.7) verdict = "🟢 Proceed — Strong Deal";
+                                                                                                                                                                                                                                else if (score > 0.4) verdict = "🟠 Renegotiate — Moderate Risk";
+                                                                                                                                                                                                                                      else verdict = "🔴 Kill — Fails Silver Lining Test";
 
-          <div class="field-row">
-            <label>Loan Term (years)</label>
-            <input type="number" id="termYears" value="30" />
-          </div>
-
-          <button type="submit" class="btn primary full">Run Stress Test</button>
-        </form>
-      </div>
-
-      <div class="system-results">
-        <h2>System Verdict</h2>
-        <div id="verdictBadge" class="verdict-badge verdict-neutral">Awaiting Analysis</div>
-        <p id="verdictSummary" class="verdict-summary">
-          Enter deal details on the left and hit “Run Stress Test” to see the system’s view.
-        </p>
-
-        <div class="results-grid">
-          <div class="result-card">
-            <h3>Base Case</h3>
-            <p><strong>Monthly Payment:</strong> <span id="basePayment">—</span></p>
-            <p><strong>Net Cashflow:</strong> <span id="baseCashflow">—</span></p>
-            <p><strong>DSCR:</strong> <span id="baseDSCR">—</span></p>
-          </div>
-          <div class="result-card">
-            <h3>Risk Metrics</h3>
-            <p><strong>Exit Spread (ARV - Total Cost):</strong> <span id="exitSpread">—</span></p>
-            <p><strong>Loan-to-Value (LTV):</strong> <span id="ltv">—</span></p>
-            <p><strong>Risk Comments:</strong></p>
-            <ul id="riskComments"></ul>
-          </div>
-          <div class="result-card">
-            <h3>Shock Scenarios</h3>
-            <ul id="scenarioList">
-              <li>+2% rate, -10% ARV, +15% rehab, +20% taxes/insurance will display here.</li>
-            </ul>
-          </div>
-        </div>
-
-        <section class="override-section">
-          <h2>Your Override Decision</h2>
-          <p>
-            The system gives a color and recommendation. You remain in charge.
-            Log how you would act so you can compare your behavior against outcomes over time.
-          </p>
-          <div class="field-row">
-            <label>Your Decision</label>
-            <select id="userDecision">
-              <option value="">Select one…</option>
-              <option value="proceed">Proceed</option>
-              <option value="renegotiate">Proceed with Renegotiation</option>
-              <option value="kill">Kill the Deal</option>
-            </select>
-          </div>
-          <div class="field-row">
-            <label>Why?</label>
-            <textarea id="userReason" rows="3" placeholder="Gut feeling? Local knowledge? Contractor you trust? Put it here."></textarea>
-          </div>
-          <button class="btn outline full" onclick="logOverride()">Log Override (Local Only)</button>
-          <p id="overrideLogNote" class="small-note">
-            Overrides are stored only in this browser for demo purposes. A production system would track them over time.
-          </p>
-        </section>
-      </div>
-    </section>
-  </main>
-
-  <footer class="site-footer">
-    <p>© 2025 Silver Lining Consulting LLC • Decision-support only • Not legal, tax, or investment advice.</p>
-  </footer>
-
-  <script>
-    function monthlyPayment(principal, annualRate, years) {
-      if (!principal || !annualRate || !years) return 0;
-      const r = (annualRate / 100) / 12;
-      const n = years * 12;
-      if (r === 0) return principal / n;
-      return principal * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
-    }
-
-    function formatMoney(x) {
-      if (isNaN(x)) return "—";
-      return "$" + x.toFixed(0);
-    }
-
-    function formatNumber(x) {
-      if (isNaN(x)) return "—";
-      return x.toFixed(2);
-    }
-
-    function setVerdict(level, text) {
-      const badge = document.getElementById("verdictBadge");
-      badge.className = "verdict-badge verdict-" + level;
-      badge.textContent = level.toUpperCase();
-      document.getElementById("verdictSummary").textContent = text;
-    }
-
-    function runStressTest() {
-      const strategy = document.getElementById("strategy").value;
-      const purchase = parseFloat(document.getElementById("purchasePrice").value) || 0;
-      const arv = parseFloat(document.getElementById("arv").value) || 0;
-      const rehab = parseFloat(document.getElementById("rehabCost").value) || 0;
-      const rent = parseFloat(document.getElementById("rent").value) || 0;
-      const taxes = parseFloat(document.getElementById("taxes").value) || 0;
-      const insurance = parseFloat(document.getElementById("insurance").value) || 0;
-      const rate = parseFloat(document.getElementById("rate").value) || 0;
-      const downPercent = parseFloat(document.getElementById("downPercent").value) || 0;
-      const termYears = parseFloat(document.getElementById("termYears").value) || 30;
-
-      const totalCost = purchase + rehab;
-      const downPayment = totalCost * (downPercent / 100);
-      const loanAmount = Math.max(totalCost - downPayment, 0);
-      const payment = monthlyPayment(loanAmount, rate, termYears);
-
-      const monthlyTaxes = taxes / 12;
-      const monthlyInsurance = insurance / 12;
-      const expenses = payment + monthlyTaxes + monthlyInsurance;
-      const netCashflow = rent - expenses;
-      const dscr = expenses > 0 ? (rent / expenses) : 0;
-      const ltv = arv > 0 ? (loanAmount / arv) * 100 : 0;
-      const exitSpread = arv - totalCost;
-
-      document.getElementById("basePayment").textContent = formatMoney(payment);
-      document.getElementById("baseCashflow").textContent = formatMoney(netCashflow);
-      document.getElementById("baseDSCR").textContent = formatNumber(dscr);
-      document.getElementById("exitSpread").textContent = formatMoney(exitSpread);
-      document.getElementById("ltv").textContent = isNaN(ltv) ? "—" : ltv.toFixed(1) + "%";
-
-      const comments = [];
-      if (strategy === "buy_hold" || strategy === "cash") {
-        if (dscr < 1.0 && payment > 0) comments.push("Base DSCR below 1.0 – property does not cover debt.");
-        if (dscr < 1.2 && payment > 0) comments.push("DSCR below 1.2 – many lenders consider this weak.");
-        if (netCashflow < 0) comments.push("Negative monthly cashflow before repairs & vacancy.");
-      }
-
-      if (ltv > 80 && payment > 0) comments.push("High LTV – little equity buffer.");
-      if (exitSpread < 0 && arv > 0) comments.push("Total cost exceeds ARV – exit spread is negative.");
-      if (exitSpread > 0 && exitSpread < arv * 0.1) comments.push("Exit spread under 10% of ARV – thin margin for errors.");
-
-      const riskList = document.getElementById("riskComments");
-      riskList.innerHTML = "";
-      if (comments.length === 0) {
-        const li = document.createElement("li");
-        li.textContent = "No major base-case flags at this level of detail.";
-        riskList.appendChild(li);
-      } else {
-        comments.forEach(c => {
-          const li = document.createElement("li");
-          li.textContent = c;
-          riskList.appendChild(li);
-        });
-      }
-
-      // Shock scenarios
-      const scenarioList = document.getElementById("scenarioList");
-      scenarioList.innerHTML = "";
-      const scenarios = [];
-
-      // +2% rate
-      if (loanAmount > 0) {
-        const paymentUp = monthlyPayment(loanAmount, rate + 2, termYears);
-        const expensesUp = paymentUp + monthlyTaxes + monthlyInsurance;
-        const dscrUp = expensesUp > 0 ? (rent / expensesUp) : 0;
-        scenarios.push({
-          name: "+2% Interest Rate",
-          dscr: dscrUp,
-          ok: dscrUp >= 1.1
-        });
-      }
-
-      // -10% ARV
-      if (arv > 0) {
-        const arvDown = arv * 0.9;
-        const spreadDown = arvDown - totalCost;
-        scenarios.push({
-          name: "-10% ARV Shock",
-          spread: spreadDown,
-          ok: spreadDown >= 0
-        });
-      }
-
-      // +15% Rehab
-      if (rehab > 0) {
-        const rehabUp = rehab * 1.15;
-        const totalUp = purchase + rehabUp;
-        const spreadUp = arv - totalUp;
-        scenarios.push({
-          name: "+15% Rehab Overrun",
-          spread: spreadUp,
-          ok: spreadUp >= 0
-        });
-      }
-
-      // +20% Taxes/Insurance
-      if (taxes > 0 || insurance > 0) {
-        const taxesUp = taxes * 1.2;
-        const insUp = insurance * 1.2;
-        const expUp = payment + (taxesUp / 12) + (insUp / 12);
-        const dscrUp2 = expUp > 0 ? (rent / expUp) : 0;
-        scenarios.push({
-          name: "+20% Taxes & Insurance",
-          dscr: dscrUp2,
-          ok: dscrUp2 >= 1.1
-        });
-      }
-
-      scenarios.forEach(s => {
-        const li = document.createElement("li");
-        let line = s.name + " → ";
-        if ("dscr" in s) {
-          line += "DSCR " + (isNaN(s.dscr) ? "—" : s.dscr.toFixed(2));
-        }
-        if ("spread" in s) {
-          line += " Exit Spread " + formatMoney(s.spread);
-        }
-        line += s.ok ? " (PASS)" : " (FAIL)";
-        li.textContent = line;
-        scenarioList.appendChild(li);
-      });
-
-      // Verdict logic (simplified)
-      let level = "green";
-      let summary = "Deal passes base checks with this limited information. Verify full details and local context before proceeding.";
-
-      if (exitSpread < 0 || (strategy !== "cash" && dscr < 1.0 && payment > 0)) {
-        level = "red";
-        summary = "System recommends KILL: base case shows structural failure (negative spread or DSCR below 1.0).";
-      } else if (
-        exitSpread < arv * 0.1 ||
-        (strategy !== "cash" && dscr < 1.2 && payment > 0) ||
-        scenarios.some(s => !s.ok)
-      ) {
-        level = "amber";
-        summary = "System recommends RENEGOTIATE: margins are thin or shocks expose weakness. Tighten price, terms, or financing.";
-      } else {
-        level = "green";
-        summary = "System recommends PROCEED: numbers appear durable under these basic shocks. Still verify assumptions and execution risk.";
-      }
-
-      setVerdict(level, summary);
-    }
-
-    function logOverride() {
-      const decision = document.getElementById("userDecision").value;
-      const reason = document.getElementById("userReason").value.trim();
-      if (!decision) {
-        alert("Select your decision before logging an override.");
-        return;
-      }
-      const record = {
-        ts: new Date().toISOString(),
-        systemVerdict: document.getElementById("verdictBadge").textContent,
-        decision,
-        reason
-      };
-      const stored = JSON.parse(localStorage.getItem("slc_overrides") || "[]");
-      stored.push(record);
-      localStorage.setItem("slc_overrides", JSON.stringify(stored));
-      document.getElementById("overrideLogNote").textContent =
-        "Override logged locally. This demo version keeps overrides in your browser only.";
-      document.getElementById("userReason").value = "";
-      document.getElementById("userDecision").value = "";
-    }
-  </script>
-</body>
-</html>
+                                                                                                                                                                                                                                            result.innerHTML = `<h3>Result:</h3><p>${verdict}</p>`;
+                                                                                                                                                                                                                                                });
+                                                                                                                                                                                                                                                  </script>
+                                                                                                                                                                                                                                                  </body>
+                                                                                                                                                                                                                                                  </html>
