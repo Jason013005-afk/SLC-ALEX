@@ -1,50 +1,53 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>ALEX | Deal Stress Test</title>
-        <link rel="stylesheet" href="style.css" />
-          <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-          </head>
-
-          <body>
-            <div class="overlay">
-                <header>
-                      <h1>Silver Lining Consulting LLC</h1>
-                            <p class="subtitle">ALEX™ Real Estate Deal Stress Test</p>
-                                  <nav>
-                                          <a href="index.html">Home</a>
-                                                  <a href="system.html" class="active">The System</a>
-                                                          <a href="pricing.html">Pricing</a>
-                                                                  <a href="contact.html">Contact</a>
-                                                                        </nav>
-                                                                            </header>
-
-                                                                                <main>
-                                                                                      <h2>Run Your Silver Lining Scan</h2>
-                                                                                            <p>Enter a live or potential deal below to test it against the ALEX™ discipline framework.</p>
-
-                                                                                                  <input id="dealInput" type="text" placeholder="Enter deal address or key numbers" />
-                                                                                                        <button id="analyzeBtn" class="button">Run Stress Test</button>
-
-                                                                                                              <div id="result"></div>
-
-                                                                                                                    <p class="disclaimer">
-                                                                                                                            All results are decision-support only and never investment, legal, or financial advice.
-                                                                                                                                  </p>
-                                                                                                                                      </main>
-                                                                                                                                        </div>
-
-                                                                                                                                          <footer>
-                                                                                                                                              © 2026 Silver Lining Consulting LLC | ALEX™ Decision Infrastructure
-                                                                                                                                                </footer>
-
-                                                                                                                                                  <script>
-                                                                                                                                                      const btn = document.getElementById("analyzeBtn");
-                                                                                                                                                          btn.addEventListener("click", () => {
-                                                                                                                                                                const input = document.getElementById("dealInput").value.trim();
-                                                                                                                                                                      const result = document.getElementById("result");
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>ALEX | The System</title>
+          <link rel="stylesheet" href="style.css" />
+            <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+            </head>
+            
+            <body>
+              <div class="overlay">
+                  <header>
+                        <h1>Silver Lining Consulting LLC</h1>
+                              <p class="subtitle">ALEX™ Real Estate Decision Infrastructure</p>
+                                    <nav>
+                                            <a href="index.html">Home</a>
+                                                    <a href="system.html" class="active">The System</a>
+                                                            <a href="pricing.html">Pricing</a>
+                                                                    <a href="contact.html">Contact</a>
+                                                                          </nav>
+                                                                              </header>
+                                                                              
+                                                                                  <main>
+                                                                                        <h2>ALEX™ Deal Stress Test</h2>
+                                                                                              <p>
+                                                                                                      ALEX™ analyzes deal risk using proprietary stress scenarios — evaluating rate, rehab, and rent shocks to help you make disciplined decisions.
+                                                                                                            </p>
+                                                                                                            
+                                                                                                                  <section class="demo">
+                                                                                                                          <h3>How It Works</h3>
+                                                                                                                                  <ol>
+                                                                                                                                            <li>Enter deal assumptions (price, rate, rent, rehab, etc.).</li>
+                                                                                                                                                      <li>ALEX™ runs shock tests and calculates DSCR, risk band, and decision verdict.</li>
+                                                                                                                                                                <li>Receive a clear summary: Proceed, Renegotiate, or Kill.</li>
+                                                                                                                                                                        </ol>
+                                                                                                                                                                              </section>
+                                                                                                                                                                              
+                                                                                                                                                                                    <div class="button-container">
+                                                                                                                                                                                            <a href="pricing.html" class="button">View Pricing</a>
+                                                                                                                                                                                                    <a href="contact.html" class="button alt">Request Demo Access</a>
+                                                                                                                                                                                                          </div>
+                                                                                                                                                                                                              </main>
+                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                
+                                                                                                                                                                                                                  <footer>
+                                                                                                                                                                                                                      © 2026 Silver Lining Consulting LLC | ALEX™ Decision Infrastructure
+                                                                                                                                                                                                                        </footer>
+                                                                                                                                                                                                                        </body>
+                                                                                                                                                                                                                        </html>                                                                                                                                                        const result = document.getElementById("result");
 
                                                                                                                                                                             if (!input) {
                                                                                                                                                                                     result.innerHTML = "<p>Please enter a deal to analyze.</p>";
