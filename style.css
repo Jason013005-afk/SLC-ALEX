@@ -1,66 +1,203 @@
-body {
-      font-family: 'Poppins', sans-serif;
-        margin: 0;
-          background: #000 url('kitchen-bg.jpg') no-repeat center center/cover;
-            color: white;
-              text-align: center;
-              }
+/* === Global Reset === */
+* {
+  margin: 0;
+    padding: 0;
+      box-sizing: border-box;
+      }
 
-              header {
-                background: rgba(0, 0, 0, 0.8);
-                  padding: 20px;
-                  }
-
-                  nav a {
-                    color: #FFD700;
-                      margin: 0 10px;
-                        text-decoration: none;
-                          font-weight: 500;
-                          }
-
-                          nav a.active {
-                            border-bottom: 2px solid #FFD700;
+      body {
+        font-family: "Inter", Arial, sans-serif;
+          background: url("https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=1920&q=80")
+              no-repeat center center fixed;
+                background-size: cover;
+                  color: #fff;
+                    min-height: 100vh;
+                      display: flex;
+                        flex-direction: column;
+                          align-items: center;
+                            justify-content: center;
                             }
 
-                            .hero {
-                              padding: 100px 20px;
-                                background: rgba(0, 0, 0, 0.6);
-                                }
-
-                                button {
-                                  background: #FFD700;
-                                    border: none;
-                                      padding: 12px 24px;
-                                        border-radius: 5px;
-                                          font-size: 1rem;
-                                            cursor: pointer;
+                            /* === Overlay for Readability === */
+                            .overlay {
+                              background: rgba(0, 0, 0, 0.78);
+                                backdrop-filter: blur(6px);
+                                  width: 100%;
+                                    min-height: 100vh;
+                                      padding: 2rem;
+                                        display: flex;
+                                          flex-direction: column;
+                                            justify-content: space-between;
                                             }
 
-                                            button:hover {
-                                              background: #ffcc00;
-                                              }
-
-                                              .features, .pricing, .contact, .form-section {
-                                                padding: 50px 20px;
+                                            /* === Header === */
+                                            header {
+                                              text-align: center;
+                                                margin-bottom: 2rem;
                                                 }
 
-                                                .plan {
-                                                  background: rgba(0, 0, 0, 0.6);
-                                                    border: 1px solid #FFD700;
-                                                      border-radius: 8px;
-                                                        padding: 20px;
-                                                          margin: 20px auto;
-                                                            max-width: 300px;
-                                                            }
+                                                header h1 {
+                                                  font-size: 2rem;
+                                                    color: #ffcc33;
+                                                      letter-spacing: 1px;
+                                                      }
 
-                                                            .plan.highlight {
-                                                              background: rgba(255, 215, 0, 0.1);
-                                                                border-color: #ffcc00;
+                                                      header h2 {
+                                                        font-size: 1.1rem;
+                                                          font-weight: 400;
+                                                            color: #ddd;
+                                                              margin-top: 0.25rem;
+                                                              }
+
+                                                              nav {
+                                                                margin-top: 1rem;
                                                                 }
 
-                                                                footer {
-                                                                  background: rgba(0, 0, 0, 0.8);
-                                                                    padding: 15px;
-                                                                      font-size: 0.9rem;
-                                                                      }
-}
+                                                                nav a {
+                                                                  color: #ffcc33;
+                                                                    text-decoration: none;
+                                                                      margin: 0 0.8rem;
+                                                                        font-weight: 500;
+                                                                          transition: color 0.3s ease;
+                                                                          }
+
+                                                                          nav a:hover {
+                                                                            color: #ffffff;
+                                                                            }
+
+                                                                            /* === Hero Section === */
+                                                                            .hero {
+                                                                              text-align: center;
+                                                                                max-width: 750px;
+                                                                                  margin: 0 auto 3rem auto;
+                                                                                  }
+
+                                                                                  .hero h3 {
+                                                                                    font-size: 1.5rem;
+                                                                                      margin-bottom: 1rem;
+                                                                                        color: #ffcc33;
+                                                                                        }
+
+                                                                                        .hero p {
+                                                                                          color: #eaeaea;
+                                                                                            line-height: 1.6;
+                                                                                              margin-bottom: 1.5rem;
+                                                                                              }
+
+                                                                                              .button-group {
+                                                                                                display: flex;
+                                                                                                  justify-content: center;
+                                                                                                    gap: 1rem;
+                                                                                                    }
+
+                                                                                                    .button,
+                                                                                                    .button-outline {
+                                                                                                      display: inline-block;
+                                                                                                        padding: 0.7rem 1.4rem;
+                                                                                                          font-size: 1rem;
+                                                                                                            border-radius: 6px;
+                                                                                                              text-decoration: none;
+                                                                                                                transition: all 0.3s ease;
+                                                                                                                }
+
+                                                                                                                .button {
+                                                                                                                  background: #ffcc33;
+                                                                                                                    color: #000;
+                                                                                                                      font-weight: 600;
+                                                                                                                      }
+
+                                                                                                                      .button:hover {
+                                                                                                                        background: #ffd84d;
+                                                                                                                        }
+
+                                                                                                                        .button-outline {
+                                                                                                                          border: 2px solid #ffcc33;
+                                                                                                                            color: #ffcc33;
+                                                                                                                            }
+
+                                                                                                                            .button-outline:hover {
+                                                                                                                              background: #ffcc33;
+                                                                                                                                color: #000;
+                                                                                                                                }
+
+                                                                                                                                /* === Features === */
+                                                                                                                                .features {
+                                                                                                                                  text-align: left;
+                                                                                                                                    max-width: 700px;
+                                                                                                                                      margin: 2rem auto;
+                                                                                                                                        color: #ddd;
+                                                                                                                                        }
+
+                                                                                                                                        .features ul {
+                                                                                                                                          list-style: none;
+                                                                                                                                          }
+
+                                                                                                                                          .features li {
+                                                                                                                                            margin-bottom: 0.8rem;
+                                                                                                                                              font-size: 1rem;
+                                                                                                                                              }
+
+                                                                                                                                              /* === Demo Section === */
+                                                                                                                                              .demo {
+                                                                                                                                                text-align: left;
+                                                                                                                                                  max-width: 700px;
+                                                                                                                                                    margin: 2rem auto;
+                                                                                                                                                    }
+
+                                                                                                                                                    .demo h3 {
+                                                                                                                                                      color: #ffcc33;
+                                                                                                                                                        margin-bottom: 1rem;
+                                                                                                                                                        }
+
+                                                                                                                                                        .demo ol {
+                                                                                                                                                          margin-left: 1.5rem;
+                                                                                                                                                            margin-bottom: 1rem;
+                                                                                                                                                            }
+
+                                                                                                                                                            .demo li {
+                                                                                                                                                              margin-bottom: 0.6rem;
+                                                                                                                                                              }
+
+                                                                                                                                                              .disclaimer {
+                                                                                                                                                                font-size: 0.85rem;
+                                                                                                                                                                  color: #aaa;
+                                                                                                                                                                    text-align: center;
+                                                                                                                                                                      margin-top: 1rem;
+                                                                                                                                                                        line-height: 1.5;
+                                                                                                                                                                        }
+
+                                                                                                                                                                        /* === Footer === */
+                                                                                                                                                                        footer {
+                                                                                                                                                                          text-align: center;
+                                                                                                                                                                            color: #ccc;
+                                                                                                                                                                              font-size: 0.85rem;
+                                                                                                                                                                                padding-top: 1rem;
+                                                                                                                                                                                  border-top: 1px solid rgba(255, 255, 255, 0.15);
+                                                                                                                                                                                    margin-top: 2rem;
+                                                                                                                                                                                    }
+
+                                                                                                                                                                                    /* === Responsive Design === */
+                                                                                                                                                                                    @media (max-width: 600px) {
+                                                                                                                                                                                      header h1 {
+                                                                                                                                                                                          font-size: 1.6rem;
+                                                                                                                                                                                            }
+
+                                                                                                                                                                                              .hero h3 {
+                                                                                                                                                                                                  font-size: 1.25rem;
+                                                                                                                                                                                                    }
+
+                                                                                                                                                                                                      .button-group {
+                                                                                                                                                                                                          flex-direction: column;
+                                                                                                                                                                                                            }
+
+                                                                                                                                                                                                              .button,
+                                                                                                                                                                                                                .button-outline {
+                                                                                                                                                                                                                    width: 100%;
+                                                                                                                                                                                                                        text-align: center;
+                                                                                                                                                                                                                          }
+
+                                                                                                                                                                                                                            .features,
+                                                                                                                                                                                                                              .demo {
+                                                                                                                                                                                                                                  text-align: center;
+                                                                                                                                                                                                                                    }
+                                                                                                                                                                                                                                    }
