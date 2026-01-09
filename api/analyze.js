@@ -1,12 +1,20 @@
-export default function handler(req, res) {
-      try {
-          res.status(200).json({
-                message: "ALEX Stress Test endpoint connected successfully.",
-                      hint: "In production, this will process deal data and return a stress score."
-                          });
-                            } catch (error) {
-                                console.error("Error:", error);
-                                    res.status(500).json({ error: "Internal Server Error" });
-                                      }
-                                      }
-}
+// api/analyze.js
+export default async function handler(req, res) {
+  try {
+      const { address, rate } = req.query;
+
+          // Temporary mock data for demo
+              const fakeData = {
+                    address,
+                          rate,
+                                priceEstimate: `$${(Math.random() * 500000 + 100000).toFixed(0)}`,
+                                      taxHistory: `${(Math.random() * 2.5 + 1.2).toFixed(2)}% avg`,
+                                            riskScore: ["LOW", "MEDIUM", "HIGH"][Math.floor(Math.random() * 3)],
+                                                  verdict: ["Proceed", "Renegotiate", "Kill"][Math.floor(Math.random() * 3)]
+                                                      };
+
+                                                          return res.status(200).json(fakeData);
+                                                            } catch (error) {
+                                                                return res.status(500).json({ error: "Internal Server Error" });
+                                                                  }
+                                                                  }
