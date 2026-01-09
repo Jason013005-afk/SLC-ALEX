@@ -1,30 +1,37 @@
 export default async function handler(req, res) {
       try {
-            // Always log inputs to verify on Vercel console
-                const { address = "Unknown", rate = "N/A" } = req.query;
-                    console.log("Analyzing:", address, rate);
+          // Only allow POST
+              if (req.method !== 'POST') {
+                    return res.status(405).json({ error: 'Method not allowed' });
+                        }
 
-                        // Fake calculation (no external API, guaranteed to work)
-                            const verdicts = ["Proceed ✅", "Renegotiate ⚖️", "Kill ❌"];
-                                const risks = ["LOW", "MEDIUM", "HIGH"];
-                                    const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+                            // Extract from request body
+                                const { address, rate } = req.body;
 
-                                        const result = {
-                                                  address,
-                                                        rate,
-                                                              estimate: `$${(Math.random() * 350000 + 150000).toFixed(0)}`,
-                                                                    risk: pick(risks),
-                                                                          verdict: pick(verdicts),
-                                                                                time: new Date().toLocaleString(),
-                                        };
+                                    // Validate
+                                        if (!address || !rate) {
+                                              return res.status(400).json({ error: 'Missing address or rate' });
+                                                  }
 
-                                            return res.status(200).json(result);
-      } catch (err) {
-            console.error("Analyze API error:", err);
-                res.status(500).json({ error: "Internal Server Error", details: err.message });
-      }
-}
-      }
-                                        }
-      }
+                                                      // Simulate stress test logic
+                                                          const stressScore = Math.random();
+                                                              let verdict;
+
+                                                                  if (stressScore > 0.75) verdict = 'Proceed ✅';
+                                                                      else if (stressScore > 0.5) verdict = 'Renegotiate ⚠️';
+                                                                          else verdict = 'Kill ❌';
+
+                                                                              // Return analysis
+                                                                                  return res.status(200).json({
+                                                                                        address,
+                                                                                              rate,
+                                                                                                    stressScore: stressScore.toFixed(2),
+                                                                                                          verdict,
+                                                                                                                message: `Analysis complete for ${address}. Recommended action: ${verdict}`
+                                                                                                                    });
+                                                                                                                      } catch (err) {
+                                                                                                                          console.error('Error in /api/analyze:', err);
+                                                                                                                              return res.status(500).json({ error: 'Internal Server Error' });
+                                                                                                                                }
+                                                                                                                                }
 }
