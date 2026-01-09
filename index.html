@@ -4,64 +4,48 @@
   <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <title>ALEX™ | Silver Lining Consulting LLC</title>
+        <link rel="stylesheet" href="style.css" />
+        </head>
 
-        <!-- SEO + Social Meta -->
-          <meta name="description" content="ALEX™ by Silver Lining Consulting LLC — Real Estate Decision Infrastructure that transforms deals into disciplined, engineered insight.">
-            <meta property="og:title" content="ALEX™ | Silver Lining Consulting LLC">
-              <meta property="og:description" content="Turn Real Estate Decisions into Engineered Discipline.">
-                <meta property="og:image" content="images/slc-logo.png">
-                  <meta name="theme-color" content="#000000">
+        <body>
+          <!-- ✨ Loader overlay -->
+            <div id="loader">
+                <div class="pulse-ring"></div>
+                    <img src="images/slc-logo.png" alt="SLC Logo" class="loader-logo" />
+                        <p class="loading-text">Analyzing Deal ...</p>
+                          </div>
 
-                    <!-- CSS -->
-                      <link rel="stylesheet" href="style.css" />
-                        <link rel="icon" href="images/slc-logo.png" type="image/png" />
-                        </head>
+                            <!-- ✨ Site content -->
+                              <header>
+                                  <img src="images/slc-logo.png" alt="Silver Lining Consulting Logo" />
+                                      <nav>
+                                            <a href="index.html" class="active">Home</a>
+                                                  <a href="system.html">The System</a>
+                                                        <a href="price.html">Pricing</a>
+                                                              <a href="contact.html">Contact</a>
+                                                                  </nav>
+                                                                    </header>
 
-                        <body>
-                          <!-- HEADER -->
-                            <header>
-                                <a href="index.html">
-                                      <img src="images/slc-logo.png" alt="Silver Lining Consulting LLC Logo" />
-                                          </a>
-                                              <nav>
-                                                    <a href="index.html" class="active">Home</a>
-                                                          <a href="system.html">The System</a>
-                                                                <a href="price.html">Pricing</a>
-                                                                      <a href="contact.html">Contact</a>
-                                                                          </nav>
-                                                                            </header>
+                                                                      <main>
+                                                                          <section class="intro">
+                                                                                <h1>Turn Real Estate Decisions into Engineered Discipline</h1>
+                                                                                      <p>ALEX™ by Silver Lining Consulting LLC is a decision-support engine that stress-tests your deals and reveals hidden risk.</p>
+                                                                                            <button id="runTest" class="cta">Run a Deal Stress Test</button>
+                                                                                                </section>
+                                                                                                  </main>
 
-                                                                              <!-- HERO SECTION -->
-                                                                                <section class="hero">
-                                                                                    <h1>Turn Real Estate Decisions into Engineered Discipline</h1>
-                                                                                        <p>
-                                                                                              ALEX™ by Silver Lining Consulting LLC is a decision-support engine that
-                                                                                                    stress-tests your deals, surfaces hidden risk, and keeps your capital out
-                                                                                                          of bad contracts.
-                                                                                                              </p>
-                                                                                                                  <a href="/api/analyze" class="cta">Run a Deal Stress Test</a>
-                                                                                                                    </section>
+                                                                                                    <footer>
+                                                                                                        <p>© 2026 Silver Lining Consulting LLC | ALEX™ Decision Infrastructure</p>
+                                                                                                          </footer>
 
-                                                                                                                      <!-- MAIN INFO -->
-                                                                                                                        <main>
-                                                                                                                            <h2>How ALEX™ Thinks</h2>
-                                                                                                                                <ul>
-                                                                                                                                      <li>✅ Deal-level risk scoring (GREEN / AMBER / RED)</li>
-                                                                                                                                            <li>⚙️ Cashflow, DSCR, and shock scenarios in seconds</li>
-                                                                                                                                                  <li>🧠 Behavior-aware overrides & decision discipline tracking</li>
-                                                                                                                                                      </ul>
+                                                                                                            <script>
+                                                                                                                const loader = document.getElementById("loader");
+                                                                                                                    const runTestBtn = document.getElementById("runTest");
 
-                                                                                                                                                          <h2>Fast Demo</h2>
-                                                                                                                                                              <ol>
-                                                                                                                                                                    <li>You enter a live or potential deal.</li>
-                                                                                                                                                                          <li>ALEX™ stress-tests the numbers with rate, rehab, and rent shocks.</li>
-                                                                                                                                                                                <li>You get a verdict: Proceed, Renegotiate, or Kill.</li>
-                                                                                                                                                                                    </ol>
-                                                                                                                                                                                      </main>
-
-                                                                                                                                                                                        <!-- FOOTER -->
-                                                                                                                                                                                          <footer>
-                                                                                                                                                                                              © 2026 Silver Lining Consulting LLC | ALEX™ Decision Infrastructure
-                                                                                                                                                                                                </footer>
-                                                                                                                                                                                                </body>
-                                                                                                                                                                                                </html>
+                                                                                                                        runTestBtn.addEventListener("click", () => {
+                                                                                                                              loader.classList.add("show");
+                                                                                                                                    setTimeout(() => loader.classList.remove("show"), 3500); // demo timing
+                                                                                                                                        });
+                                                                                                                                          </script>
+                                                                                                                                          </body>
+                                                                                                                                          </html>
