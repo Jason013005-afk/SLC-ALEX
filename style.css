@@ -24,145 +24,151 @@
                               width: 100%;
                                 top: 0;
                                   z-index: 1000;
-                                    border-bottom: 1px solid rgba(255, 215, 0, 0.3);
+                                    border-bottom: 1px solid rgba(255, 215, 0, 0.25);
                                     }
 
                                     header img {
-                                      height: 70px;
+                                      height: 60px; /* reduced from 70px to fit better */
                                         width: auto;
-                                        }
+                                          transition: transform 0.3s ease;
+                                          }
 
-                                        nav a {
-                                          color: #ffd700;
-                                            text-decoration: none;
-                                              margin: 0 15px;
-                                                font-weight: 600;
-                                                  text-transform: uppercase;
-                                                    position: relative;
-                                                      transition: 0.3s;
-                                                      }
+                                          header img:hover {
+                                            transform: scale(1.05);
+                                            }
 
-                                                      /* glowing hover effect */
-                                                      nav a:hover {
-                                                        color: #fff;
-                                                          text-shadow: 0 0 10px #ffd700, 0 0 20px #ffd700;
+                                            /* ---------- NAV ---------- */
+                                            nav a {
+                                              color: #e0b800; /* gold toned down ~20% */
+                                                text-decoration: none;
+                                                  margin: 0 15px;
+                                                    font-weight: 600;
+                                                      text-transform: uppercase;
+                                                        position: relative;
+                                                          transition: 0.3s;
                                                           }
 
-                                                          nav a.active {
+                                                          nav a:hover {
                                                             color: #fff;
-                                                              text-shadow: 0 0 15px #ffd700;
+                                                              text-shadow: 0 0 10px #e0b800, 0 0 20px #e0b800;
                                                               }
 
-                                                              /* ---------- HERO SECTION ---------- */
-                                                              .hero {
-                                                                background: 
-                                                                    linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)),
-                                                                        url('images/hero-bg.png') center/cover no-repeat;
-                                                                          height: 100vh;
-                                                                            display: flex;
-                                                                              flex-direction: column;
-                                                                                justify-content: center;
-                                                                                  align-items: center;
-                                                                                    text-align: center;
-                                                                                      color: #fff;
-                                                                                        padding: 0 1rem;
-                                                                                        }
+                                                              nav a.active {
+                                                                color: #fff;
+                                                                  text-shadow: 0 0 15px #e0b800;
+                                                                  }
 
-                                                                                        .hero h1 {
-                                                                                          font-size: 2.5rem;
-                                                                                            color: #ffd700;
-                                                                                              text-shadow: 0 0 15px #ffd700, 0 0 30px #ffea00;
-                                                                                                margin-bottom: 1rem;
-                                                                                                }
+                                                                  /* ---------- HERO SECTION ---------- */
+                                                                  .hero {
+                                                                    background:
+                                                                        linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.6)),
+                                                                            url('images/hero-bg.png') center center / 120% no-repeat; /* zoomed out ~20% */
+                                                                              height: 100vh;
+                                                                                display: flex;
+                                                                                  flex-direction: column;
+                                                                                    justify-content: center;
+                                                                                      align-items: center;
+                                                                                        text-align: center;
+                                                                                          color: #fff;
+                                                                                            padding: 0 1rem;
+                                                                                              filter: brightness(1.1); /* lightens image slightly */
+                                                                                              }
 
-                                                                                                .hero p {
-                                                                                                  max-width: 700px;
-                                                                                                    font-size: 1.1rem;
-                                                                                                      margin-bottom: 2rem;
-                                                                                                        color: #f5f5f5;
-                                                                                                        }
+                                                                                              .hero h1 {
+                                                                                                font-size: 2.5rem;
+                                                                                                  color: #e0b800; /* slightly dimmer gold */
+                                                                                                    text-shadow: 0 0 10px #e0b800, 0 0 20px rgba(255, 215, 0, 0.5);
+                                                                                                      margin-bottom: 1rem;
+                                                                                                      }
 
-                                                                                                        /* ---------- CALL TO ACTION BUTTON ---------- */
-                                                                                                        .cta {
-                                                                                                          background: linear-gradient(90deg, #ffcc00, #ffb700);
-                                                                                                            color: #000;
-                                                                                                              padding: 0.9rem 2.2rem;
-                                                                                                                border-radius: 50px;
-                                                                                                                  font-weight: 700;
-                                                                                                                    font-size: 1.1rem;
-                                                                                                                      text-decoration: none;
-                                                                                                                        transition: 0.3s;
-                                                                                                                          box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
-                                                                                                                          }
+                                                                                                      .hero p {
+                                                                                                        max-width: 700px;
+                                                                                                          font-size: 1.1rem;
+                                                                                                            margin-bottom: 2rem;
+                                                                                                              color: #f5f5f5;
+                                                                                                              }
 
-                                                                                                                          .cta:hover {
-                                                                                                                            box-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
-                                                                                                                              transform: translateY(-2px);
-                                                                                                                              }
+                                                                                                              /* ---------- BUTTON ---------- */
+                                                                                                              .cta {
+                                                                                                                background: linear-gradient(90deg, #e0b800, #cfa000);
+                                                                                                                  color: #000;
+                                                                                                                    padding: 0.9rem 2.2rem;
+                                                                                                                      border-radius: 50px;
+                                                                                                                        font-weight: 700;
+                                                                                                                          font-size: 1.1rem;
+                                                                                                                            text-decoration: none;
+                                                                                                                              transition: 0.3s;
+                                                                                                                                box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+                                                                                                                                }
 
-                                                                                                                              /* ---------- MAIN CONTENT ---------- */
-                                                                                                                              main {
-                                                                                                                                padding: 6rem 2rem 2rem;
-                                                                                                                                  max-width: 900px;
-                                                                                                                                    margin: auto;
+                                                                                                                                .cta:hover {
+                                                                                                                                  box-shadow: 0 0 25px rgba(255, 215, 0, 0.7);
+                                                                                                                                    transform: translateY(-2px);
                                                                                                                                     }
 
-                                                                                                                                    h2 {
-                                                                                                                                      font-size: 2rem;
-                                                                                                                                        color: #ffd700;
-                                                                                                                                          margin: 2rem 0 1rem;
-                                                                                                                                            text-align: center;
-                                                                                                                                            }
+                                                                                                                                    /* ---------- MAIN ---------- */
+                                                                                                                                    main {
+                                                                                                                                      padding: 6rem 2rem 2rem;
+                                                                                                                                        max-width: 900px;
+                                                                                                                                          margin: auto;
+                                                                                                                                          }
 
-                                                                                                                                            ul {
-                                                                                                                                              list-style: none;
-                                                                                                                                                padding-left: 1rem;
-                                                                                                                                                }
+                                                                                                                                          h2 {
+                                                                                                                                            font-size: 2rem;
+                                                                                                                                              color: #e0b800;
+                                                                                                                                                margin: 2rem 0 1rem;
+                                                                                                                                                  text-align: center;
+                                                                                                                                                  }
 
-                                                                                                                                                ul li {
-                                                                                                                                                  font-size: 1.1rem;
-                                                                                                                                                    margin-bottom: 10px;
-                                                                                                                                                      position: relative;
+                                                                                                                                                  ul {
+                                                                                                                                                    list-style: none;
+                                                                                                                                                      padding-left: 1rem;
                                                                                                                                                       }
 
-                                                                                                                                                      ul li::before {
-                                                                                                                                                        content: "✨";
-                                                                                                                                                          margin-right: 8px;
-                                                                                                                                                            color: #ffd700;
+                                                                                                                                                      ul li {
+                                                                                                                                                        font-size: 1.1rem;
+                                                                                                                                                          margin-bottom: 10px;
+                                                                                                                                                            position: relative;
                                                                                                                                                             }
 
-                                                                                                                                                            /* ---------- FOOTER ---------- */
-                                                                                                                                                            footer {
-                                                                                                                                                              background: #000;
-                                                                                                                                                                color: #999;
-                                                                                                                                                                  text-align: center;
-                                                                                                                                                                    padding: 2rem 1rem;
-                                                                                                                                                                      border-top: 1px solid rgba(255, 215, 0, 0.2);
-                                                                                                                                                                        font-size: 0.9rem;
-                                                                                                                                                                        }
+                                                                                                                                                            ul li::before {
+                                                                                                                                                              content: "✨";
+                                                                                                                                                                margin-right: 8px;
+                                                                                                                                                                  color: #e0b800;
+                                                                                                                                                                  }
 
-                                                                                                                                                                        footer a {
-                                                                                                                                                                          color: #ffd700;
-                                                                                                                                                                            text-decoration: none;
-                                                                                                                                                                              font-weight: 600;
+                                                                                                                                                                  /* ---------- FOOTER ---------- */
+                                                                                                                                                                  footer {
+                                                                                                                                                                    background: #000;
+                                                                                                                                                                      color: #999;
+                                                                                                                                                                        text-align: center;
+                                                                                                                                                                          padding: 2rem 1rem;
+                                                                                                                                                                            border-top: 1px solid rgba(255, 215, 0, 0.2);
+                                                                                                                                                                              font-size: 0.9rem;
                                                                                                                                                                               }
 
-                                                                                                                                                                              /* ---------- RESPONSIVE ---------- */
-                                                                                                                                                                              @media (max-width: 768px) {
-                                                                                                                                                                                header {
-                                                                                                                                                                                    flex-direction: column;
-                                                                                                                                                                                      }
+                                                                                                                                                                              footer a {
+                                                                                                                                                                                color: #e0b800;
+                                                                                                                                                                                  text-decoration: none;
+                                                                                                                                                                                    font-weight: 600;
+                                                                                                                                                                                    }
 
-                                                                                                                                                                                        nav {
-                                                                                                                                                                                            margin-top: 0.5rem;
-                                                                                                                                                                                              }
+                                                                                                                                                                                    /* ---------- RESPONSIVE ---------- */
+                                                                                                                                                                                    @media (max-width: 768px) {
+                                                                                                                                                                                      header {
+                                                                                                                                                                                          flex-direction: column;
+                                                                                                                                                                                            }
 
-                                                                                                                                                                                                .hero h1 {
-                                                                                                                                                                                                    font-size: 1.8rem;
-                                                                                                                                                                                                      }
+                                                                                                                                                                                              nav {
+                                                                                                                                                                                                  margin-top: 0.5rem;
+                                                                                                                                                                                                    }
 
-                                                                                                                                                                                                        .cta {
-                                                                                                                                                                                                            font-size: 1rem;
-                                                                                                                                                                                                                padding: 0.8rem 1.6rem;
-                                                                                                                                                                                                                  }
-                                                                                                                                                                                                                  }
+                                                                                                                                                                                                      .hero h1 {
+                                                                                                                                                                                                          font-size: 1.8rem;
+                                                                                                                                                                                                            }
+
+                                                                                                                                                                                                              .cta {
+                                                                                                                                                                                                                  font-size: 1rem;
+                                                                                                                                                                                                                      padding: 0.8rem 1.6rem;
+                                                                                                                                                                                                                        }
+                                                                                                                                                                                                                        }
