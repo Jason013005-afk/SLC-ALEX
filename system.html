@@ -1,45 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>ALEX™ Real Estate Stress Test</title>
-        <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>ALEX™ | Silver Lining Consulting LLC</title>
+        <link rel="stylesheet" href="styles.css" />
         </head>
         <body>
-          <header>
-              <img src="images/slc-logo.png" alt="Silver Lining Consulting LLC Logo">
-                  <nav>
-                        <a href="index.html">Home</a>
-                              <a href="system.html" class="active">The System</a>
-                                    <a href="price.html">Pricing</a>
-                                          <a href="contact.html">Contact</a>
-                                              </nav>
-                                                </header>
+          <!-- Background Overlay -->
+            <div class="background-overlay"></div>
 
-                                                  <main>
-                                                      <h1>ALEX™ Real Estate Stress Test</h1>
-                                                          <p class="subtitle">Enter your property and rate to analyze instantly.</p>
-                                                              <input id="address" type="text" placeholder="Enter Property Address">
-                                                                  <input id="rate" type="number" step="0.1" placeholder="Rate %">
-                                                                      <button id="runTest" class="cta">Run Stress Test</button>
+              <!-- Header -->
+                <header class="glass">
+                    <h1>SILVER LINING CONSULTING LLC</h1>
+                        <p>ALEX™ Decision Intelligence Tool</p>
+                          </header>
 
-                                                                          <div id="result-card" class="result hidden">
-                                                                                <h2>📊 Analysis Result</h2>
-                                                                                      <p id="result-body"></p>
-                                                                                          </div>
-                                                                                            </main>
+                            <!-- Main Content -->
+                              <main>
+                                  <section class="intro glass">
+                                        <h2>Turn Real Estate Decisions into Engineered Discipline</h2>
+                                              <p>
+                                                      ALEX™ by Silver Lining Consulting LLC is a real estate decision-support system.
+                                                              Enter a property address and interest rate to stress test the deal instantly.
+                                                                    </p>
 
-                                                                                              <div id="loader">
-                                                                                                  <div class="pulse-ring"></div>
-                                                                                                      <img src="images/slc-logo.png" alt="Loader Logo" class="loader-logo">
-                                                                                                          <div class="loading-text">Analyzing Deal ...</div>
-                                                                                                            </div>
+                                                                          <!-- Input fields -->
+                                                                                <div class="input-container">
+                                                                                        <input type="text" id="addressInput" placeholder="Enter Property Address" />
+                                                                                                <input type="number" id="rateInput" placeholder="Interest Rate (%)" />
+                                                                                                      </div>
 
-                                                                                                              <footer>
-                                                                                                                  © 2026 Silver Lining Consulting LLC | ALEX™ Decision Infrastructure
-                                                                                                                    </footer>
+                                                                                                            <!-- Run button -->
+                                                                                                                  <button id="runTest" class="glow-button">Run Stress Test</button>
 
-                                                                                                                      <script src="scripts.js"></script>
-                                                                                                                      </body>
-                                                                                                                      </html>
+                                                                                                                        <!-- Progress Bar -->
+                                                                                                                              <div class="progress-bar">
+                                                                                                                                      <div id="progressBar" class="progress-inner"></div>
+                                                                                                                                            </div>
+                                                                                                                                                </section>
+
+                                                                                                                                                    <!-- Metrics -->
+                                                                                                                                                        <section class="metrics glass">
+                                                                                                                                                              <div class="metric-card">
+                                                                                                                                                                      <h3>ROI</h3>
+                                                                                                                                                                              <div class="metric-value" id="roi">--%</div>
+                                                                                                                                                                                    </div>
+                                                                                                                                                                                          <div class="metric-card">
+                                                                                                                                                                                                  <h3>Risk</h3>
+                                                                                                                                                                                                          <div class="metric-value" id="risk">--</div>
+                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                      <div class="metric-card">
+                                                                                                                                                                                                                              <h3>Equity Growth</h3>
+                                                                                                                                                                                                                                      <div class="metric-value" id="equity">--%</div>
+                                                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                                                                </section>
+
+                                                                                                                                                                                                                                                    <!-- Summary -->
+                                                                                                                                                                                                                                                        <section class="summary glass">
+                                                                                                                                                                                                                                                              <p id="summaryText">Awaiting analysis...</p>
+                                                                                                                                                                                                                                                                  </section>
+                                                                                                                                                                                                                                                                    </main>
+
+                                                                                                                                                                                                                                                                      <!-- Footer -->
+                                                                                                                                                                                                                                                                        <footer class="glass">
+                                                                                                                                                                                                                                                                            <p>© 2026 Silver Lining Consulting LLC | ALEX™ Decision Infrastructure</p>
+                                                                                                                                                                                                                                                                              </footer>
+
+                                                                                                                                                                                                                                                                                <!-- Link to working script -->
+                                                                                                                                                                                                                                                                                  <script type="module" src="./scripts.js"></script>
+                                                                                                                                                                                                                                                                                  </body>
+                                                                                                                                                                                                                                                                                  </html>
