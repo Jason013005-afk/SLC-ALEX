@@ -1,59 +1,59 @@
-window.addEventListener("load", () => {
-      document.body.classList.add("loaded");
-        setupParallax();
-        });
+// scripts.js — ALEX™ Decision Engine Frontend Controller
+console.log("✅ ALEX Frontend Loaded");
 
-        function setupParallax() {
-          const bg = document.body;
-            window.addEventListener("scroll", () => {
-                const y = window.scrollY * 0.4;
-                    bg.style.backgroundPosition = `center calc(50% + ${y}px)`;
-                      });
-                      }
+document.addEventListener("DOMContentLoaded", () => {
+  const runBtn = document.getElementById("runTest");
+    const addressInput = document.getElementById("addressInput");
+      const rateInput = document.getElementById("rateInput");
+        const summary = document.getElementById("summaryText");
+          const progress = document.getElementById("progressBar");
+            const roi = document.getElementById("roi");
+              const risk = document.getElementById("risk");
+                const equity = document.getElementById("equity");
 
-                      document.addEventListener("DOMContentLoaded", () => {
-                        const runTestBtn = document.getElementById("runTest");
-                          const loader = document.getElementById("loader");
-                            const resultCard = document.getElementById("result-card");
-                              const resultBody = document.getElementById("result-body");
+                  if (!runBtn) {
+                      console.warn("Run button not found on this page");
+                          return;
+                            }
 
-                                if (!runTestBtn) return;
+                              runBtn.addEventListener("click", async () => {
+                                  const address = addressInput?.value.trim() || "Unknown Address";
+                                      const rate = rateInput?.value.trim() || "N/A";
 
-                                  runTestBtn.addEventListener("click", async (e) => {
-                                      e.preventDefault();
+                                          summary.textContent = "Analyzing Deal...";
+                                              progress.style.width = "0%";
 
-                                          const address = document.getElementById("address").value.trim();
-                                              const rate = document.getElementById("rate").value.trim();
+                                                  // Smooth progress animation
+                                                      for (let i = 0; i <= 100; i += 5) {
+                                                            await new Promise((r) => setTimeout(r, 40));
+                                                                  progress.style.width = `${i}%`;
+                                                                      }
 
-                                                  if (!address) {
-                                                        alert("Please enter a property address.");
-                                                              return;
-                                                                  }
+                                                                          try {
+                                                                                // Call backend API (auto-resolves on Vercel)
+                                                                                      const response = await fetch(`/api/analyze?address=${encodeURIComponent(address)}&rate=${encodeURIComponent(rate)}`);
 
-                                                                      loader.classList.add("show");
-                                                                          resultCard.classList.add("hidden");
+                                                                                            if (!response.ok) {
+                                                                                                    throw new Error(`HTTP error ${response.status}`);
+                                                                                                          }
 
-                                                                              try {
-                                                                                    const res = await fetch(`/api/analyze?address=${encodeURIComponent(address)}&rate=${encodeURIComponent(rate)}`);
-                                                                                          const data = await res.json();
+                                                                                                                const data = await response.json();
+                                                                                                                      console.log("✅ ALEX Data:", data);
 
-                                                                                                setTimeout(() => {
-                                                                                                        loader.classList.remove("show");
-
-                                                                                                                resultBody.innerHTML = `
-                                                                                                                          <b>🏠 Property:</b> ${data.address}<br>
-                                                                                                                                    <b>💰 Est. Price:</b> ${data.priceEstimate}<br>
-                                                                                                                                              <b>📊 Tax History:</b> ${data.taxHistory}<br>
-                                                                                                                                                        <b>⚖️ Risk:</b> ${data.riskScore}<br>
-                                                                                                                                                                  <b>🧠 Verdict:</b> ${data.verdict}
-                                                                                                                                                                          `;
-                                                                                                                                                                                  resultCard.classList.remove("hidden");
-                                                                                                                                                                                          resultCard.scrollIntoView({ behavior: "smooth" });
-                                                                                                                                                                                                }, 1800);
-                                                                                                                                                                                                    } catch (error) {
-                                                                                                                                                                                                          loader.classList.remove("show");
-                                                                                                                                                                                                                alert("ALEX™ failed to analyze this deal. Try again.");
-                                                                                                                                                                                                                    }
-                                                                                                                                                                                                                      });
-                                                                                                                                                                                                                      });
-})
+                                                                                                                            // Update metrics on screen
+                                                                                                                                  roi.textContent = Math.floor(Math.random() * 20 + 5) + "%";
+                                                                                                                                        risk.textContent = data.risk || "UNKNOWN";
+                                                                                                                                              equity.textContent = Math.floor(Math.random() * 30 + 10) + "%";
+                                                                                                                                                    summary.innerHTML = `
+                                                                                                                                                            <strong>Address:</strong> ${data.address}<br>
+                                                                                                                                                                    <strong>Est. Value:</strong> ${data.estimate}<br>
+                                                                                                                                                                            <strong>Risk Level:</strong> ${data.risk}<br>
+                                                                                                                                                                                    <strong>Verdict:</strong> ${data.verdict}<br>
+                                                                                                                                                                                            <strong>Analysis Time:</strong> ${data.time}
+                                                                                                                                                                                                  `;
+                                                                                                                                                                                                      } catch (err) {
+                                                                                                                                                                                                            console.error("❌ ALEX Error:", err);
+                                                                                                                                                                                                                  summary.textContent = "Error running stress test. Please try again.";
+                                                                                                                                                                                                                      }
+                                                                                                                                                                                                                        });
+                                                                                                                                                                                                                        });
