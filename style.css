@@ -172,3 +172,19 @@
                                                                                                                                                                                                                       padding: 0.8rem 1.6rem;
                                                                                                                                                                                                                         }
                                                                                                                                                                                                                         }
+                                                                                                                                                                                                                        .hero::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at center, rgba(255,215,0,0.08), transparent 70%);
+  animation: glowPulse 6s infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes glowPulse {
+  from { opacity: 0.3; }
+  to { opacity: 0.6; }
+}
