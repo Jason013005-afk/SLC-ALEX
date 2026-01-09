@@ -1,203 +1,114 @@
-/* === Global Reset === */
+/* === Reset === */
 * {
   margin: 0;
     padding: 0;
       box-sizing: border-box;
       }
 
+      /* === Body / Background === */
       body {
-        font-family: "Inter", Arial, sans-serif;
-          background: url("https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=1920&q=80")
-              no-repeat center center fixed;
-                background-size: cover;
-                  color: #fff;
-                    min-height: 100vh;
-                      display: flex;
-                        flex-direction: column;
-                          align-items: center;
-                            justify-content: center;
-                            }
+        font-family: "Inter", sans-serif;
+          color: #fff;
+            background: url("images/hero-bg.jpg") no-repeat center center/cover;
+              height: 100vh;
+                display: flex;
+                  flex-direction: column;
+                    justify-content: space-between;
+                      text-align: center;
+                        position: relative;
+                        }
 
-                            /* === Overlay for Readability === */
-                            .overlay {
-                              background: rgba(0, 0, 0, 0.78);
-                                backdrop-filter: blur(6px);
-                                  width: 100%;
-                                    min-height: 100vh;
-                                      padding: 2rem;
-                                        display: flex;
-                                          flex-direction: column;
-                                            justify-content: space-between;
-                                            }
+                        /* === Overlay for readability === */
+                        .background-overlay {
+                          position: fixed;
+                            top: 0;
+                              left: 0;
+                                width: 100%;
+                                  height: 100%;
+                                    background: rgba(0, 0, 0, 0.45);
+                                      z-index: -1;
+                                      }
 
-                                            /* === Header === */
-                                            header {
-                                              text-align: center;
-                                                margin-bottom: 2rem;
-                                                }
+                                      /* === Header === */
+                                      header {
+                                        padding: 20px 0;
+                                        }
+                                        .logo {
+                                          width: 160px;
+                                            margin-top: 15px;
+                                              filter: drop-shadow(0px 0px 8px rgba(255, 215, 0, 0.9));
+                                              }
+                                              header h1 {
+                                                font-size: 2rem;
+                                                  font-weight: 700;
+                                                    background: linear-gradient(90deg, #f1c232, #fff3b0);
+                                                      -webkit-background-clip: text;
+                                                        -webkit-text-fill-color: transparent;
+                                                        }
+                                                        .tagline {
+                                                          font-size: 1rem;
+                                                            color: #e6e6e6;
+                                                            }
 
-                                                header h1 {
-                                                  font-size: 2rem;
-                                                    color: #ffcc33;
-                                                      letter-spacing: 1px;
-                                                      }
-
-                                                      header h2 {
-                                                        font-size: 1.1rem;
-                                                          font-weight: 400;
-                                                            color: #ddd;
-                                                              margin-top: 0.25rem;
-                                                              }
-
-                                                              nav {
-                                                                margin-top: 1rem;
-                                                                }
-
-                                                                nav a {
-                                                                  color: #ffcc33;
-                                                                    text-decoration: none;
-                                                                      margin: 0 0.8rem;
-                                                                        font-weight: 500;
-                                                                          transition: color 0.3s ease;
+                                                            /* === Intro Section === */
+                                                            .intro {
+                                                              margin: 0 auto;
+                                                                padding: 30px;
+                                                                  border-radius: 10px;
+                                                                    width: 90%;
+                                                                      max-width: 600px;
+                                                                        background: rgba(0, 0, 0, 0.55);
+                                                                          border: 1px solid gold;
                                                                           }
+                                                                          .intro h2 {
+                                                                            color: gold;
+                                                                              font-size: 1.5rem;
+                                                                                margin-bottom: 10px;
+                                                                                }
+                                                                                .intro p {
+                                                                                  color: #f0f0f0;
+                                                                                    margin-bottom: 20px;
+                                                                                    }
 
-                                                                          nav a:hover {
-                                                                            color: #ffffff;
-                                                                            }
-
-                                                                            /* === Hero Section === */
-                                                                            .hero {
-                                                                              text-align: center;
-                                                                                max-width: 750px;
-                                                                                  margin: 0 auto 3rem auto;
-                                                                                  }
-
-                                                                                  .hero h3 {
-                                                                                    font-size: 1.5rem;
-                                                                                      margin-bottom: 1rem;
-                                                                                        color: #ffcc33;
-                                                                                        }
-
-                                                                                        .hero p {
-                                                                                          color: #eaeaea;
-                                                                                            line-height: 1.6;
-                                                                                              margin-bottom: 1.5rem;
-                                                                                              }
-
-                                                                                              .button-group {
-                                                                                                display: flex;
-                                                                                                  justify-content: center;
-                                                                                                    gap: 1rem;
-                                                                                                    }
-
-                                                                                                    .button,
-                                                                                                    .button-outline {
-                                                                                                      display: inline-block;
-                                                                                                        padding: 0.7rem 1.4rem;
-                                                                                                          font-size: 1rem;
-                                                                                                            border-radius: 6px;
-                                                                                                              text-decoration: none;
-                                                                                                                transition: all 0.3s ease;
-                                                                                                                }
-
-                                                                                                                .button {
-                                                                                                                  background: #ffcc33;
-                                                                                                                    color: #000;
-                                                                                                                      font-weight: 600;
+                                                                                    /* === Input & Button === */
+                                                                                    #addressInput {
+                                                                                      padding: 12px;
+                                                                                        width: 70%;
+                                                                                          max-width: 400px;
+                                                                                            border-radius: 6px;
+                                                                                              border: 1px solid gold;
+                                                                                                font-size: 1rem;
+                                                                                                  margin-bottom: 15px;
+                                                                                                  }
+                                                                                                  .glow-button {
+                                                                                                    background: linear-gradient(90deg, #f1c232, #d4af37);
+                                                                                                      color: #000;
+                                                                                                        font-weight: 600;
+                                                                                                          border: none;
+                                                                                                            padding: 12px 30px;
+                                                                                                              border-radius: 8px;
+                                                                                                                cursor: pointer;
+                                                                                                                  box-shadow: 0 0 12px rgba(241, 194, 50, 0.7);
+                                                                                                                    transition: 0.3s;
+                                                                                                                    }
+                                                                                                                    .glow-button:hover {
+                                                                                                                      transform: scale(1.05);
                                                                                                                       }
 
-                                                                                                                      .button:hover {
-                                                                                                                        background: #ffd84d;
-                                                                                                                        }
+                                                                                                                      /* === Result Box === */
+                                                                                                                      .result-box {
+                                                                                                                        background: rgba(0, 0, 0, 0.65);
+                                                                                                                          margin-top: 20px;
+                                                                                                                            padding: 20px;
+                                                                                                                              border-radius: 8px;
+                                                                                                                                color: #fff;
+                                                                                                                                  border: 1px solid gold;
+                                                                                                                                  }
 
-                                                                                                                        .button-outline {
-                                                                                                                          border: 2px solid #ffcc33;
-                                                                                                                            color: #ffcc33;
-                                                                                                                            }
-
-                                                                                                                            .button-outline:hover {
-                                                                                                                              background: #ffcc33;
-                                                                                                                                color: #000;
-                                                                                                                                }
-
-                                                                                                                                /* === Features === */
-                                                                                                                                .features {
-                                                                                                                                  text-align: left;
-                                                                                                                                    max-width: 700px;
-                                                                                                                                      margin: 2rem auto;
-                                                                                                                                        color: #ddd;
-                                                                                                                                        }
-
-                                                                                                                                        .features ul {
-                                                                                                                                          list-style: none;
+                                                                                                                                  /* === Footer === */
+                                                                                                                                  footer {
+                                                                                                                                    background: rgba(0, 0, 0, 0.6);
+                                                                                                                                      color: #ccc;
+                                                                                                                                        padding: 20px;
+                                                                                                                                          font-size: 0.9rem;
                                                                                                                                           }
-
-                                                                                                                                          .features li {
-                                                                                                                                            margin-bottom: 0.8rem;
-                                                                                                                                              font-size: 1rem;
-                                                                                                                                              }
-
-                                                                                                                                              /* === Demo Section === */
-                                                                                                                                              .demo {
-                                                                                                                                                text-align: left;
-                                                                                                                                                  max-width: 700px;
-                                                                                                                                                    margin: 2rem auto;
-                                                                                                                                                    }
-
-                                                                                                                                                    .demo h3 {
-                                                                                                                                                      color: #ffcc33;
-                                                                                                                                                        margin-bottom: 1rem;
-                                                                                                                                                        }
-
-                                                                                                                                                        .demo ol {
-                                                                                                                                                          margin-left: 1.5rem;
-                                                                                                                                                            margin-bottom: 1rem;
-                                                                                                                                                            }
-
-                                                                                                                                                            .demo li {
-                                                                                                                                                              margin-bottom: 0.6rem;
-                                                                                                                                                              }
-
-                                                                                                                                                              .disclaimer {
-                                                                                                                                                                font-size: 0.85rem;
-                                                                                                                                                                  color: #aaa;
-                                                                                                                                                                    text-align: center;
-                                                                                                                                                                      margin-top: 1rem;
-                                                                                                                                                                        line-height: 1.5;
-                                                                                                                                                                        }
-
-                                                                                                                                                                        /* === Footer === */
-                                                                                                                                                                        footer {
-                                                                                                                                                                          text-align: center;
-                                                                                                                                                                            color: #ccc;
-                                                                                                                                                                              font-size: 0.85rem;
-                                                                                                                                                                                padding-top: 1rem;
-                                                                                                                                                                                  border-top: 1px solid rgba(255, 255, 255, 0.15);
-                                                                                                                                                                                    margin-top: 2rem;
-                                                                                                                                                                                    }
-
-                                                                                                                                                                                    /* === Responsive Design === */
-                                                                                                                                                                                    @media (max-width: 600px) {
-                                                                                                                                                                                      header h1 {
-                                                                                                                                                                                          font-size: 1.6rem;
-                                                                                                                                                                                            }
-
-                                                                                                                                                                                              .hero h3 {
-                                                                                                                                                                                                  font-size: 1.25rem;
-                                                                                                                                                                                                    }
-
-                                                                                                                                                                                                      .button-group {
-                                                                                                                                                                                                          flex-direction: column;
-                                                                                                                                                                                                            }
-
-                                                                                                                                                                                                              .button,
-                                                                                                                                                                                                                .button-outline {
-                                                                                                                                                                                                                    width: 100%;
-                                                                                                                                                                                                                        text-align: center;
-                                                                                                                                                                                                                          }
-
-                                                                                                                                                                                                                            .features,
-                                                                                                                                                                                                                              .demo {
-                                                                                                                                                                                                                                  text-align: center;
-                                                                                                                                                                                                                                    }
-                                                                                                                                                                                                                                    }
