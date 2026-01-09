@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>ALEX™ Stress Test</title>
+      <title>ALEX™ Real Estate Stress Test</title>
         <link rel="stylesheet" href="style.css" />
         </head>
 
         <body>
           <header>
-              <h1>ALEX™ Real Estate Stress Test</h1>
+              <img src="images/slc-logo.png" alt="Silver Lining Consulting LLC Logo" />
                   <nav>
                         <a href="index.html">Home</a>
                               <a href="system.html" class="active">The System</a>
@@ -19,42 +19,31 @@
                                                 </header>
 
                                                   <main>
-                                                      <section class="form-section">
-                                                            <h2>Property Stress Test</h2>
-                                                                  <form id="stressForm">
-                                                                          <input type="text" id="address" placeholder="Property Address" required />
-                                                                                  <input type="number" id="rate" placeholder="Interest Rate (%)" required step="0.01" />
-                                                                                          <button type="submit">Run Stress Test</button>
-                                                                                                </form>
-                                                                                                      <div id="result"></div>
-                                                                                                          </section>
-                                                                                                            </main>
+                                                      <h1>ALEX™ Real Estate Stress Test</h1>
+                                                          <p class="subtitle">Enter your property and loan rate to analyze instantly.</p>
 
-                                                                                                              <footer>
-                                                                                                                  © 2026 Silver Lining Consulting LLC | ALEX™ Decision Infrastructure
-                                                                                                                    </footer>
+                                                              <section class="stress-form">
+                                                                    <input id="address" type="text" placeholder="Enter Property Address" />
+                                                                          <input id="rate" type="number" step="0.1" placeholder="Rate %" />
+                                                                                <button id="runTest" class="cta">Run Stress Test</button>
+                                                                                    </section>
 
-                                                                                                                      <script>
-                                                                                                                          document.getElementById('stressForm').addEventListener('submit', async (e) => {
-                                                                                                                                e.preventDefault();
-                                                                                                                                      const address = document.getElementById('address').value.trim();
-                                                                                                                                            const rate = parseFloat(document.getElementById('rate').value);
+                                                                                        <div id="result-card" class="result hidden">
+                                                                                              <h2>📊 Analysis Result</h2>
+                                                                                                    <p id="result-body"></p>
+                                                                                                        </div>
+                                                                                                          </main>
 
-                                                                                                                                                  const res = await fetch('/api/analyze', {
-                                                                                                                                                          method: 'POST',
-                                                                                                                                                                  headers: { 'Content-Type': 'application/json' },
-                                                                                                                                                                          body: JSON.stringify({ address, rate })
-                                                                                                                                                                                });
+                                                                                                            <div id="loader">
+                                                                                                                <div class="pulse-ring"></div>
+                                                                                                                    <img src="images/slc-logo.png" alt="Loader Logo" class="loader-logo" />
+                                                                                                                        <div class="loading-text">Analyzing Deal ...</div>
+                                                                                                                          </div>
 
-                                                                                                                                                                                      const data = await res.json();
-                                                                                                                                                                                            const resultDiv = document.getElementById('result');
+                                                                                                                            <footer>
+                                                                                                                                © 2026 Silver Lining Consulting LLC | ALEX™ Decision Infrastructure
+                                                                                                                                  </footer>
 
-                                                                                                                                                                                                  if (res.ok) {
-                                                                                                                                                                                                          resultDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
-                                                                                                                                                                                                                } else {
-                                                                                                                                                                                                                        resultDiv.textContent = `Error: ${data.error}`;
-                                                                                                                                                                                                                              }
-                                                                                                                                                                                                                                  });
-                                                                                                                                                                                                                                    </script>
-                                                                                                                                                                                                                                    </body>
-                                                                                                                                                                                                                                    </html>
+                                                                                                                                    <script src="scripts.js"></script>
+                                                                                                                                    </body>
+                                                                                                                                    </html>

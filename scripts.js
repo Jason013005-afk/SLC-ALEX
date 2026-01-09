@@ -1,10 +1,10 @@
-// scripts.js – front-end for ALEX™ system
+// scripts.js – final demo version with root API call and result card
 window.addEventListener("load", () => {
   document.body.classList.add("loaded");
-    parallaxBackground();
+    setupParallax();
     });
 
-    function parallaxBackground() {
+    function setupParallax() {
       const bg = document.body;
         window.addEventListener("scroll", () => {
             const y = window.scrollY * 0.4;
@@ -12,32 +12,49 @@ window.addEventListener("load", () => {
                   });
                   }
 
-                  // Loader and stress test simulation
                   document.addEventListener("DOMContentLoaded", () => {
                     const runTestBtn = document.getElementById("runTest");
-                      if (!runTestBtn) return;
+                      const loader = document.getElementById("loader");
+                        const resultCard = document.getElementById("result-card");
+                          const resultBody = document.getElementById("result-body");
 
-                        runTestBtn.addEventListener("click", async () => {
-                            const address = document.getElementById("address")?.value || "Unknown Property";
-                                const rate = document.getElementById("rate")?.value || "N/A";
+                            if (!runTestBtn) return;
 
-                                    const loader = document.getElementById("loader");
-                                        loader.classList.add("show");
+                              runTestBtn.addEventListener("click", async (e) => {
+                                  e.preventDefault(); // 🔒 Prevents page reload
 
-                                            // Call API
-                                                try {
-                                                      const res = await fetch(`/api/analyze?address=${encodeURIComponent(address)}&rate=${encodeURIComponent(rate)}`);
-                                                            const data = await res.json();
+                                      const address = document.getElementById("address").value.trim();
+                                          const rate = document.getElementById("rate").value.trim();
 
-                                                                  setTimeout(() => {
-                                                                          loader.classList.remove("show");
-                                                                                  alert(
-                                                                                            `🏠 ${data.address}\n💰 Estimated Price: ${data.priceEstimate}\n📊 Tax History: ${data.taxHistory}\n🧠 Risk: ${data.riskScore}\n✅ Verdict: ${data.verdict}`
-                                                                                                    );
-                                                                                                          }, 2200);
-                                                                                                              } catch (e) {
-                                                                                                                    loader.classList.remove("show");
-                                                                                                                          alert("⚠️ ALEX™ failed to process the request. Try again.");
-                                                                                                                              }
-                                                                                                                                });
-                                                                                                                                });
+                                              if (!address) {
+                                                    alert("Please enter a property address.");
+                                                          return;
+                                                              }
+
+                                                                  loader.classList.add("show");
+                                                                      resultCard.classList.add("hidden");
+
+                                                                          try {
+                                                                                const res = await fetch(`/api/analyze?address=${encodeURIComponent(address)}&rate=${encodeURIComponent(rate)}`);
+                                                                                      const data = await res.json();
+
+                                                                                            setTimeout(() => {
+                                                                                                    loader.classList.remove("show");
+
+                                                                                                            resultBody.innerHTML = `
+                                                                                                                      <b>🏠 Property:</b> ${data.address || "N/A"}<br>
+                                                                                                                                <b>💰 Est. Price:</b> ${data.priceEstimate}<br>
+                                                                                                                                          <b>📊 Tax History:</b> ${data.taxHistory}<br>
+                                                                                                                                                    <b>⚖️ Risk:</b> ${data.riskScore}<br>
+                                                                                                                                                              <b>🧠 Verdict:</b> ${data.verdict}
+                                                                                                                                                                      `;
+                                                                                                                                                                              resultCard.classList.remove("hidden");
+                                                                                                                                                                                      resultCard.scrollIntoView({ behavior: "smooth" });
+                                                                                                                                                                                            }, 2000);
+
+                                                                                                                                                                                                } catch (error) {
+                                                                                                                                                                                                      loader.classList.remove("show");
+                                                                                                                                                                                                            alert("ALEX™ failed to analyze this deal. Try again.");
+                                                                                                                                                                                                                }
+                                                                                                                                                                                                                  });
+                                                                                                                                                                                                                  });
