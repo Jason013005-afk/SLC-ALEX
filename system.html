@@ -1,15 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>ALEX™ Real Estate Stress Test</title>
-        <link rel="stylesheet" href="style.css" />
+        <link rel="stylesheet" href="style.css">
         </head>
-
         <body>
           <header>
-              <img src="images/slc-logo.png" alt="Silver Lining Consulting LLC Logo" />
+              <img src="images/slc-logo.png" alt="Silver Lining Consulting LLC Logo">
                   <nav>
                         <a href="index.html">Home</a>
                               <a href="system.html" class="active">The System</a>
@@ -20,30 +19,27 @@
 
                                                   <main>
                                                       <h1>ALEX™ Real Estate Stress Test</h1>
-                                                          <p class="subtitle">Enter your property and loan rate to analyze instantly.</p>
+                                                          <p class="subtitle">Enter your property and rate to analyze instantly.</p>
+                                                              <input id="address" type="text" placeholder="Enter Property Address">
+                                                                  <input id="rate" type="number" step="0.1" placeholder="Rate %">
+                                                                      <button id="runTest" class="cta">Run Stress Test</button>
 
-                                                              <section class="stress-form">
-                                                                    <input id="address" type="text" placeholder="Enter Property Address" />
-                                                                          <input id="rate" type="number" step="0.1" placeholder="Rate %" />
-                                                                                <button id="runTest" class="cta">Run Stress Test</button>
-                                                                                    </section>
+                                                                          <div id="result-card" class="result hidden">
+                                                                                <h2>📊 Analysis Result</h2>
+                                                                                      <p id="result-body"></p>
+                                                                                          </div>
+                                                                                            </main>
 
-                                                                                        <div id="result-card" class="result hidden">
-                                                                                              <h2>📊 Analysis Result</h2>
-                                                                                                    <p id="result-body"></p>
-                                                                                                        </div>
-                                                                                                          </main>
+                                                                                              <div id="loader">
+                                                                                                  <div class="pulse-ring"></div>
+                                                                                                      <img src="images/slc-logo.png" alt="Loader Logo" class="loader-logo">
+                                                                                                          <div class="loading-text">Analyzing Deal ...</div>
+                                                                                                            </div>
 
-                                                                                                            <div id="loader">
-                                                                                                                <div class="pulse-ring"></div>
-                                                                                                                    <img src="images/slc-logo.png" alt="Loader Logo" class="loader-logo" />
-                                                                                                                        <div class="loading-text">Analyzing Deal ...</div>
-                                                                                                                          </div>
+                                                                                                              <footer>
+                                                                                                                  © 2026 Silver Lining Consulting LLC | ALEX™ Decision Infrastructure
+                                                                                                                    </footer>
 
-                                                                                                                            <footer>
-                                                                                                                                © 2026 Silver Lining Consulting LLC | ALEX™ Decision Infrastructure
-                                                                                                                                  </footer>
-
-                                                                                                                                    <script src="scripts.js"></script>
-                                                                                                                                    </body>
-                                                                                                                                    </html>
+                                                                                                                      <script src="scripts.js"></script>
+                                                                                                                      </body>
+                                                                                                                      </html>
