@@ -3,99 +3,33 @@
 <head>
   <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>ALEX™ | Silver Lining Consulting LLC</title>
+      <title>SLC ALEX | Silver Lining Consulting LLC</title>
         <link rel="stylesheet" href="style.css" />
         </head>
         <body>
-          <!-- Cinematic Background -->
-            <div class="background-motion"></div>
+          <div class="background-motion"></div>
 
-              <!-- Header -->
-                <header class="glass">
-                    <img src="./images/slc-logo.png" alt="SLC Logo" class="logo" />
-                        <h1>SILVER LINING CONSULTING LLC</h1>
-                            <p>ALEX™ Executive Real Estate Intelligence System</p>
-                              </header>
+            <header class="glass">
+                <img src="images/slc-logo.png" alt="SLC Logo" class="logo" />
+                    <nav>
+                          <a href="index.html" class="active">Home</a>
+                                <a href="system.html">The System</a>
+                                      <a href="price.html">Pricing</a>
+                                            <a href="contact.html">Contact</a>
+                                                </nav>
+                                                  </header>
 
-                                <!-- Main -->
-                                  <main>
-                                      <section class="intro glass">
-                                            <h2>Elevate Your Real Estate Decisions</h2>
-                                                  <p>
-                                                          ALEX™ is a precision decision-support engine designed by Silver Lining Consulting LLC.
-                                                                  It stress-tests your deals, calculates ROI, surfaces risk, and guides confident investing.
-                                                                        </p>
+                                                    <main class="hero glass">
+                                                        <h1>Turn Real Estate Decisions into Engineered Discipline</h1>
+                                                            <p>
+                                                                  ALEX™ by Silver Lining Consulting LLC is a decision-support engine that
+                                                                        stress-tests your deals, surfaces hidden risk, and keeps your capital out of bad contracts.
+                                                                            </p>
+                                                                                <a href="#" class="cta">Run a Deal Stress Test</a>
+                                                                                  </main>
 
-                                                                              <div class="input-section">
-                                                                                      <input type="text" id="address" placeholder="Enter property address" />
-                                                                                              <input type="number" id="rate" placeholder="Interest rate (%)" step="0.01" />
-                                                                                                      <button id="runTest" class="glow-button">Run a Deal Stress Test</button>
-                                                                                                            </div>
-
-                                                                                                                  <div class="progress-bar">
-                                                                                                                          <div id="progress" class="progress"></div>
-                                                                                                                                </div>
-                                                                                                                                    </section>
-
-                                                                                                                                        <!-- Metrics -->
-                                                                                                                                            <section class="metrics glass">
-                                                                                                                                                  <div class="metric-card">
-                                                                                                                                                          <h3>ROI</h3>
-                                                                                                                                                                  <div id="roi">--%</div>
-                                                                                                                                                                        </div>
-                                                                                                                                                                              <div class="metric-card">
-                                                                                                                                                                                      <h3>Risk Index</h3>
-                                                                                                                                                                                              <div id="risk">--</div>
-                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                          <div class="metric-card">
-                                                                                                                                                                                                                  <h3>Equity Growth</h3>
-                                                                                                                                                                                                                          <div id="equity">--%</div>
-                                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                                    </section>
-
-                                                                                                                                                                                                                                        <!-- Summary -->
-                                                                                                                                                                                                                                            <section class="summary glass">
-                                                                                                                                                                                                                                                  <p id="summaryText">Awaiting analysis...</p>
-                                                                                                                                                                                                                                                      </section>
-                                                                                                                                                                                                                                                        </main>
-
-                                                                                                                                                                                                                                                          <!-- Footer -->
-                                                                                                                                                                                                                                                            <footer class="glass">
-                                                                                                                                                                                                                                                                © 2026 Silver Lining Consulting LLC | ALEX™ Decision Infrastructure
-                                                                                                                                                                                                                                                                  </footer>
-
-                                                                                                                                                                                                                                                                    <script>
-                                                                                                                                                                                                                                                                        const btn = document.getElementById("runTest");
-                                                                                                                                                                                                                                                                            const progress = document.getElementById("progress");
-                                                                                                                                                                                                                                                                                const summary = document.getElementById("summaryText");
-
-                                                                                                                                                                                                                                                                                    btn.addEventListener("click", async () => {
-                                                                                                                                                                                                                                                                                          const address = document.getElementById("address").value.trim();
-                                                                                                                                                                                                                                                                                                const rate = parseFloat(document.getElementById("rate").value);
-
-                                                                                                                                                                                                                                                                                                      if (!address || isNaN(rate)) {
-                                                                                                                                                                                                                                                                                                              summary.textContent = "Please enter a valid address and rate.";
-                                                                                                                                                                                                                                                                                                                      return;
-                                                                                                                                                                                                                                                                                                                            }
-
-                                                                                                                                                                                                                                                                                                                                  summary.textContent = "Running analysis...";
-                                                                                                                                                                                                                                                                                                                                        progress.style.width = "0%";
-
-                                                                                                                                                                                                                                                                                                                                              for (let i = 0; i <= 100; i += 5) {
-                                                                                                                                                                                                                                                                                                                                                      await new Promise((r) => setTimeout(r, 50));
-                                                                                                                                                                                                                                                                                                                                                              progress.style.width = `${i}%`;
-                                                                                                                                                                                                                                                                                                                                                                    }
-
-                                                                                                                                                                                                                                                                                                                                                                          // Simulated results
-                                                                                                                                                                                                                                                                                                                                                                                const roi = (Math.random() * 20 + 5).toFixed(2);
-                                                                                                                                                                                                                                                                                                                                                                                      const risk = ["Low", "Moderate", "High"][Math.floor(Math.random() * 3)];
-                                                                                                                                                                                                                                                                                                                                                                                            const equity = (Math.random() * 15 + 2).toFixed(2);
-
-                                                                                                                                                                                                                                                                                                                                                                                                  document.getElementById("roi").textContent = `${roi}%`;
-                                                                                                                                                                                                                                                                                                                                                                                                        document.getElementById("risk").textContent = risk;
-                                                                                                                                                                                                                                                                                                                                                                                                              document.getElementById("equity").textContent = `${equity}%`;
-                                                                                                                                                                                                                                                                                                                                                                                                                    summary.textContent = `Analysis complete for ${address}. Estimated ROI: ${roi}% at ${rate}% interest. Risk level: ${risk}.`;
-                                                                                                                                                                                                                                                                                                                                                                                                                        });
-                                                                                                                                                                                                                                                                                                                                                                                                                          </script>
-                                                                                                                                                                                                                                                                                                                                                                                                                          </body>
-                                                                                                                                                                                                                                                                                                                                                                                                                          </html>
+                                                                                    <footer>
+                                                                                        © 2026 Silver Lining Consulting LLC | ALEX™ Decision Infrastructure
+                                                                                          </footer>
+                                                                                          </body>
+                                                                                          </html>
