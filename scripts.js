@@ -1,45 +1,39 @@
-document.addEventListener('DOMContentLoaded', () => {
-      const form = document.getElementById('stressForm');
-        const resultDiv = document.getElementById('result');
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("stressForm");
+  const resultBox = document.getElementById("result");
 
-          if (form) {
-              form.addEventListener('submit', async (e) => {
-                    e.preventDefault();
-                          const address = document.getElementById('address').value;
-                                const rate = document.getElementById('rate').value;
+  form?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const address = document.getElementById("address").value.trim();
+    const rate = parseFloat(document.getElementById("rate").value.trim());
 
-                                      resultDiv.innerHTML = `
-                                              <div class="loading">
-                                                        <img src="./images/slc-logo.png" class="loading-logo" />
-                                                                  <p>Analyzing Deal...</p>
-                                                                          </div>
-                                                                                `;
+    if (!address || isNaN(rate)) {
+      resultBox.innerHTML = `<p style="color:red;">Please enter valid details.</p>`;
+      return;
+    }
 
-                                                                                      try {
-                                                                                              const response = await fetch('/api/analyze', {
-                                                                                                        method: 'POST',
-                                                                                                                  headers: { 'Content-Type': 'application/json' },
-                                                                                                                            body: JSON.stringify({ address, rate })
-                                                                                                                                    });
+    resultBox.innerHTML = `<p style="color:yellow;">Processing...</p>`;
 
-                                                                                                                                            const data = await response.json();
+    try {
+      const response = await fetch(`http://localhost:4000/api/property?address=${encodeURIComponent(address)}&rate=${rate}`);
+      if (!response.ok) throw new Error("Server error");
 
-                                                                                                                                                    if (!response.ok) throw new Error(data.error || 'Server Error');
+      const data = await response.json();
 
-                                                                                                                                                            resultDiv.innerHTML = `
-                                                                                                                                                                      <div class="result-card">
-                                                                                                                                                                                  <h3>Deal Analysis Complete</h3>
-                                                                                                                                                                                              <p><strong>Address:</strong> ${data.address}</p>
-                                                                                                                                                                                                          <p><strong>Rate:</strong> ${data.rate}%</p>
-                                                                                                                                                                                                                      <p><strong>Score:</strong> ${data.stressScore}</p>
-                                                                                                                                                                                                                                  <p><strong>Verdict:</strong> ${data.verdict}</p>
-                                                                                                                                                                                                                                              <p>${data.message}</p>
-                                                                                                                                                                                                                                                        </div>
-                                                                                                                                                                                                                                                                `;
-                                                                                                                                                                                                                                                                      } catch (err) {
-                                                                                                                                                                                                                                                                              resultDiv.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
-                                                                                                                                                                                                                                                                                    }
-                                                                                                                                                                                                                                                                                        });
-                                                                                                                                                                                                                                                                                          }
-                                                                                                                                                                                                                                                                                          });
-})
+      resultBox.innerHTML = `
+        <h3>Stress Test Result</h3>
+        <p><strong>Address:</strong> ${data.address}</p>
+        <p><strong>Estimated Value:</strong> $${data.estimatedValue.toLocaleString()}</p>
+        <p><strong>Taxes:</strong> $${data.taxes.toLocaleString()}</p>
+        <p><strong>Beds/Baths:</strong> ${data.beds}/${data.baths}</p>
+        <p><strong>Recommendation:</strong> ${data.recommendation}</p>
+        <hr>
+        <p><strong>Interest Rate:</strong> ${rate}%</p>
+        <p><strong>Risk Level:</strong> ${data.risk}</p>
+      `;
+    } catch (err) {
+      console.error(err);
+      resultBox.innerHTML = `<p style="color:red;">Error: Failed to fetch data. Check backend connection.</p>`;
+    }
+  });
+});

@@ -1,68 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>ALEX™ | Real Estate Stress Test</title>
-        <link rel="stylesheet" href="styles.css" />
-          <script defer src="scripts.js"></script>
-          </head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ALEX™ Real Estate Stress Test</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="scripts.js"></script>
+</head>
+<body>
+  <header>
+    <img src="images/slc-logo.png" alt="Silver Lining Consulting LLC Logo">
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="system.html">The System</a>
+      <a href="price.html">Pricing</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+  </header>
 
-          <body>
-            <header>
-                <nav class="navbar">
-                      <div class="logo">
-                              <img src="./images/slc-logo.png" alt="Silver Lining Consulting Logo" />
-                                    </div>
-                                          <ul class="nav-links">
-                                                  <li><a href="index.html">Home</a></li>
-                                                          <li><a href="system.html" class="active">The System</a></li>
-                                                                  <li><a href="price.html">Pricing</a></li>
-                                                                          <li><a href="contact.html">Contact</a></li>
-                                                                                </ul>
-                                                                                    </nav>
-                                                                                      </header>
+  <main>
+    <h2>ALEX™ Real Estate Stress Test</h2>
+    <p>Run an intelligent analysis to evaluate your real estate investment risk.</p>
 
-                                                                                        <section class="hero fade-in">
-                                                                                            <div class="hero-overlay"></div>
-                                                                                                <div class="hero-content">
-                                                                                                      <h1>ALEX™ Real Estate Stress Test</h1>
-                                                                                                            <p>
-                                                                                                                    Run an intelligent analysis to evaluate your real estate investment risk
-                                                                                                                            with engineered precision.
-                                                                                                                                  </p>
-                                                                                                                                      </div>
-                                                                                                                                        </section>
+    <form id="stressForm">
+      <label>Property Address</label>
+      <input type="text" id="address" placeholder="Enter property address" required>
 
-                                                                                                                                          <main class="fade-in">
-                                                                                                                                              <div class="form-container">
-                                                                                                                                                    <h2>Property Stress Test</h2>
+      <label>Interest Rate (%)</label>
+      <input type="number" id="rate" step="0.1" placeholder="Enter interest rate" required>
 
-                                                                                                                                                          <form id="stressForm">
-                                                                                                                                                                  <input
-                                                                                                                                                                            type="text"
-                                                                                                                                                                                      id="address"
-                                                                                                                                                                                                placeholder="Enter Property Address"
-                                                                                                                                                                                                          required
-                                                                                                                                                                                                                  />
-                                                                                                                                                                                                                          <input
-                                                                                                                                                                                                                                    type="number"
-                                                                                                                                                                                                                                              id="rate"
-                                                                                                                                                                                                                                                        placeholder="Interest Rate (%)"
-                                                                                                                                                                                                                                                                  required
-                                                                                                                                                                                                                                                                            step="0.01"
-                                                                                                                                                                                                                                                                                    />
-                                                                                                                                                                                                                                                                                            <button type="submit" class="gold-btn">Run Stress Test</button>
-                                                                                                                                                                                                                                                                                                  </form>
+      <button type="submit">Run Stress Test</button>
+    </form>
 
-                                                                                                                                                                                                                                                                                                        <div id="result"></div>
-                                                                                                                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                                                                                                                              </main>
+    <div id="result" class="result-box"></div>
+  </main>
 
-                                                                                                                                                                                                                                                                                                                <footer>
-                                                                                                                                                                                                                                                                                                                    <p>
-                                                                                                                                                                                                                                                                                                                          © 2026 Silver Lining Consulting LLC | ALEX™ Decision Infrastructure
-                                                                                                                                                                                                                                                                                                                              </p>
-                                                                                                                                                                                                                                                                                                                                </footer>
-                                                                                                                                                                                                                                                                                                                                </body>
-                                                                                                                                                                                                                                                                                                                                </html>
+  <footer>
+    © 2026 Silver Lining Consulting LLC | ALEX™ Decision Infrastructure
+  </footer>
+</body>
+</html>
