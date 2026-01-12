@@ -25,3 +25,20 @@
     "node-fetch": "^3.3.2"
   }
 }
+{
+    "name": "slc-alex",
+      "version": "1.0.0",
+        "description": "ALEX™ Real Estate Stress Test backend service",
+          "main": "service.js",
+            "type": "module",
+              "scripts": {
+                  "start": "node service.js"
+                    },
+                      "dependencies": {
+                          "express": "^4.19.2",
+                              "cors": "^2.8.5",
+                                  "dotenv": "^16.4.5",
+                                      "node-fetch": "^3.3.2"
+                                        }
+                                        }
+}
