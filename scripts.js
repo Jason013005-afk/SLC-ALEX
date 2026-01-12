@@ -1,3 +1,5 @@
+const API_BASE_URL = "https://4000-upgraded-trout-77r44jqj5wc7rx-<yourID>.app.github.dev";
+// 👆 Replace <yourID> with whatever appears in your Codespaces port URL
 document.addEventListener('DOMContentLoaded', () => {
       const form = document.getElementById('stressForm');
         const resultDiv = document.getElementById('result');
