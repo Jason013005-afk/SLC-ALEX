@@ -1,44 +1,31 @@
 {
-  "name": "slc-alex",
-  "version": "1.0.0",
-  "description": "",
-  "main": "scripts.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Jason013005-afk/SLC-ALEX.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "bugs": {
-    "url": "https://github.com/Jason013005-afk/SLC-ALEX/issues"
-  },
-  "homepage": "https://github.com/Jason013005-afk/SLC-ALEX#readme",
-  "dependencies": {
-    "cors": "^2.8.5",
-    "dotenv": "^17.2.3",
-    "express": "^5.2.1",
-    "node-fetch": "^3.3.2"
-  }
-}
-{
-    "name": "slc-alex",
-      "version": "1.0.0",
-        "description": "ALEX™ Real Estate Stress Test backend service",
-          "main": "service.js",
-            "type": "module",
-              "scripts": {
-                  "start": "node service.js"
-                    },
-                      "dependencies": {
-                          "express": "^4.19.2",
-                              "cors": "^2.8.5",
-                                  "dotenv": "^16.4.5",
-                                      "node-fetch": "^3.3.2"
-                                        }
-                                        }
+      "name": "slc-alex",
+        "version": "1.0.0",
+          "description": "ALEX™ Real Estate Stress Test backend service for property and rental data analysis.",
+            "main": "service.js",
+              "type": "module",
+                "scripts": {
+                    "dev": "nodemon service.js",
+                        "start": "node service.js"
+                          },
+                            "keywords": [
+                                "real-estate",
+                                    "investment",
+                                        "analysis",
+                                            "express",
+                                                "api",
+                                                    "backend"
+                                                      ],
+                                                        "author": "Silver Lining Consulting LLC",
+                                                          "license": "MIT",
+                                                            "dependencies": {
+                                                                "cors": "^2.8.5",
+                                                                    "dotenv": "^16.4.5",
+                                                                        "express": "^4.19.2",
+                                                                            "node-fetch": "^3.3.2"
+                                                                              },
+                                                                                "devDependencies": {
+                                                                                    "nodemon": "^3.0.2"
+                                                                                      }
+                                                                                      }
 }
