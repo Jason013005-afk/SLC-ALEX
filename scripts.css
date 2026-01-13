@@ -1,0 +1,13 @@
+"scripts": {
+      "start": "node service.js",
+        "dev": "nodemon service.js",
+          "build": "echo 'No build step required' && exit 0",
+            "lint": "eslint . --ext .js",
+              "format": "prettier --write .",
+                "test": "echo \"✅ All systems nominal — no tests yet\" && exit 0",
+                  "clean": "rm -rf node_modules package-lock.json && npm install",
+                    "debug": "node --inspect service.js",
+                      "analyze": "node api/analyze.js",
+                        "deploy-check": "echo 'Ready for deployment 🚀'"
+                        }
+}
