@@ -1,0 +1,31 @@
+// service.js
+import express from "express";
+import path from "path";
+import { fileURLToPath } from "url";
+import stressHandler from "./api/stress.js";
+
+const app = express();
+const PORT = process.env.PORT || 4000;
+
+app.use(express.json());
+
+// 🧩 Paths setup
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// 🧩 Serve frontend static files
+app.use(express.static(__dirname));
+
+// 🧩 API route
+app.get("/api/stress", stressHandler);
+app.post("/api/stress", stressHandler);
+
+// 🧩 Default backend test route
+app.get("/", (req, res) => {
+  res.json({ message: "✅ SLC-ALEX backend is running smoothly!" });
+  });
+
+  // 🧩 Start server
+  app.listen(PORT, () => {
+    console.log(`🚀 SLC-ALEX backend running on port ${PORT}`);
+    });
