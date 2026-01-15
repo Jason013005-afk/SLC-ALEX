@@ -1,66 +1,36 @@
-import express from "express";
-import cors from "cors";
-import dotenv from "dotenv";
-dotenv.config();
+// ✅ service.js — CommonJS version for Node 24
+const express = require("express");
+const cors = require("cors");
 
 const app = express();
-const PORT = process.env.PORT || 4000;
-
-// --- Middleware ---
 app.use(cors());
 app.use(express.json());
 
-// --- Root Route ---
-app.get("/", (_, res) => {
-  res.json({
-      message: "✅ ALEX Backend Active",
-          status: "ok",
-            });
-            });
+// Root check
+app.get("/", (req, res) => {
+  res.json({ message: "✅ ALEX Backend Active", status: "ok" });
+  });
 
-            // --- Stress Analysis Route ---
-            app.post("/api/stress", async (req, res) => {
-              try {
-                  const { address, interestRate } = req.body;
+  // Simple property analysis route
+  app.post("/api/stress", (req, res) => {
+    const { address, interestRate } = req.body;
 
-                      // --- Basic static analysis logic (replace later with live data) ---
-                          const estimatedValue = 350000;
-                              const rentValue = 2500;
-                                  const section8 = 2200;
-                                      const taxes = 4200;
-                                          const insurance = 1200;
+      if (!address || !interestRate) {
+          return res.status(400).json({ error: "Missing address or interest rate" });
+            }
 
-                                              const annualRent = rentValue * 12;
-                                                  const annualSection8 = section8 * 12;
-                                                      const annualExpense = taxes + insurance;
-                                                          const roi = ((annualRent - annualExpense) / estimatedValue).toFixed(2);
-                                                              const appreciation = Math.round(estimatedValue * 1.18);
-                                                                  const netProfit = Math.round((annualRent - annualExpense) * 5);
-                                                                      const totalReturn = Math.round(netProfit + appreciation);
+              const result = {
+                  address,
+                      estimatedValue: 330000,
+                          rent: 2200,
+                              section8: 2400,
+                                  roi: "10.2%",
+                                      loanAmount: 270000,
+                                          appreciation: 25000,
+                                            };
 
-                                                                          // --- Send response ---
-                                                                              res.json({
-                                                                                    address,
-                                                                                          interestRate,
-                                                                                                estimatedValue,
-                                                                                                      rentValue,
-                                                                                                            section8,
-                                                                                                                  taxes,
-                                                                                                                        insurance,
-                                                                                                                              annualRent,
-                                                                                                                                    annualSection8,
-                                                                                                                                          roi,
-                                                                                                                                                appreciation,
-                                                                                                                                                      netProfit,
-                                                                                                                                                            totalReturn,
-                                                                                                                                                                });
-                                                                                                                                                                  } catch (error) {
-                                                                                                                                                                      console.error("❌ Error in /api/stress:", error.message);
-                                                                                                                                                                          res.status(500).json({ error: "Internal Server Error" });
-                                                                                                                                                                            }
-                                                                                                                                                                            });
+                                              res.json(result);
+                                              });
 
-                                                                                                                                                                            // --- Start Server ---
-                                                                                                                                                                            app.listen(PORT, () => {
-                                                                                                                                                                              console.log(`🚀 SLC-ALEX backend running on port ${PORT}`);
-                                                                                                                                                                              });
+                                              const PORT = process.env.PORT || 4000;
+                                              app.listen(PORT, () => console.log(`🚀 SLC-ALEX backend running on port ${PORT}`));
