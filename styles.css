@@ -1,4 +1,4 @@
-/* === Global Reset === */
+/* === GLOBAL RESET === */
 * {
   margin: 0;
     padding: 0;
@@ -14,206 +14,220 @@
                   flex-direction: column;
                     align-items: center;
                       justify-content: flex-start;
-                      }
+                        overflow-x: hidden;
+                        }
 
-                      /* === Hero Section === */
-                      .hero {
-                        position: relative;
-                          width: 100%;
-                            height: 280px;
-                              background: url("images/kitchen.jpg") center top / contain no-repeat;
-                                background-color: #000;
-                                  display: flex;
-                                    flex-direction: column;
-                                      align-items: center;
-                                        justify-content: center;
-                                          text-align: center;
-                                            box-shadow: 0 0 40px rgba(0, 255, 255, 0.2);
-                                            }
+                        /* === HERO SECTION === */
+                        .hero {
+                          position: relative;
+                            width: 100%;
+                              height: 320px;
+                                background: url("images/hero-bg.png") center center / cover no-repeat;
+                                  background-color: #000;
+                                    display: flex;
+                                      flex-direction: column;
+                                        align-items: center;
+                                          justify-content: center;
+                                            text-align: center;
+                                              box-shadow: 0 0 40px rgba(0, 255, 255, 0.25);
+                                              }
 
-                                            .hero h1 {
-                                              font-size: 1.8rem;
-                                                color: #00eaff;
-                                                  text-shadow: 0 0 20px #00eaff;
-                                                  }
+                                              .hero h1 {
+                                                font-size: 2rem;
+                                                  color: #00eaff;
+                                                    text-shadow: 0 0 20px #00eaff, 0 0 40px #0077ff;
+                                                    }
 
-                                                  #backend-status {
-                                                    margin-top: 8px;
-                                                      font-size: 1.1rem;
-                                                        color: lime;
-                                                          font-weight: 600;
-                                                            text-shadow: 0 0 8px #00ff00;
-                                                            }
+                                                    #backend-status {
+                                                      margin-top: 10px;
+                                                        font-size: 1.1rem;
+                                                          color: lime;
+                                                            font-weight: 600;
+                                                              text-shadow: 0 0 10px #00ff00;
+                                                              }
 
-                                                            /* === Navigation === */
-                                                            .nav-links {
-                                                              display: flex;
-                                                                justify-content: center;
-                                                                  gap: 14px;
-                                                                    background: rgba(0, 0, 0, 0.7);
-                                                                      padding: 10px;
-                                                                        border-bottom: 1px solid #00ffff33;
-                                                                          box-shadow: 0 2px 15px #00ffff22;
-                                                                          }
+                                                              /* === NAV BAR === */
+                                                              .nav-links {
+                                                                display: flex;
+                                                                  justify-content: center;
+                                                                    align-items: center;
+                                                                      gap: 18px;
+                                                                        background: rgba(0, 0, 0, 0.75);
+                                                                          padding: 12px;
+                                                                            border-bottom: 1px solid #00ffff44;
+                                                                              box-shadow: 0 2px 20px #00ffff22;
+                                                                                width: 100%;
+                                                                                }
 
-                                                                          .nav-links a {
-                                                                            color: #00eaff;
-                                                                              text-decoration: none;
-                                                                                font-weight: 600;
-                                                                                  text-shadow: 0 0 6px #00eaff;
-                                                                                    transition: color 0.2s ease, transform 0.2s ease;
-                                                                                    }
+                                                                                .nav-links a {
+                                                                                  color: #00eaff;
+                                                                                    text-decoration: none;
+                                                                                      font-weight: 600;
+                                                                                        text-shadow: 0 0 6px #00eaff;
+                                                                                          transition: color 0.2s ease, transform 0.2s ease;
+                                                                                          }
 
-                                                                                    .nav-links a:hover {
-                                                                                      color: #fff;
-                                                                                        transform: scale(1.1);
-                                                                                        }
+                                                                                          .nav-links a:hover {
+                                                                                            color: #fff;
+                                                                                              transform: scale(1.1);
+                                                                                              }
 
-                                                                                        /* === Form Section === */
-                                                                                        .form-section {
-                                                                                          width: 90%;
-                                                                                            max-width: 500px;
-                                                                                              margin-top: 20px;
-                                                                                                background: rgba(20, 20, 20, 0.8);
-                                                                                                  border: 1px solid #00ffff44;
-                                                                                                    border-radius: 12px;
-                                                                                                      padding: 20px;
-                                                                                                        box-shadow: 0 0 25px #00ffff33;
-                                                                                                          backdrop-filter: blur(4px);
-                                                                                                          }
+                                                                                              .nav-links .active {
+                                                                                                color: #fff;
+                                                                                                  text-shadow: 0 0 10px #00ffff;
+                                                                                                  }
 
-                                                                                                          label {
-                                                                                                            display: block;
-                                                                                                              margin: 10px 0 5px;
-                                                                                                                font-weight: bold;
-                                                                                                                  color: #0ff;
-                                                                                                                  }
+                                                                                                  /* === MAIN FORM AREA === */
+                                                                                                  .form-section {
+                                                                                                    width: 90%;
+                                                                                                      max-width: 520px;
+                                                                                                        margin-top: 25px;
+                                                                                                          background: rgba(20, 20, 20, 0.85);
+                                                                                                            border: 1px solid #00ffff55;
+                                                                                                              border-radius: 14px;
+                                                                                                                padding: 25px;
+                                                                                                                  box-shadow: 0 0 25px #00ffff33;
+                                                                                                                    backdrop-filter: blur(6px);
+                                                                                                                    }
 
-                                                                                                                  input {
-                                                                                                                    width: 100%;
-                                                                                                                      padding: 10px;
-                                                                                                                        border: none;
-                                                                                                                          border-radius: 8px;
-                                                                                                                            background-color: #111;
-                                                                                                                              color: #fff;
-                                                                                                                                outline: none;
-                                                                                                                                  font-size: 1rem;
-                                                                                                                                    box-shadow: inset 0 0 10px #00ffff33;
+                                                                                                                    .form-section h2 {
+                                                                                                                      color: #00eaff;
+                                                                                                                        text-shadow: 0 0 10px #00eaff;
+                                                                                                                          margin-bottom: 15px;
+                                                                                                                            text-align: center;
+                                                                                                                            }
+
+                                                                                                                            /* === LABELS & INPUTS === */
+                                                                                                                            label {
+                                                                                                                              display: block;
+                                                                                                                                margin: 12px 0 5px;
+                                                                                                                                  font-weight: bold;
+                                                                                                                                    color: #0ff;
                                                                                                                                     }
 
-                                                                                                                                    /* === Analyze Button === */
-                                                                                                                                    button {
+                                                                                                                                    input,
+                                                                                                                                    textarea {
                                                                                                                                       width: 100%;
-                                                                                                                                        margin-top: 20px;
-                                                                                                                                          padding: 12px;
-                                                                                                                                            font-size: 1.1rem;
-                                                                                                                                              font-weight: bold;
+                                                                                                                                        padding: 10px;
+                                                                                                                                          border: none;
+                                                                                                                                            border-radius: 8px;
+                                                                                                                                              background-color: #111;
                                                                                                                                                 color: #fff;
-                                                                                                                                                  background: linear-gradient(90deg, #0077ff, #00eaff);
-                                                                                                                                                    border: none;
-                                                                                                                                                      border-radius: 8px;
-                                                                                                                                                        cursor: pointer;
-                                                                                                                                                          transition: transform 0.2s ease, box-shadow 0.2s ease;
-                                                                                                                                                          }
+                                                                                                                                                  outline: none;
+                                                                                                                                                    font-size: 1rem;
+                                                                                                                                                      box-shadow: inset 0 0 10px #00ffff33;
+                                                                                                                                                        resize: vertical;
+                                                                                                                                                        }
 
-                                                                                                                                                          button:hover {
-                                                                                                                                                            transform: scale(1.03);
-                                                                                                                                                              box-shadow: 0 0 15px #00eaffaa;
-                                                                                                                                                              }
-
-                                                                                                                                                              button.loading {
-                                                                                                                                                                background: linear-gradient(90deg, #444, #777);
-                                                                                                                                                                  color: #ddd;
-                                                                                                                                                                    cursor: not-allowed;
-                                                                                                                                                                      animation: pulse 1.2s infinite alternate;
-                                                                                                                                                                      }
-
-                                                                                                                                                                      @keyframes pulse {
-                                                                                                                                                                        0% { box-shadow: 0 0 10px #00eaff33; }
-                                                                                                                                                                          100% { box-shadow: 0 0 25px #00eaff; }
-                                                                                                                                                                          }
-
-                                                                                                                                                                          /* === Results Section === */
-                                                                                                                                                                          #results {
-                                                                                                                                                                            margin-top: 20px;
-                                                                                                                                                                              padding: 10px;
+                                                                                                                                                        /* === BUTTONS === */
+                                                                                                                                                        button {
+                                                                                                                                                          width: 100%;
+                                                                                                                                                            margin-top: 20px;
+                                                                                                                                                              padding: 12px;
+                                                                                                                                                                font-size: 1.1rem;
+                                                                                                                                                                  font-weight: bold;
+                                                                                                                                                                    color: #fff;
+                                                                                                                                                                      background: linear-gradient(90deg, #0077ff, #00eaff);
+                                                                                                                                                                        border: none;
+                                                                                                                                                                          border-radius: 10px;
+                                                                                                                                                                            cursor: pointer;
+                                                                                                                                                                              transition: transform 0.2s ease, box-shadow 0.2s ease;
                                                                                                                                                                               }
 
-                                                                                                                                                                              .result-box {
-                                                                                                                                                                                margin-top: 10px;
-                                                                                                                                                                                  padding: 15px;
-                                                                                                                                                                                    border-radius: 10px;
-                                                                                                                                                                                      background: rgba(0, 255, 255, 0.05);
-                                                                                                                                                                                        border: 1px solid #00ffff33;
-                                                                                                                                                                                        }
+                                                                                                                                                                              button:hover {
+                                                                                                                                                                                transform: scale(1.03);
+                                                                                                                                                                                  box-shadow: 0 0 18px #00eaffaa;
+                                                                                                                                                                                  }
 
-                                                                                                                                                                                        #results h3 {
-                                                                                                                                                                                          text-align: center;
-                                                                                                                                                                                            color: #00eaff;
-                                                                                                                                                                                              text-shadow: 0 0 10px #00eaff;
-                                                                                                                                                                                                margin-bottom: 10px;
-                                                                                                                                                                                                }
+                                                                                                                                                                                  button.loading {
+                                                                                                                                                                                    background: linear-gradient(90deg, #444, #777);
+                                                                                                                                                                                      color: #ddd;
+                                                                                                                                                                                        cursor: not-allowed;
+                                                                                                                                                                                          animation: pulse 1.2s infinite alternate;
+                                                                                                                                                                                          }
 
-                                                                                                                                                                                                #results p {
-                                                                                                                                                                                                  font-size: 0.95rem;
-                                                                                                                                                                                                    color: #ddd;
-                                                                                                                                                                                                      margin: 6px 0;
-                                                                                                                                                                                                        border-bottom: 1px solid #00ffff22;
-                                                                                                                                                                                                          padding-bottom: 4px;
+                                                                                                                                                                                          @keyframes pulse {
+                                                                                                                                                                                            0% {
+                                                                                                                                                                                                box-shadow: 0 0 10px #00eaff33;
+                                                                                                                                                                                                  }
+                                                                                                                                                                                                    100% {
+                                                                                                                                                                                                        box-shadow: 0 0 25px #00eaff;
+                                                                                                                                                                                                          }
                                                                                                                                                                                                           }
 
-                                                                                                                                                                                                          /* === Footer === */
-                                                                                                                                                                                                          footer {
-                                                                                                                                                                                                            margin-top: 40px;
-                                                                                                                                                                                                              padding: 15px;
-                                                                                                                                                                                                                text-align: center;
-                                                                                                                                                                                                                  font-size: 0.9rem;
-                                                                                                                                                                                                                    color: #00ffffaa;
-                                                                                                                                                                                                                      border-top: 1px solid #00ffff33;
-                                                                                                                                                                                                                        width: 100%;
-                                                                                                                                                                                                                          box-shadow: 0 -5px 20px #00ffff11;
+                                                                                                                                                                                                          /* === RESULTS === */
+                                                                                                                                                                                                          #results {
+                                                                                                                                                                                                            margin-top: 25px;
+                                                                                                                                                                                                              padding: 10px;
+                                                                                                                                                                                                              }
+
+                                                                                                                                                                                                              .result-box {
+                                                                                                                                                                                                                margin-top: 10px;
+                                                                                                                                                                                                                  padding: 15px;
+                                                                                                                                                                                                                    border-radius: 10px;
+                                                                                                                                                                                                                      background: rgba(0, 255, 255, 0.06);
+                                                                                                                                                                                                                        border: 1px solid #00ffff33;
+                                                                                                                                                                                                                          box-shadow: inset 0 0 10px #00ffff22;
                                                                                                                                                                                                                           }
 
-                                                                                                                                                                                                                          /* === Responsive === */
-                                                                                                                                                                                                                          @media (max-width: 480px) {
-                                                                                                                                                                                                                            .hero h1 {
-                                                                                                                                                                                                                                font-size: 1.5rem;
+                                                                                                                                                                                                                          #results h3 {
+                                                                                                                                                                                                                            text-align: center;
+                                                                                                                                                                                                                              color: #00eaff;
+                                                                                                                                                                                                                                text-shadow: 0 0 10px #00eaff;
+                                                                                                                                                                                                                                  margin-bottom: 12px;
                                                                                                                                                                                                                                   }
-                                                                                                                                                                                                                                    button {
-                                                                                                                                                                                                                                        font-size: 1rem;
-                                                                                                                                                                                                                                          }
-                                                                                                                                                                                                                                          }
-                                                                                                                                                                                                                                          /* === Shared Page Styles === */
-                                                                                                                                                                                                                                          .form-section h2 {
-                                                                                                                                                                                                                                            color: #00eaff;
-                                                                                                                                                                                                                                              text-shadow: 0 0 10px #00eaff;
-                                                                                                                                                                                                                                                margin-bottom: 15px;
-                                                                                                                                                                                                                                                  text-align: center;
+
+                                                                                                                                                                                                                                  #results p {
+                                                                                                                                                                                                                                    font-size: 0.95rem;
+                                                                                                                                                                                                                                      color: #ddd;
+                                                                                                                                                                                                                                        margin: 6px 0;
+                                                                                                                                                                                                                                          border-bottom: 1px solid #00ffff22;
+                                                                                                                                                                                                                                            padding-bottom: 4px;
+                                                                                                                                                                                                                                            }
+
+                                                                                                                                                                                                                                            /* === LISTS & TEXT === */
+                                                                                                                                                                                                                                            .form-section p,
+                                                                                                                                                                                                                                            .form-section ul {
+                                                                                                                                                                                                                                              color: #ccc;
+                                                                                                                                                                                                                                                font-size: 1rem;
+                                                                                                                                                                                                                                                  line-height: 1.6;
                                                                                                                                                                                                                                                   }
 
-                                                                                                                                                                                                                                                  .form-section p, .form-section ul, textarea {
-                                                                                                                                                                                                                                                    color: #ccc;
-                                                                                                                                                                                                                                                      font-size: 1rem;
-                                                                                                                                                                                                                                                        line-height: 1.5;
-                                                                                                                                                                                                                                                        }
+                                                                                                                                                                                                                                                  ul {
+                                                                                                                                                                                                                                                    list-style-type: none;
+                                                                                                                                                                                                                                                      padding-left: 10px;
+                                                                                                                                                                                                                                                      }
 
-                                                                                                                                                                                                                                                        textarea {
-                                                                                                                                                                                                                                                          width: 100%;
-                                                                                                                                                                                                                                                            border: none;
-                                                                                                                                                                                                                                                              border-radius: 8px;
-                                                                                                                                                                                                                                                                padding: 10px;
-                                                                                                                                                                                                                                                                  background: #111;
-                                                                                                                                                                                                                                                                    color: #fff;
-                                                                                                                                                                                                                                                                      box-shadow: inset 0 0 10px #00ffff33;
-                                                                                                                                                                                                                                                                        resize: vertical;
-                                                                                                                                                                                                                                                                        }
+                                                                                                                                                                                                                                                      ul li::before {
+                                                                                                                                                                                                                                                        content: "• ";
+                                                                                                                                                                                                                                                          color: #00eaff;
+                                                                                                                                                                                                                                                          }
 
-                                                                                                                                                                                                                                                                        ul {
-                                                                                                                                                                                                                                                                          list-style-type: none;
-                                                                                                                                                                                                                                                                            padding-left: 10px;
-                                                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                                          /* === FOOTER === */
+                                                                                                                                                                                                                                                          footer {
+                                                                                                                                                                                                                                                            margin-top: 40px;
+                                                                                                                                                                                                                                                              padding: 15px;
+                                                                                                                                                                                                                                                                text-align: center;
+                                                                                                                                                                                                                                                                  font-size: 0.9rem;
+                                                                                                                                                                                                                                                                    color: #00ffffaa;
+                                                                                                                                                                                                                                                                      border-top: 1px solid #00ffff33;
+                                                                                                                                                                                                                                                                        width: 100%;
+                                                                                                                                                                                                                                                                          box-shadow: 0 -5px 20px #00ffff11;
+                                                                                                                                                                                                                                                                          }
 
-                                                                                                                                                                                                                                                                            ul li::before {
-                                                                                                                                                                                                                                                                              content: "• ";
-                                                                                                                                                                                                                                                                                color: #00eaff;
-                                                                                                                                                                                                                                                                                }
+                                                                                                                                                                                                                                                                          /* === RESPONSIVE === */
+                                                                                                                                                                                                                                                                          @media (max-width: 480px) {
+                                                                                                                                                                                                                                                                            .hero {
+                                                                                                                                                                                                                                                                                height: 250px;
+                                                                                                                                                                                                                                                                                    background-position: center top;
+                                                                                                                                                                                                                                                                                      }
+                                                                                                                                                                                                                                                                                        .hero h1 {
+                                                                                                                                                                                                                                                                                            font-size: 1.6rem;
+                                                                                                                                                                                                                                                                                              }
+                                                                                                                                                                                                                                                                                                button {
+                                                                                                                                                                                                                                                                                                    font-size: 1rem;
+                                                                                                                                                                                                                                                                                                      }
+                                                                                                                                                                                                                                                                                                        .form-section {
+                                                                                                                                                                                                                                                                                                            width: 95%;
+                                                                                                                                                                                                                                                                                                              }
+                                                                                                                                                                                                                                                                                                              }
