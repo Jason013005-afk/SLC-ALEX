@@ -1,38 +1,66 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>Services | SLC-ALEX</title>
-        <link rel="stylesheet" href="styles.css" />
-        </head>
-        <body>
-          <section class="hero">
-              <h1>⚙️ SLC-ALEX Services</h1>
-                </section>
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+dotenv.config();
 
-                  <nav class="nav-links">
-                      <a href="index.html">🏠 Home</a>
-                          <a href="service.html" class="active">⚙️ Services</a>
-                              <a href="price.html">💰 Pricing</a>
-                                  <a href="contact.html">📞 Contact</a>
-                                      <a href="system.html">🧠 System</a>
-                                        </nav>
+const app = express();
+const PORT = process.env.PORT || 4000;
 
-                                          <section class="form-section">
-                                              <h2>Our Property Intelligence Services</h2>
-                                                  <p>
-                                                        ALEX uses live data and proprietary analytics to assess real-estate
-                                                              investment performance. Our services include:
-                                                                  </p>
-                                                                      <ul>
-                                                                            <li>🏡 Property value forecasting</li>
-                                                                                  <li>📈 ROI and rent optimization</li>
-                                                                                        <li>💳 Financing stress tests</li>
-                                                                                              <li>📊 Market and appreciation tracking</li>
-                                                                                                  </ul>
-                                                                                                    </section>
+// --- Middleware ---
+app.use(cors());
+app.use(express.json());
 
-                                                                                                      <footer><p>⚙️ Powered by ALEX Backend</p></footer>
-                                                                                                      </body>
-                                                                                                      </html>
+// --- Root Route ---
+app.get("/", (_, res) => {
+  res.json({
+      message: "✅ ALEX Backend Active",
+          status: "ok",
+            });
+            });
+
+            // --- Stress Analysis Route ---
+            app.post("/api/stress", async (req, res) => {
+              try {
+                  const { address, interestRate } = req.body;
+
+                      // --- Basic static analysis logic (replace later with live data) ---
+                          const estimatedValue = 350000;
+                              const rentValue = 2500;
+                                  const section8 = 2200;
+                                      const taxes = 4200;
+                                          const insurance = 1200;
+
+                                              const annualRent = rentValue * 12;
+                                                  const annualSection8 = section8 * 12;
+                                                      const annualExpense = taxes + insurance;
+                                                          const roi = ((annualRent - annualExpense) / estimatedValue).toFixed(2);
+                                                              const appreciation = Math.round(estimatedValue * 1.18);
+                                                                  const netProfit = Math.round((annualRent - annualExpense) * 5);
+                                                                      const totalReturn = Math.round(netProfit + appreciation);
+
+                                                                          // --- Send response ---
+                                                                              res.json({
+                                                                                    address,
+                                                                                          interestRate,
+                                                                                                estimatedValue,
+                                                                                                      rentValue,
+                                                                                                            section8,
+                                                                                                                  taxes,
+                                                                                                                        insurance,
+                                                                                                                              annualRent,
+                                                                                                                                    annualSection8,
+                                                                                                                                          roi,
+                                                                                                                                                appreciation,
+                                                                                                                                                      netProfit,
+                                                                                                                                                            totalReturn,
+                                                                                                                                                                });
+                                                                                                                                                                  } catch (error) {
+                                                                                                                                                                      console.error("❌ Error in /api/stress:", error.message);
+                                                                                                                                                                          res.status(500).json({ error: "Internal Server Error" });
+                                                                                                                                                                            }
+                                                                                                                                                                            });
+
+                                                                                                                                                                            // --- Start Server ---
+                                                                                                                                                                            app.listen(PORT, () => {
+                                                                                                                                                                              console.log(`🚀 SLC-ALEX backend running on port ${PORT}`);
+                                                                                                                                                                              });
