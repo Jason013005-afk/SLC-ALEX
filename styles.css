@@ -14,220 +14,146 @@
                   flex-direction: column;
                     align-items: center;
                       justify-content: flex-start;
-                        overflow-x: hidden;
-                        }
+                      }
 
-                        /* === HERO SECTION === */
-                        .hero {
-                          position: relative;
-                            width: 100%;
-                              height: 320px;
-                                background: url("images/hero-bg.png") center center / cover no-repeat;
-                                  background-color: #000;
-                                    display: flex;
-                                      flex-direction: column;
-                                        align-items: center;
-                                          justify-content: center;
-                                            text-align: center;
-                                              box-shadow: 0 0 40px rgba(0, 255, 255, 0.25);
-                                              }
+                      /* === HERO === */
+                      .hero {
+                        width: 100%;
+                          height: 320px;
+                            background: url("images/hero-bg.png") center center / cover no-repeat;
+                              display: flex;
+                                flex-direction: column;
+                                  justify-content: center;
+                                    align-items: center;
+                                      text-align: center;
+                                        box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+                                        }
 
-                                              .hero h1 {
-                                                font-size: 2rem;
-                                                  color: #00eaff;
-                                                    text-shadow: 0 0 20px #00eaff, 0 0 40px #0077ff;
-                                                    }
+                                        .hero-logo {
+                                          width: 85px;
+                                            height: auto;
+                                              margin-bottom: 12px;
+                                                filter: drop-shadow(0 0 10px gold);
+                                                }
 
-                                                    #backend-status {
-                                                      margin-top: 10px;
-                                                        font-size: 1.1rem;
-                                                          color: lime;
-                                                            font-weight: 600;
-                                                              text-shadow: 0 0 10px #00ff00;
+                                                .hero h1 {
+                                                  font-size: 2rem;
+                                                    color: gold;
+                                                      text-shadow: 0 0 20px gold, 0 0 40px #ffcc00;
+                                                      }
+
+                                                      #backend-status {
+                                                        margin-top: 10px;
+                                                          font-size: 1.1rem;
+                                                            color: red;
+                                                              font-weight: 600;
                                                               }
 
-                                                              /* === NAV BAR === */
+                                                              /* === NAV === */
                                                               .nav-links {
                                                                 display: flex;
                                                                   justify-content: center;
-                                                                    align-items: center;
-                                                                      gap: 18px;
-                                                                        background: rgba(0, 0, 0, 0.75);
+                                                                    gap: 18px;
+                                                                      background: rgba(0, 0, 0, 0.8);
+                                                                        border-bottom: 1px solid gold;
                                                                           padding: 12px;
-                                                                            border-bottom: 1px solid #00ffff44;
-                                                                              box-shadow: 0 2px 20px #00ffff22;
-                                                                                width: 100%;
-                                                                                }
+                                                                            box-shadow: 0 2px 20px rgba(255, 215, 0, 0.2);
+                                                                              width: 100%;
+                                                                              }
 
-                                                                                .nav-links a {
-                                                                                  color: #00eaff;
-                                                                                    text-decoration: none;
-                                                                                      font-weight: 600;
-                                                                                        text-shadow: 0 0 6px #00eaff;
-                                                                                          transition: color 0.2s ease, transform 0.2s ease;
-                                                                                          }
+                                                                              .nav-links a {
+                                                                                color: gold;
+                                                                                  text-decoration: none;
+                                                                                    font-weight: 600;
+                                                                                      text-shadow: 0 0 6px gold;
+                                                                                        transition: 0.2s;
+                                                                                        }
 
-                                                                                          .nav-links a:hover {
-                                                                                            color: #fff;
-                                                                                              transform: scale(1.1);
-                                                                                              }
+                                                                                        .nav-links a:hover {
+                                                                                          color: white;
+                                                                                            transform: scale(1.1);
+                                                                                            }
 
-                                                                                              .nav-links .active {
-                                                                                                color: #fff;
-                                                                                                  text-shadow: 0 0 10px #00ffff;
-                                                                                                  }
+                                                                                            /* === FORM SECTION === */
+                                                                                            .form-section {
+                                                                                              width: 90%;
+                                                                                                max-width: 520px;
+                                                                                                  margin-top: 25px;
+                                                                                                    background: rgba(20, 20, 20, 0.9);
+                                                                                                      border: 1px solid gold;
+                                                                                                        border-radius: 12px;
+                                                                                                          padding: 25px;
+                                                                                                            box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+                                                                                                            }
 
-                                                                                                  /* === MAIN FORM AREA === */
-                                                                                                  .form-section {
-                                                                                                    width: 90%;
-                                                                                                      max-width: 520px;
-                                                                                                        margin-top: 25px;
-                                                                                                          background: rgba(20, 20, 20, 0.85);
-                                                                                                            border: 1px solid #00ffff55;
-                                                                                                              border-radius: 14px;
-                                                                                                                padding: 25px;
-                                                                                                                  box-shadow: 0 0 25px #00ffff33;
-                                                                                                                    backdrop-filter: blur(6px);
+                                                                                                            .form-section h2 {
+                                                                                                              color: gold;
+                                                                                                                text-shadow: 0 0 15px gold;
+                                                                                                                  text-align: center;
+                                                                                                                    margin-bottom: 15px;
                                                                                                                     }
 
-                                                                                                                    .form-section h2 {
-                                                                                                                      color: #00eaff;
-                                                                                                                        text-shadow: 0 0 10px #00eaff;
-                                                                                                                          margin-bottom: 15px;
-                                                                                                                            text-align: center;
+                                                                                                                    label {
+                                                                                                                      display: block;
+                                                                                                                        margin: 10px 0 5px;
+                                                                                                                          font-weight: bold;
+                                                                                                                            color: gold;
                                                                                                                             }
 
-                                                                                                                            /* === LABELS & INPUTS === */
-                                                                                                                            label {
-                                                                                                                              display: block;
-                                                                                                                                margin: 12px 0 5px;
-                                                                                                                                  font-weight: bold;
-                                                                                                                                    color: #0ff;
-                                                                                                                                    }
+                                                                                                                            input {
+                                                                                                                              width: 100%;
+                                                                                                                                padding: 10px;
+                                                                                                                                  background: #111;
+                                                                                                                                    color: #fff;
+                                                                                                                                      border: none;
+                                                                                                                                        border-radius: 8px;
+                                                                                                                                          outline: none;
+                                                                                                                                            box-shadow: inset 0 0 10px gold;
+                                                                                                                                            }
 
-                                                                                                                                    input,
-                                                                                                                                    textarea {
-                                                                                                                                      width: 100%;
-                                                                                                                                        padding: 10px;
-                                                                                                                                          border: none;
-                                                                                                                                            border-radius: 8px;
-                                                                                                                                              background-color: #111;
-                                                                                                                                                color: #fff;
-                                                                                                                                                  outline: none;
-                                                                                                                                                    font-size: 1rem;
-                                                                                                                                                      box-shadow: inset 0 0 10px #00ffff33;
-                                                                                                                                                        resize: vertical;
-                                                                                                                                                        }
+                                                                                                                                            /* === BUTTON === */
+                                                                                                                                            button {
+                                                                                                                                              width: 100%;
+                                                                                                                                                margin-top: 15px;
+                                                                                                                                                  padding: 12px;
+                                                                                                                                                    font-size: 1.1rem;
+                                                                                                                                                      color: #fff;
+                                                                                                                                                        background: linear-gradient(90deg, #ffb700, #ffd700);
+                                                                                                                                                          border: none;
+                                                                                                                                                            border-radius: 10px;
+                                                                                                                                                              cursor: pointer;
+                                                                                                                                                                transition: 0.2s;
+                                                                                                                                                                }
 
-                                                                                                                                                        /* === BUTTONS === */
-                                                                                                                                                        button {
-                                                                                                                                                          width: 100%;
-                                                                                                                                                            margin-top: 20px;
-                                                                                                                                                              padding: 12px;
-                                                                                                                                                                font-size: 1.1rem;
-                                                                                                                                                                  font-weight: bold;
-                                                                                                                                                                    color: #fff;
-                                                                                                                                                                      background: linear-gradient(90deg, #0077ff, #00eaff);
-                                                                                                                                                                        border: none;
-                                                                                                                                                                          border-radius: 10px;
-                                                                                                                                                                            cursor: pointer;
-                                                                                                                                                                              transition: transform 0.2s ease, box-shadow 0.2s ease;
-                                                                                                                                                                              }
+                                                                                                                                                                button:hover {
+                                                                                                                                                                  transform: scale(1.03);
+                                                                                                                                                                    box-shadow: 0 0 20px gold;
+                                                                                                                                                                    }
 
-                                                                                                                                                                              button:hover {
-                                                                                                                                                                                transform: scale(1.03);
-                                                                                                                                                                                  box-shadow: 0 0 18px #00eaffaa;
-                                                                                                                                                                                  }
+                                                                                                                                                                    /* === RESULTS === */
+                                                                                                                                                                    .result-box {
+                                                                                                                                                                      margin-top: 20px;
+                                                                                                                                                                        background: rgba(255, 215, 0, 0.05);
+                                                                                                                                                                          border: 1px solid gold;
+                                                                                                                                                                            border-radius: 10px;
+                                                                                                                                                                              padding: 15px;
+                                                                                                                                                                                box-shadow: inset 0 0 10px rgba(255, 215, 0, 0.2);
+                                                                                                                                                                                }
 
-                                                                                                                                                                                  button.loading {
-                                                                                                                                                                                    background: linear-gradient(90deg, #444, #777);
-                                                                                                                                                                                      color: #ddd;
-                                                                                                                                                                                        cursor: not-allowed;
-                                                                                                                                                                                          animation: pulse 1.2s infinite alternate;
-                                                                                                                                                                                          }
+                                                                                                                                                                                .result-box h3 {
+                                                                                                                                                                                  text-align: center;
+                                                                                                                                                                                    color: gold;
+                                                                                                                                                                                      text-shadow: 0 0 10px gold;
+                                                                                                                                                                                      }
 
-                                                                                                                                                                                          @keyframes pulse {
-                                                                                                                                                                                            0% {
-                                                                                                                                                                                                box-shadow: 0 0 10px #00eaff33;
-                                                                                                                                                                                                  }
-                                                                                                                                                                                                    100% {
-                                                                                                                                                                                                        box-shadow: 0 0 25px #00eaff;
-                                                                                                                                                                                                          }
-                                                                                                                                                                                                          }
-
-                                                                                                                                                                                                          /* === RESULTS === */
-                                                                                                                                                                                                          #results {
-                                                                                                                                                                                                            margin-top: 25px;
-                                                                                                                                                                                                              padding: 10px;
-                                                                                                                                                                                                              }
-
-                                                                                                                                                                                                              .result-box {
-                                                                                                                                                                                                                margin-top: 10px;
-                                                                                                                                                                                                                  padding: 15px;
-                                                                                                                                                                                                                    border-radius: 10px;
-                                                                                                                                                                                                                      background: rgba(0, 255, 255, 0.06);
-                                                                                                                                                                                                                        border: 1px solid #00ffff33;
-                                                                                                                                                                                                                          box-shadow: inset 0 0 10px #00ffff22;
-                                                                                                                                                                                                                          }
-
-                                                                                                                                                                                                                          #results h3 {
-                                                                                                                                                                                                                            text-align: center;
-                                                                                                                                                                                                                              color: #00eaff;
-                                                                                                                                                                                                                                text-shadow: 0 0 10px #00eaff;
-                                                                                                                                                                                                                                  margin-bottom: 12px;
-                                                                                                                                                                                                                                  }
-
-                                                                                                                                                                                                                                  #results p {
-                                                                                                                                                                                                                                    font-size: 0.95rem;
-                                                                                                                                                                                                                                      color: #ddd;
-                                                                                                                                                                                                                                        margin: 6px 0;
-                                                                                                                                                                                                                                          border-bottom: 1px solid #00ffff22;
-                                                                                                                                                                                                                                            padding-bottom: 4px;
-                                                                                                                                                                                                                                            }
-
-                                                                                                                                                                                                                                            /* === LISTS & TEXT === */
-                                                                                                                                                                                                                                            .form-section p,
-                                                                                                                                                                                                                                            .form-section ul {
-                                                                                                                                                                                                                                              color: #ccc;
-                                                                                                                                                                                                                                                font-size: 1rem;
-                                                                                                                                                                                                                                                  line-height: 1.6;
-                                                                                                                                                                                                                                                  }
-
-                                                                                                                                                                                                                                                  ul {
-                                                                                                                                                                                                                                                    list-style-type: none;
-                                                                                                                                                                                                                                                      padding-left: 10px;
-                                                                                                                                                                                                                                                      }
-
-                                                                                                                                                                                                                                                      ul li::before {
-                                                                                                                                                                                                                                                        content: "• ";
-                                                                                                                                                                                                                                                          color: #00eaff;
-                                                                                                                                                                                                                                                          }
-
-                                                                                                                                                                                                                                                          /* === FOOTER === */
-                                                                                                                                                                                                                                                          footer {
-                                                                                                                                                                                                                                                            margin-top: 40px;
-                                                                                                                                                                                                                                                              padding: 15px;
-                                                                                                                                                                                                                                                                text-align: center;
-                                                                                                                                                                                                                                                                  font-size: 0.9rem;
-                                                                                                                                                                                                                                                                    color: #00ffffaa;
-                                                                                                                                                                                                                                                                      border-top: 1px solid #00ffff33;
-                                                                                                                                                                                                                                                                        width: 100%;
-                                                                                                                                                                                                                                                                          box-shadow: 0 -5px 20px #00ffff11;
-                                                                                                                                                                                                                                                                          }
-
-                                                                                                                                                                                                                                                                          /* === RESPONSIVE === */
-                                                                                                                                                                                                                                                                          @media (max-width: 480px) {
-                                                                                                                                                                                                                                                                            .hero {
-                                                                                                                                                                                                                                                                                height: 250px;
-                                                                                                                                                                                                                                                                                    background-position: center top;
-                                                                                                                                                                                                                                                                                      }
-                                                                                                                                                                                                                                                                                        .hero h1 {
-                                                                                                                                                                                                                                                                                            font-size: 1.6rem;
-                                                                                                                                                                                                                                                                                              }
-                                                                                                                                                                                                                                                                                                button {
-                                                                                                                                                                                                                                                                                                    font-size: 1rem;
-                                                                                                                                                                                                                                                                                                      }
-                                                                                                                                                                                                                                                                                                        .form-section {
-                                                                                                                                                                                                                                                                                                            width: 95%;
-                                                                                                                                                                                                                                                                                                              }
-                                                                                                                                                                                                                                                                                                              }
+                                                                                                                                                                                      /* === FOOTER === */
+                                                                                                                                                                                      footer {
+                                                                                                                                                                                        margin-top: 40px;
+                                                                                                                                                                                          padding: 15px;
+                                                                                                                                                                                            text-align: center;
+                                                                                                                                                                                              font-size: 0.9rem;
+                                                                                                                                                                                                color: gold;
+                                                                                                                                                                                                  border-top: 1px solid gold;
+                                                                                                                                                                                                    width: 100%;
+                                                                                                                                                                                                      box-shadow: 0 -5px 20px rgba(255, 215, 0, 0.15);
+                                                                                                                                                                                                      }
