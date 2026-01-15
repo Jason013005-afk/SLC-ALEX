@@ -1,74 +1,69 @@
-// === SLC-ALEX Property Analyzer Frontend Script ===
+// 🔗 Backend URL
+const backendURL = "https://obscure-lamp-97gr4gw497j5fj6x-4000.app.github.dev";
 
-// ✅ Update this URL if your backend port changes
-const backendURL = "https://497j5fj6x-4000.app.github.dev";
-
-// ===== Backend Connection Check =====
-async function checkBackendConnection() {
-  const statusElem = document.getElementById("backend-status");
+// 🔍 Check backend connection
+async function checkBackendStatus() {
+  const statusEl = document.getElementById("backend-status");
     try {
         const res = await fetch(`${backendURL}/`);
-            if (res.ok) {
-                  statusElem.innerHTML = "🟢 Backend Connected";
-                        statusElem.style.color = "limegreen";
-                            } else {
-                                  throw new Error("Connection failed");
-                                      }
-                                        } catch (err) {
-                                            statusElem.innerHTML = "🔴 Backend Connection Failed";
-                                                statusElem.style.color = "red";
-                                                  }
-                                                  }
-                                                  checkBackendConnection();
+            if (!res.ok) throw new Error("Backend not reachable");
 
-                                                  // ===== Analyze Property =====
-                                                  async function analyzeProperty() {
-                                                    const address = document.getElementById("address").value.trim();
-                                                      const interestRate = document.getElementById("interestRate").value.trim();
-                                                        const resultsBox = document.getElementById("results");
-                                                          const analyzeButton = document.getElementById("analyze-btn");
+                const data = await res.json();
+                    statusEl.innerHTML = "🟢 Backend Connected";
+                        statusEl.style.color = "limegreen";
+                          } catch (err) {
+                              statusEl.innerHTML = "🔴 Backend Connection Failed";
+                                  statusEl.style.color = "red";
+                                    }
+                                    }
 
-                                                            if (!address || !interestRate) {
-                                                                resultsBox.innerHTML = "⚠️ Please enter both Address and Interest Rate.";
-                                                                    return;
-                                                                      }
+                                    // 🧮 Analyze Property
+                                    async function analyzeProperty() {
+                                      const address = document.getElementById("address").value.trim();
+                                        const rate = parseFloat(document.getElementById("interestRate").value);
+                                          const resultBox = document.getElementById("results");
 
-                                                                        // Loading animation
-                                                                          analyzeButton.disabled = true;
-                                                                            analyzeButton.innerHTML = "⏳ Analyzing...";
+                                            if (!address || isNaN(rate)) {
+                                                resultBox.innerHTML = `<p style="color: gold;">⚠️ Please enter a valid address and interest rate.</p>`;
+                                                    return;
+                                                      }
 
-                                                                              try {
-                                                                                  const response = await fetch(`${backendURL}/api/stress`, {
-                                                                                        method: "POST",
-                                                                                              headers: { "Content-Type": "application/json" },
-                                                                                                    body: JSON.stringify({ address, interestRate }),
-                                                                                                        });
+                                                        resultBox.innerHTML = `<p style="color: gold;">⏳ Analyzing property...</p>`;
 
-                                                                                                            if (!response.ok) throw new Error("Backend error");
+                                                          try {
+                                                              const res = await fetch(`${backendURL}/api/stress`, {
+                                                                    method: "POST",
+                                                                          headers: { "Content-Type": "application/json" },
+                                                                                body: JSON.stringify({
+                                                                                        address,
+                                                                                                interestRate: rate,
+                                                                                                        // Optional placeholder data — backend ignores if not needed
+                                                                                                                price: 300000,
+                                                                                                                        rent: 2500,
+                                                                                                                              }),
+                                                                                                                                  });
 
-                                                                                                                const data = await response.json();
+                                                                                                                                      if (!res.ok) throw new Error("Failed to fetch analysis");
 
-                                                                                                                    resultsBox.innerHTML = `
-                                                                                                                          <h3>📊 Analysis Results</h3>
-                                                                                                                                <p><b>Address:</b> ${data.address}</p>
-                                                                                                                                      <p><b>Interest Rate:</b> ${data.interestRate}%</p>
-                                                                                                                                            <p><b>Estimated Value:</b> $${data.estimatedValue.toLocaleString()}</p>
-                                                                                                                                                  <p><b>Monthly Rent:</b> $${data.rentValue.toLocaleString()}</p>
-                                                                                                                                                        <p><b>Section 8 Rate:</b> $${data.section8.toLocaleString()}</p>
-                                                                                                                                                              <p><b>Taxes:</b> $${data.taxes.toLocaleString()}</p>
-                                                                                                                                                                    <p><b>Insurance:</b> $${data.insurance.toLocaleString()}</p>
-                                                                                                                                                                          <p><b>ROI:</b> ${data.roi}</p>
-                                                                                                                                                                                <p><b>Appreciation:</b> $${data.appreciation.toLocaleString()}</p>
-                                                                                                                                                                                      <p><b>5-Year Net Profit:</b> $${data.netProfit.toLocaleString()}</p>
-                                                                                                                                                                                            <p><b>Total Return:</b> $${data.totalReturn.toLocaleString()}</p>
-                                                                                                                                                                                                `;
-                                                                                                                                                                                                  } catch (error) {
-                                                                                                                                                                                                      console.error("❌ Analysis Error:", error);
-                                                                                                                                                                                                          resultsBox.innerHTML = `
-                                                                                                                                                                                                                ⚠️ Could not fetch analysis. Check backend or input.
-                                                                                                                                                                                                                    `;
-                                                                                                                                                                                                                      } finally {
-                                                                                                                                                                                                                          analyzeButton.disabled = false;
-                                                                                                                                                                                                                              analyzeButton.innerHTML = "🔍 Analyze Property";
-                                                                                                                                                                                                                                }
-                                                                                                                                                                                                                                }
+                                                                                                                                          const data = await res.json();
+
+                                                                                                                                              resultBox.innerHTML = `
+                                                                                                                                                    <div style="color: gold; text-shadow: 0 0 10px #ffbf00;">
+                                                                                                                                                            <h3>📊 Analysis Results</h3>
+                                                                                                                                                                    <p><b>Address:</b> ${data.address || address}</p>
+                                                                                                                                                                            <p><b>Estimated Value:</b> $${data.estimatedValue?.toLocaleString() || "N/A"}</p>
+                                                                                                                                                                                    <p><b>Rent:</b> $${data.rent?.toLocaleString() || "N/A"}</p>
+                                                                                                                                                                                            <p><b>Section 8:</b> $${data.section8?.toLocaleString() || "N/A"}</p>
+                                                                                                                                                                                                    <p><b>ROI:</b> ${data.roi || "N/A"}</p>
+                                                                                                                                                                                                            <p><b>Market Appreciation:</b> $${data.appreciation?.toLocaleString() || "N/A"}</p>
+                                                                                                                                                                                                                    <p><b>Loan Amount:</b> $${data.lma || "N/A"}</p>
+                                                                                                                                                                                                                          </div>
+                                                                                                                                                                                                                              `;
+                                                                                                                                                                                                                                } catch (err) {
+                                                                                                                                                                                                                                    console.error("Error:", err);
+                                                                                                                                                                                                                                        resultBox.innerHTML = `<p style="color: red;">⚠️ Could not fetch analysis. Check backend or input.</p>`;
+                                                                                                                                                                                                                                          }
+                                                                                                                                                                                                                                          }
+
+                                                                                                                                                                                                                                          // ⚙️ Auto-run backend check when page loads
+                                                                                                                                                                                                                                          document.addEventListener("DOMContentLoaded", checkBackendStatus);
