@@ -1,67 +1,74 @@
-// scripts.js
-console.log("✅ ALEX frontend scripts loaded successfully.");
+// === SLC-ALEX Property Analyzer Frontend Script ===
 
-// === API BASE URL ===
-// (You can change this later to your permanent backend endpoint on Vercel)
-const API_BASE = "https://ooo.app.github.dev";
+// ✅ Update this URL if your backend port changes
+const backendURL = "https://497j5fj6x-4000.app.github.dev";
 
-// === FORM HANDLER ===
-document.addEventListener("DOMContentLoaded", () => {
-  const form = document.querySelector("#stressTestForm");
-    const resultBox = document.querySelector("#results");
-      const button = document.querySelector("#runTestButton");
+// ===== Backend Connection Check =====
+async function checkBackendConnection() {
+  const statusElem = document.getElementById("backend-status");
+    try {
+        const res = await fetch(`${backendURL}/`);
+            if (res.ok) {
+                  statusElem.innerHTML = "🟢 Backend Connected";
+                        statusElem.style.color = "limegreen";
+                            } else {
+                                  throw new Error("Connection failed");
+                                      }
+                                        } catch (err) {
+                                            statusElem.innerHTML = "🔴 Backend Connection Failed";
+                                                statusElem.style.color = "red";
+                                                  }
+                                                  }
+                                                  checkBackendConnection();
 
-        if (!form) {
-            console.warn("⚠️ stressTestForm not found on this page.");
-                return;
-                  }
+                                                  // ===== Analyze Property =====
+                                                  async function analyzeProperty() {
+                                                    const address = document.getElementById("address").value.trim();
+                                                      const interestRate = document.getElementById("interestRate").value.trim();
+                                                        const resultsBox = document.getElementById("results");
+                                                          const analyzeButton = document.getElementById("analyze-btn");
 
-                    form.addEventListener("submit", async (e) => {
-                        e.preventDefault();
+                                                            if (!address || !interestRate) {
+                                                                resultsBox.innerHTML = "⚠️ Please enter both Address and Interest Rate.";
+                                                                    return;
+                                                                      }
 
-                            resultBox.innerHTML = "⏳ Running ALEX Stress Test...";
-                                button.disabled = true;
+                                                                        // Loading animation
+                                                                          analyzeButton.disabled = true;
+                                                                            analyzeButton.innerHTML = "⏳ Analyzing...";
 
-                                    const formData = {
-                                          propertyType: form.propertyType?.value,
-                                                purchasePrice: parseFloat(form.purchasePrice?.value || 0),
-                                                      downPayment: parseFloat(form.downPayment?.value || 0),
-                                                            interestRate: parseFloat(form.interestRate?.value || 0),
-                                                                  rentalIncome: parseFloat(form.rentalIncome?.value || 0),
-                                                                        operatingExpenses: parseFloat(form.operatingExpenses?.value || 0)
-                                                                            };
+                                                                              try {
+                                                                                  const response = await fetch(`${backendURL}/api/stress`, {
+                                                                                        method: "POST",
+                                                                                              headers: { "Content-Type": "application/json" },
+                                                                                                    body: JSON.stringify({ address, interestRate }),
+                                                                                                        });
 
-                                                                                try {
-                                                                                      const response = await fetch(`${API_BASE}/api/stress`, {
-                                                                                              method: "POST",
-                                                                                                      headers: { "Content-Type": "application/json" },
-                                                                                                              body: JSON.stringify(formData)
-                                                                                                                    });
+                                                                                                            if (!response.ok) throw new Error("Backend error");
 
-                                                                                                                          if (!response.ok) {
-                                                                                                                                  throw new Error(`Server returned ${response.status}`);
-                                                                                                                                        }
+                                                                                                                const data = await response.json();
 
-                                                                                                                                              const data = await response.json();
-
-                                                                                                                                                    resultBox.innerHTML = `
-                                                                                                                                                            <div class="results-box">
-                                                                                                                                                                      <h3>📊 ALEX Stress Test Results</h3>
-                                                                                                                                                                                <p><strong>Risk Rating:</strong> ${data.risk || "N/A"}</p>
-                                                                                                                                                                                          <p><strong>Capital Safety Index:</strong> ${data.capitalIndex || "N/A"}</p>
-                                                                                                                                                                                                    <p><strong>Liquidity Stress:</strong> ${data.liquidity || "N/A"}</p>
-                                                                                                                                                                                                              <p><strong>Summary:</strong> ${data.summary || "No summary provided"}</p>
-                                                                                                                                                                                                                      </div>
-                                                                                                                                                                                                                            `;
-                                                                                                                                                                                                                                } catch (err) {
-                                                                                                                                                                                                                                      console.error("❌ Backend connection failed:", err);
-                                                                                                                                                                                                                                            resultBox.innerHTML = `
-                                                                                                                                                                                                                                                    <p style="color: red;">
-                                                                                                                                                                                                                                                              ⚠️ Unable to connect to ALEX backend. Please try again later.
-                                                                                                                                                                                                                                                                      </p>
-                                                                                                                                                                                                                                                                            `;
-                                                                                                                                                                                                                                                                                } finally {
-                                                                                                                                                                                                                                                                                      button.disabled = false;
-                                                                                                                                                                                                                                                                                          }
-                                                                                                                                                                                                                                                                                            });
-                                                                                                                                                                                                                                                                                            });
+                                                                                                                    resultsBox.innerHTML = `
+                                                                                                                          <h3>📊 Analysis Results</h3>
+                                                                                                                                <p><b>Address:</b> ${data.address}</p>
+                                                                                                                                      <p><b>Interest Rate:</b> ${data.interestRate}%</p>
+                                                                                                                                            <p><b>Estimated Value:</b> $${data.estimatedValue.toLocaleString()}</p>
+                                                                                                                                                  <p><b>Monthly Rent:</b> $${data.rentValue.toLocaleString()}</p>
+                                                                                                                                                        <p><b>Section 8 Rate:</b> $${data.section8.toLocaleString()}</p>
+                                                                                                                                                              <p><b>Taxes:</b> $${data.taxes.toLocaleString()}</p>
+                                                                                                                                                                    <p><b>Insurance:</b> $${data.insurance.toLocaleString()}</p>
+                                                                                                                                                                          <p><b>ROI:</b> ${data.roi}</p>
+                                                                                                                                                                                <p><b>Appreciation:</b> $${data.appreciation.toLocaleString()}</p>
+                                                                                                                                                                                      <p><b>5-Year Net Profit:</b> $${data.netProfit.toLocaleString()}</p>
+                                                                                                                                                                                            <p><b>Total Return:</b> $${data.totalReturn.toLocaleString()}</p>
+                                                                                                                                                                                                `;
+                                                                                                                                                                                                  } catch (error) {
+                                                                                                                                                                                                      console.error("❌ Analysis Error:", error);
+                                                                                                                                                                                                          resultsBox.innerHTML = `
+                                                                                                                                                                                                                ⚠️ Could not fetch analysis. Check backend or input.
+                                                                                                                                                                                                                    `;
+                                                                                                                                                                                                                      } finally {
+                                                                                                                                                                                                                          analyzeButton.disabled = false;
+                                                                                                                                                                                                                              analyzeButton.innerHTML = "🔍 Analyze Property";
+                                                                                                                                                                                                                                }
+                                                                                                                                                                                                                                }
