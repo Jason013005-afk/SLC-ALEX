@@ -1,130 +1,219 @@
-/* === BASE === */
-body {
+/* === Global Reset === */
+* {
   margin: 0;
-    font-family: "Poppins", sans-serif;
-      background: #000;
-        color: #fff;
+    padding: 0;
+      box-sizing: border-box;
+        font-family: "Poppins", sans-serif;
         }
 
-        /* === HEADER === */
-        header {
-          background: rgba(0,0,0,0.9);
-            padding: 1rem 2rem;
-              position: fixed;
-                width: 100%;
-                  top: 0;
-                    display: flex;
-                      justify-content: space-between;
-                        align-items: center;
-                          z-index: 1000;
-                          }
+        body {
+          background-color: #000;
+            color: #fff;
+              min-height: 100vh;
+                display: flex;
+                  flex-direction: column;
+                    align-items: center;
+                      justify-content: flex-start;
+                      }
 
-                          .logo {
-                            width: 140px;
-                              height: auto;
-                                filter: drop-shadow(0 0 6px gold);
-                                }
+                      /* === Hero Section === */
+                      .hero {
+                        position: relative;
+                          width: 100%;
+                            height: 280px;
+                              background: url("images/kitchen.jpg") center top / contain no-repeat;
+                                background-color: #000;
+                                  display: flex;
+                                    flex-direction: column;
+                                      align-items: center;
+                                        justify-content: center;
+                                          text-align: center;
+                                            box-shadow: 0 0 40px rgba(0, 255, 255, 0.2);
+                                            }
 
-                                nav ul {
-                                  list-style: none;
-                                    display: flex;
-                                      gap: 1.5rem;
-                                      }
+                                            .hero h1 {
+                                              font-size: 1.8rem;
+                                                color: #00eaff;
+                                                  text-shadow: 0 0 20px #00eaff;
+                                                  }
 
-                                      nav a {
-                                        color: #ccc;
-                                          text-decoration: none;
-                                            font-weight: 500;
-                                              transition: 0.3s;
-                                              }
+                                                  #backend-status {
+                                                    margin-top: 8px;
+                                                      font-size: 1.1rem;
+                                                        color: lime;
+                                                          font-weight: 600;
+                                                            text-shadow: 0 0 8px #00ff00;
+                                                            }
 
-                                              nav a.active, nav a:hover {
-                                                color: gold;
-                                                }
+                                                            /* === Navigation === */
+                                                            .nav-links {
+                                                              display: flex;
+                                                                justify-content: center;
+                                                                  gap: 14px;
+                                                                    background: rgba(0, 0, 0, 0.7);
+                                                                      padding: 10px;
+                                                                        border-bottom: 1px solid #00ffff33;
+                                                                          box-shadow: 0 2px 15px #00ffff22;
+                                                                          }
 
-                                                /* === HERO SECTION === */
-                                                .hero {
-                                                  background: url("images/hero-bg.png") center/cover no-repeat fixed;
-                                                    min-height: 100vh;
-                                                      display: flex;
-                                                        align-items: center;
-                                                          justify-content: center;
-                                                            text-align: center;
-                                                              padding-top: 6rem;
-                                                              }
+                                                                          .nav-links a {
+                                                                            color: #00eaff;
+                                                                              text-decoration: none;
+                                                                                font-weight: 600;
+                                                                                  text-shadow: 0 0 6px #00eaff;
+                                                                                    transition: color 0.2s ease, transform 0.2s ease;
+                                                                                    }
 
-                                                              .hero-content {
-                                                                background: rgba(0,0,0,0.6);
-                                                                  padding: 2rem;
-                                                                    border-radius: 10px;
-                                                                      box-shadow: 0 0 25px rgba(255,215,0,0.3);
-                                                                      }
+                                                                                    .nav-links a:hover {
+                                                                                      color: #fff;
+                                                                                        transform: scale(1.1);
+                                                                                        }
 
-                                                                      .hero h1 {
-                                                                        font-size: 2.2rem;
-                                                                          color: gold;
-                                                                            margin-bottom: 0.5rem;
-                                                                            }
-
-                                                                            .hero p {
-                                                                              color: #ddd;
-                                                                                margin-bottom: 1rem;
-                                                                                }
-
-                                                                                /* === FORM === */
-                                                                                form input, form button {
-                                                                                  width: 100%;
-                                                                                    padding: 0.8rem;
-                                                                                      margin: 0.4rem 0;
-                                                                                        border: none;
-                                                                                          border-radius: 6px;
-                                                                                          }
-
-                                                                                          form input {
-                                                                                            background: #222;
-                                                                                              color: #fff;
-                                                                                              }
-
-                                                                                              form button {
-                                                                                                background: linear-gradient(90deg, gold, #b8860b);
-                                                                                                  color: #000;
-                                                                                                    font-weight: 700;
-                                                                                                      cursor: pointer;
-                                                                                                        transition: all 0.3s ease;
-                                                                                                        }
-
-                                                                                                        form button:hover {
-                                                                                                          background: linear-gradient(90deg, #b8860b, gold);
+                                                                                        /* === Form Section === */
+                                                                                        .form-section {
+                                                                                          width: 90%;
+                                                                                            max-width: 500px;
+                                                                                              margin-top: 20px;
+                                                                                                background: rgba(20, 20, 20, 0.8);
+                                                                                                  border: 1px solid #00ffff44;
+                                                                                                    border-radius: 12px;
+                                                                                                      padding: 20px;
+                                                                                                        box-shadow: 0 0 25px #00ffff33;
+                                                                                                          backdrop-filter: blur(4px);
                                                                                                           }
 
-                                                                                                          /* === RESULTS BOX === */
-                                                                                                          .results-box {
-                                                                                                            margin-top: 1.5rem;
-                                                                                                              background: rgba(30, 30, 30, 0.9);
-                                                                                                                border: 1px solid gold;
-                                                                                                                  border-radius: 8px;
-                                                                                                                    padding: 1rem;
-                                                                                                                      text-align: left;
-                                                                                                                        color: #fff;
-                                                                                                                          animation: fadeIn 0.6s ease;
-                                                                                                                          }
+                                                                                                          label {
+                                                                                                            display: block;
+                                                                                                              margin: 10px 0 5px;
+                                                                                                                font-weight: bold;
+                                                                                                                  color: #0ff;
+                                                                                                                  }
 
-                                                                                                                          .results-box h3 {
-                                                                                                                            color: gold;
-                                                                                                                            }
+                                                                                                                  input {
+                                                                                                                    width: 100%;
+                                                                                                                      padding: 10px;
+                                                                                                                        border: none;
+                                                                                                                          border-radius: 8px;
+                                                                                                                            background-color: #111;
+                                                                                                                              color: #fff;
+                                                                                                                                outline: none;
+                                                                                                                                  font-size: 1rem;
+                                                                                                                                    box-shadow: inset 0 0 10px #00ffff33;
+                                                                                                                                    }
 
-                                                                                                                            /* === FOOTER === */
-                                                                                                                            footer {
-                                                                                                                              text-align: center;
-                                                                                                                                padding: 1rem;
-                                                                                                                                  font-size: 0.9rem;
-                                                                                                                                    color: #888;
-                                                                                                                                      background: #000;
-                                                                                                                                        border-top: 1px solid gold;
-                                                                                                                                        }
+                                                                                                                                    /* === Analyze Button === */
+                                                                                                                                    button {
+                                                                                                                                      width: 100%;
+                                                                                                                                        margin-top: 20px;
+                                                                                                                                          padding: 12px;
+                                                                                                                                            font-size: 1.1rem;
+                                                                                                                                              font-weight: bold;
+                                                                                                                                                color: #fff;
+                                                                                                                                                  background: linear-gradient(90deg, #0077ff, #00eaff);
+                                                                                                                                                    border: none;
+                                                                                                                                                      border-radius: 8px;
+                                                                                                                                                        cursor: pointer;
+                                                                                                                                                          transition: transform 0.2s ease, box-shadow 0.2s ease;
+                                                                                                                                                          }
 
-                                                                                                                                        /* === ANIMATIONS === */
-                                                                                                                                        @keyframes fadeIn {
-                                                                                                                                          from { opacity: 0; transform: translateY(20px); }
-                                                                                                                                            to { opacity: 1; transform: translateY(0); }
-                                                                                                                                            }
+                                                                                                                                                          button:hover {
+                                                                                                                                                            transform: scale(1.03);
+                                                                                                                                                              box-shadow: 0 0 15px #00eaffaa;
+                                                                                                                                                              }
+
+                                                                                                                                                              button.loading {
+                                                                                                                                                                background: linear-gradient(90deg, #444, #777);
+                                                                                                                                                                  color: #ddd;
+                                                                                                                                                                    cursor: not-allowed;
+                                                                                                                                                                      animation: pulse 1.2s infinite alternate;
+                                                                                                                                                                      }
+
+                                                                                                                                                                      @keyframes pulse {
+                                                                                                                                                                        0% { box-shadow: 0 0 10px #00eaff33; }
+                                                                                                                                                                          100% { box-shadow: 0 0 25px #00eaff; }
+                                                                                                                                                                          }
+
+                                                                                                                                                                          /* === Results Section === */
+                                                                                                                                                                          #results {
+                                                                                                                                                                            margin-top: 20px;
+                                                                                                                                                                              padding: 10px;
+                                                                                                                                                                              }
+
+                                                                                                                                                                              .result-box {
+                                                                                                                                                                                margin-top: 10px;
+                                                                                                                                                                                  padding: 15px;
+                                                                                                                                                                                    border-radius: 10px;
+                                                                                                                                                                                      background: rgba(0, 255, 255, 0.05);
+                                                                                                                                                                                        border: 1px solid #00ffff33;
+                                                                                                                                                                                        }
+
+                                                                                                                                                                                        #results h3 {
+                                                                                                                                                                                          text-align: center;
+                                                                                                                                                                                            color: #00eaff;
+                                                                                                                                                                                              text-shadow: 0 0 10px #00eaff;
+                                                                                                                                                                                                margin-bottom: 10px;
+                                                                                                                                                                                                }
+
+                                                                                                                                                                                                #results p {
+                                                                                                                                                                                                  font-size: 0.95rem;
+                                                                                                                                                                                                    color: #ddd;
+                                                                                                                                                                                                      margin: 6px 0;
+                                                                                                                                                                                                        border-bottom: 1px solid #00ffff22;
+                                                                                                                                                                                                          padding-bottom: 4px;
+                                                                                                                                                                                                          }
+
+                                                                                                                                                                                                          /* === Footer === */
+                                                                                                                                                                                                          footer {
+                                                                                                                                                                                                            margin-top: 40px;
+                                                                                                                                                                                                              padding: 15px;
+                                                                                                                                                                                                                text-align: center;
+                                                                                                                                                                                                                  font-size: 0.9rem;
+                                                                                                                                                                                                                    color: #00ffffaa;
+                                                                                                                                                                                                                      border-top: 1px solid #00ffff33;
+                                                                                                                                                                                                                        width: 100%;
+                                                                                                                                                                                                                          box-shadow: 0 -5px 20px #00ffff11;
+                                                                                                                                                                                                                          }
+
+                                                                                                                                                                                                                          /* === Responsive === */
+                                                                                                                                                                                                                          @media (max-width: 480px) {
+                                                                                                                                                                                                                            .hero h1 {
+                                                                                                                                                                                                                                font-size: 1.5rem;
+                                                                                                                                                                                                                                  }
+                                                                                                                                                                                                                                    button {
+                                                                                                                                                                                                                                        font-size: 1rem;
+                                                                                                                                                                                                                                          }
+                                                                                                                                                                                                                                          }
+                                                                                                                                                                                                                                          /* === Shared Page Styles === */
+                                                                                                                                                                                                                                          .form-section h2 {
+                                                                                                                                                                                                                                            color: #00eaff;
+                                                                                                                                                                                                                                              text-shadow: 0 0 10px #00eaff;
+                                                                                                                                                                                                                                                margin-bottom: 15px;
+                                                                                                                                                                                                                                                  text-align: center;
+                                                                                                                                                                                                                                                  }
+
+                                                                                                                                                                                                                                                  .form-section p, .form-section ul, textarea {
+                                                                                                                                                                                                                                                    color: #ccc;
+                                                                                                                                                                                                                                                      font-size: 1rem;
+                                                                                                                                                                                                                                                        line-height: 1.5;
+                                                                                                                                                                                                                                                        }
+
+                                                                                                                                                                                                                                                        textarea {
+                                                                                                                                                                                                                                                          width: 100%;
+                                                                                                                                                                                                                                                            border: none;
+                                                                                                                                                                                                                                                              border-radius: 8px;
+                                                                                                                                                                                                                                                                padding: 10px;
+                                                                                                                                                                                                                                                                  background: #111;
+                                                                                                                                                                                                                                                                    color: #fff;
+                                                                                                                                                                                                                                                                      box-shadow: inset 0 0 10px #00ffff33;
+                                                                                                                                                                                                                                                                        resize: vertical;
+                                                                                                                                                                                                                                                                        }
+
+                                                                                                                                                                                                                                                                        ul {
+                                                                                                                                                                                                                                                                          list-style-type: none;
+                                                                                                                                                                                                                                                                            padding-left: 10px;
+                                                                                                                                                                                                                                                                            }
+
+                                                                                                                                                                                                                                                                            ul li::before {
+                                                                                                                                                                                                                                                                              content: "• ";
+                                                                                                                                                                                                                                                                                color: #00eaff;
+                                                                                                                                                                                                                                                                                }
