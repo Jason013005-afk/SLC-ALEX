@@ -1,66 +1,103 @@
-// ✅ scripts.js — connects automatically to backend
-const backendURL = "https://obscure-lamp-97gr4gw497j5fj6x-4000.app.github.dev";
+// ===============================
+// SLC-ALEX Frontend Script
+// ===============================
 
-async function checkBackendStatus() {
-  const statusEl = document.getElementById("backend-status");
+// ✅ Live backend URL
+const backendUrl = "https://orange-succotash-4jp59p697gqqh5559-4000.app.github.dev";
 
-    try {
-        const res = await fetch(`${backendURL}/`);
-            const data = await res.json();
+// Wait until DOM is ready
+document.addEventListener("DOMContentLoaded", () => {
+  initContactForm();
+    loadServices();
+    });
 
-                if (data.status === "ok") {
-                      statusEl.innerHTML = "🟢 Backend Connected";
-                            statusEl.style.color = "limegreen";
-                                  console.log("✅ Backend OK");
-                                      } else {
-                                            throw new Error("Invalid backend response");
-                                                }
-                                                  } catch (err) {
-                                                      console.error("Backend connection failed:", err);
-                                                          statusEl.innerHTML = "🔴 Backend Connection Failed";
-                                                              statusEl.style.color = "red";
-                                                                }
-                                                                }
+    // ===============================
+    // CONTACT FORM HANDLER
+    // ===============================
+    function initContactForm() {
+      const contactForm = document.querySelector("#contactForm");
+        const statusBox = document.querySelector("#formStatus");
 
-                                                                async function analyzeProperty() {
-                                                                  const address = document.getElementById("address").value.trim();
-                                                                    const rate = parseFloat(document.getElementById("interestRate").value);
-                                                                      const resultBox = document.getElementById("results");
+          if (!contactForm) return;
 
-                                                                        if (!address || isNaN(rate)) {
-                                                                            resultBox.innerHTML = `<p style="color: gold;">⚠️ Enter valid address and interest rate.</p>`;
-                                                                                return;
-                                                                                  }
+            contactForm.addEventListener("submit", async (e) => {
+                e.preventDefault();
 
-                                                                                    resultBox.innerHTML = `<p style="color: gold;">⏳ Analyzing property...</p>`;
+                    const formData = {
+                          name: document.querySelector("#name").value.trim(),
+                                email: document.querySelector("#email").value.trim(),
+                                      message: document.querySelector("#message").value.trim(),
+                                          };
 
-                                                                                      try {
-                                                                                          const res = await fetch(`${backendURL}/api/stress`, {
-                                                                                                method: "POST",
-                                                                                                      headers: { "Content-Type": "application/json" },
-                                                                                                            body: JSON.stringify({ address, interestRate: rate }),
-                                                                                                                });
+                                              statusBox.textContent = "Sending...";
+                                                  statusBox.style.color = "#c6a45a"; // Gold tone
 
-                                                                                                                    if (!res.ok) throw new Error("Server error");
+                                                      try {
+                                                            const res = await fetch(`${backendUrl}/api/contact`, {
+                                                                    method: "POST",
+                                                                            headers: { "Content-Type": "application/json" },
+                                                                                    body: JSON.stringify(formData),
+                                                                                          });
 
-                                                                                                                        const data = await res.json();
+                                                                                                const data = await res.json();
 
-                                                                                                                            resultBox.innerHTML = `
-                                                                                                                                  <div style="color: gold; text-shadow: 0 0 10px #ffbf00;">
-                                                                                                                                          <h3>📊 Analysis Results</h3>
-                                                                                                                                                  <p><b>Address:</b> ${data.address}</p>
-                                                                                                                                                          <p><b>Estimated Value:</b> $${data.estimatedValue}</p>
-                                                                                                                                                                  <p><b>Rent:</b> $${data.rent}</p>
-                                                                                                                                                                          <p><b>Section 8:</b> $${data.section8}</p>
-                                                                                                                                                                                  <p><b>ROI:</b> ${data.roi}</p>
-                                                                                                                                                                                          <p><b>Loan Amount:</b> $${data.lma}</p>
-                                                                                                                                                                                                  <p><b>Market Appreciation:</b> $${data.appreciation}</p>
-                                                                                                                                                                                                        </div>
-                                                                                                                                                                                                            `;
-                                                                                                                                                                                                              } catch (err) {
-                                                                                                                                                                                                                  console.error(err);
-                                                                                                                                                                                                                      resultBox.innerHTML = `<p style="color: red;">⚠️ Could not fetch analysis.</p>`;
-                                                                                                                                                                                                                        }
-                                                                                                                                                                                                                        }
+                                                                                                      if (res.ok) {
+                                                                                                              statusBox.textContent = "✅ Message sent successfully!";
+                                                                                                                      statusBox.style.color = "#00c851";
+                                                                                                                              contactForm.reset();
+                                                                                                                                    } else {
+                                                                                                                                            statusBox.textContent = `❌ Error: ${data.error || "Message failed"}`;
+                                                                                                                                                    statusBox.style.color = "#ff4444";
+                                                                                                                                                          }
+                                                                                                                                                              } catch (err) {
+                                                                                                                                                                    console.error("Error sending form:", err);
+                                                                                                                                                                          statusBox.textContent = "⚠️ Unable to reach server.";
+                                                                                                                                                                                statusBox.style.color = "#ffbb33";
+                                                                                                                                                                                    }
+                                                                                                                                                                                      });
+                                                                                                                                                                                      }
 
-                                                                                                                                                                                                                        document.addEventListener("DOMContentLoaded", checkBackendStatus);
+                                                                                                                                                                                      // ===============================
+                                                                                                                                                                                      // DYNAMIC SERVICES SECTION
+                                                                                                                                                                                      // ===============================
+                                                                                                                                                                                      async function loadServices() {
+                                                                                                                                                                                        const serviceSection = document.querySelector("#servicesList");
+                                                                                                                                                                                          if (!serviceSection) return;
+
+                                                                                                                                                                                            serviceSection.innerHTML = "<p>Loading services...</p>";
+
+                                                                                                                                                                                              try {
+                                                                                                                                                                                                  const res = await fetch(`${backendUrl}/api/services`);
+                                                                                                                                                                                                      const data = await res.json();
+
+                                                                                                                                                                                                          if (Array.isArray(data.services)) {
+                                                                                                                                                                                                                serviceSection.innerHTML = data.services
+                                                                                                                                                                                                                        .map(
+                                                                                                                                                                                                                                  (s) => `
+                                                                                                                                                                                                                                            <div class="service-item fade-in">
+                                                                                                                                                                                                                                                        <h3>${s.title}</h3>
+                                                                                                                                                                                                                                                                    <p>${s.description}</p>
+                                                                                                                                                                                                                                                                              </div>
+                                                                                                                                                                                                                                                                                      `
+                                                                                                                                                                                                                                                                                              )
+                                                                                                                                                                                                                                                                                                      .join("");
+                                                                                                                                                                                                                                                                                                          } else {
+                                                                                                                                                                                                                                                                                                                serviceSection.innerHTML = "<p>No services found.</p>";
+                                                                                                                                                                                                                                                                                                                    }
+                                                                                                                                                                                                                                                                                                                      } catch (err) {
+                                                                                                                                                                                                                                                                                                                          console.error("Service load error:", err);
+                                                                                                                                                                                                                                                                                                                              serviceSection.innerHTML = "<p>⚠️ Unable to load services.</p>";
+                                                                                                                                                                                                                                                                                                                                }
+                                                                                                                                                                                                                                                                                                                                }
+
+                                                                                                                                                                                                                                                                                                                                // ===============================
+                                                                                                                                                                                                                                                                                                                                // SIMPLE SCROLL FADE-IN EFFECT
+                                                                                                                                                                                                                                                                                                                                // ===============================
+                                                                                                                                                                                                                                                                                                                                window.addEventListener("scroll", () => {
+                                                                                                                                                                                                                                                                                                                                  document.querySelectorAll(".fade-in").forEach((el) => {
+                                                                                                                                                                                                                                                                                                                                      const rect = el.getBoundingClientRect();
+                                                                                                                                                                                                                                                                                                                                          if (rect.top < window.innerHeight - 100) {
+                                                                                                                                                                                                                                                                                                                                                el.classList.add("visible");
+                                                                                                                                                                                                                                                                                                                                                    }
+                                                                                                                                                                                                                                                                                                                                                      });
+                                                                                                                                                                                                                                                                                                                                                      });
