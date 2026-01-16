@@ -1,16 +1,29 @@
 {
-  "name": "slc-alex",
-  "version": "1.0.0",
-  "description": "ALEX Real Estate Stress Test backend service",
-  "main": "service.js",
-  "type": "module",
-  "scripts": {
-    "start": "node service.js"
-  },
-  "dependencies": {
-    "cors": "^2.8.5",
-    "dotenv": "^16.6.1",
-    "express": "^4.22.1",
-    "node-fetch": "^3.3.2"
-  }
+      "name": "slc-alex",
+        "version": "1.0.0",
+          "description": "SLC-ALEX Property Analyzer backend and frontend integration",
+            "main": "service.js",
+              "type": "module",
+                "scripts": {
+                    "start": "node service.js",
+                        "dev": "nodemon service.js"
+                          },
+                            "author": "Silver Lining Consulting LLC",
+                              "license": "MIT",
+                                "dependencies": {
+                                    "cors": "^2.8.5",
+                                        "express": "^4.19.2"
+                                          },
+                                            "devDependencies": {
+                                                "nodemon": "^3.1.0"
+                                                  },
+                                                    "keywords": [
+                                                        "SLC",
+                                                            "ALEX",
+                                                                "Property Analyzer",
+                                                                    "Real Estate",
+                                                                        "Node.js",
+                                                                            "Express"
+                                                                              ]
+                                                                              }
 }
