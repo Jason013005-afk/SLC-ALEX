@@ -1,0 +1,29 @@
+{
+  "name": "slc-alex",
+  "version": "1.0.0",
+  "description": "SLC-ALEX backend server for property analysis and contact API",
+  "main": "services.cjs",
+  "scripts": {
+    "start": "node services.cjs",
+    "dev": "nodemon services.cjs"
+  },
+  "author": "Silver Line Capital",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  },
+  "keywords": [
+    "SLC",
+    "ALEX",
+    "Property Analyzer",
+    "Real Estate",
+    "Node.js",
+    "Express",
+    "API",
+    "Backend"
+  ]
+}
