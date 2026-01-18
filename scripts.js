@@ -1,39 +1,61 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const form = document.getElementById("stressForm");
-  const resultBox = document.getElementById("result");
+console.log("✅ ALEX frontend loaded successfully");
 
-  form?.addEventListener("submit", async (e) => {
+// Backend API endpoint
+const backendUrl = "http://localhost:4000/api/stress";
+console.log("Using backend:", backendUrl);
+
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.querySelector("form");
+  const addressInput = document.getElementById("propertyAddress");
+  const rateInput = document.getElementById("interestRate");
+  const runButton = document.getElementById("runButton");
+  const resultBox = document.getElementById("results");
+
+  if (!form || !addressInput || !rateInput || !runButton || !resultBox) {
+    console.error("❌ Missing elements in system.html — check IDs.");
+    return;
+  }
+
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const address = document.getElementById("address").value.trim();
-    const rate = parseFloat(document.getElementById("rate").value.trim());
+
+    const address = addressInput.value.trim();
+    const rate = parseFloat(rateInput.value.trim());
 
     if (!address || isNaN(rate)) {
-      resultBox.innerHTML = `<p style="color:red;">Please enter valid details.</p>`;
+      alert("Please enter a valid address and interest rate.");
       return;
     }
 
-    resultBox.innerHTML = `<p style="color:yellow;">Processing...</p>`;
+    runButton.disabled = true;
+    runButton.textContent = "Running...";
+    resultBox.innerHTML = "<p>Running analysis...</p>";
 
     try {
-      const response = await fetch(`http://localhost:4000/api/property?address=${encodeURIComponent(address)}&rate=${rate}`);
-      if (!response.ok) throw new Error("Server error");
+      const res = await fetch(backendUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address, rate }),
+      });
 
-      const data = await response.json();
+      if (!res.ok) throw new Error(`Backend returned ${res.status}`);
+
+      const data = await res.json();
+      console.log("✅ Got response from backend:", data);
 
       resultBox.innerHTML = `
-        <h3>Stress Test Result</h3>
-        <p><strong>Address:</strong> ${data.address}</p>
-        <p><strong>Estimated Value:</strong> $${data.estimatedValue.toLocaleString()}</p>
-        <p><strong>Taxes:</strong> $${data.taxes.toLocaleString()}</p>
-        <p><strong>Beds/Baths:</strong> ${data.beds}/${data.baths}</p>
-        <p><strong>Recommendation:</strong> ${data.recommendation}</p>
-        <hr>
-        <p><strong>Interest Rate:</strong> ${rate}%</p>
-        <p><strong>Risk Level:</strong> ${data.risk}</p>
+        <h3>Results</h3>
+        <p><strong>Address:</strong> ${data.address || address}</p>
+        <p><strong>Estimated Value:</strong> $${data.estimatedValue?.toLocaleString() || "N/A"}</p>
+        <p><strong>Rent Estimate:</strong> $${data.estimatedRent?.toLocaleString() || "N/A"}</p>
+        <p><strong>Risk Score:</strong> ${data.riskScore || "N/A"}</p>
       `;
     } catch (err) {
-      console.error(err);
-      resultBox.innerHTML = `<p style="color:red;">Error: Failed to fetch data. Check backend connection.</p>`;
+      console.error("❌ Error:", err);
+      resultBox.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
+    } finally {
+      runButton.disabled = false;
+      runButton.textContent = "Run Stress Test";
     }
   });
 });

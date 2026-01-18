@@ -1,45 +1,53 @@
-import express from "express";
-import fetch from "node-fetch";
-import cors from "cors";
+import express from 'express';
+import fetch from 'node-fetch';
+import dotenv from 'dotenv';
+dotenv.config();
 
 const app = express();
-app.use(cors());
-const PORT = 4000;
+app.use(express.json());
 
-// Public property lookup (demo endpoint)
-app.get("/api/property", async (req, res) => {
-  const address = req.query.address;
-  if (!address) return res.status(400).json({ error: "Address required" });
+const rentcastBase = 'https://api.rentcast.io/v1';
+const headers = { 'accept': 'application/json', 'X-Api-Key': process.env.RENTCAST_KEY };
 
-  const url = `https://realtor.p.rapidapi.com/properties/v2/list-for-sale?city=Fall%20River&limit=1&offset=0&state_code=MA&sort=relevance`;
-
+// POST /api/stress
+app.post('/api/stress', async (req, res) => {
   try {
-    const response = await fetch(url, {
-      method: "GET",
-      headers: {
-        "X-RapidAPI-Key": "demo-key",
-        "X-RapidAPI-Host": "realtor.p.rapidapi.com",
-      },
-    });
+    const { address, interestRate } = req.body;
 
-    const data = await response.json();
+    // 1️⃣  Pull property & rent estimates
+    const valueRes = await fetch(`${rentcastBase}/avm/value?address=${encodeURIComponent(address)}`, { headers });
+    const rentRes = await fetch(`${rentcastBase}/rent/estimate?address=${encodeURIComponent(address)}`, { headers });
 
+    const valueData = await valueRes.json();
+    const rentData = await rentRes.json();
+
+    // 2️⃣  Compute some internal metrics
+    const estimatedValue = valueData.avmValue || valueData.price || 0;
+    const rentValue = rentData.rentEstimate || 0;
+    const roi = ((rentValue * 12) / estimatedValue) * 100;
+    const mao = estimatedValue * 0.7;
+    const appreciation5yr = estimatedValue * 1.15;
+    const riskIndex = Math.max(1, 10 - (roi / 2));
+
+    // 3️⃣  Send data back
     res.json({
-      address: address,
-      estimatedValue: data?.properties?.[0]?.price ?? 350000,
-      taxes: 4800,
-      beds: data?.properties?.[0]?.beds ?? 3,
-      baths: data?.properties?.[0]?.baths_full ?? 2,
-      recommendation:
-        (data?.properties?.[0]?.price ?? 350000) > 500000
-          ? "High-end — proceed with due diligence"
-          : "Moderate investment — review terms carefully",
+      address,
+      estimatedValue,
+      rentValue,
+      roi: roi.toFixed(2),
+      mao,
+      appreciation5yr,
+      riskIndex,
+      sourceStatus: {
+        rentcast: valueRes.ok && rentRes.ok,
+        fallback: !valueRes.ok || !rentRes.ok
+      }
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('API /stress error:', err.message);
+    res.status(500).json({ error: 'Failed to fetch data', details: err.message });
   }
 });
 
-app.listen(PORT, () =>
-  console.log(`✅ Proxy running at http://localhost:${PORT}`)
-);
+// keep this at the end
+app.listen(4000, () => console.log('✅ Backend running on http://localhost:4000'));

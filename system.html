@@ -1,42 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ALEX™ Real Estate Stress Test</title>
-  <link rel="stylesheet" href="styles.css">
-  <script defer src="scripts.js"></script>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <header>
-    <img src="images/slc-logo.png" alt="Silver Lining Consulting LLC Logo">
-    <nav>
+  <div class="navbar">
+    <div class="logo">ALEX™</div>
+    <div class="nav-links">
       <a href="index.html">Home</a>
-      <a href="system.html">The System</a>
+      <a href="system.html" class="active">The System</a>
       <a href="price.html">Pricing</a>
       <a href="contact.html">Contact</a>
-    </nav>
-  </header>
+    </div>
+  </div>
 
-  <main>
-    <h2>ALEX™ Real Estate Stress Test</h2>
-    <p>Run an intelligent analysis to evaluate your real estate investment risk.</p>
+  <div class="container">
+    <div class="overlay-box">
+      <h1>ALEX™ Real Estate Stress Test</h1>
+      <p>Run an intelligent analysis to evaluate your real estate investment risk.</p>
 
-    <form id="stressForm">
-      <label>Property Address</label>
-      <input type="text" id="address" placeholder="Enter property address" required>
+      <label for="address">Property Address</label>
+      <input id="address" type="text" placeholder="Enter full property address" />
 
-      <label>Interest Rate (%)</label>
-      <input type="number" id="rate" step="0.1" placeholder="Enter interest rate" required>
+      <label for="rate">Interest Rate (%)</label>
+      <input id="rate" type="number" step="0.1" placeholder="Enter rate, e.g. 6.5" />
 
-      <button type="submit">Run Stress Test</button>
-    </form>
+      <button id="runBtn">Run Stress Test</button>
 
-    <div id="result" class="result-box"></div>
-  </main>
+      <div id="loading" style="display:none; color:gold; margin-top:15px;">⏳ Running analysis...</div>
+      <div id="result" style="margin-top:20px; color:white; font-size:1rem;"></div>
+      <div id="error" style="margin-top:20px; color:red;"></div>
+    </div>
+  </div>
 
   <footer>
     © 2026 Silver Lining Consulting LLC | ALEX™ Decision Infrastructure
   </footer>
+
+  <script src="scripts.js"></script>
 </body>
 </html>
