@@ -9,7 +9,8 @@
                       "dependencies": {
                           "express": "^4.19.2",
                               "cors": "^2.8.5",
-                                  "concurrently": "^8.2.2"
-                                    }
-                                    }
+                                  "concurrently": "^8.2.2",
+                                      "serve": "^14.2.0"
+                                        }
+                                        }
 }
