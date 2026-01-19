@@ -5,39 +5,60 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ALEX™ Real Estate Stress Test</title>
   <link rel="stylesheet" href="styles.css">
+  <script defer src="scripts.js"></script>
 </head>
 <body>
-  <nav class="navbar">
-    <div class="nav-left">
-      <a href="index.html"><img src="images/slc-logo.png" alt="Silver Lining Consulting LLC" class="nav-logo"></a>
-    </div>
-    <div class="nav-right">
-      <a href="index.html">Home</a>
-      <a href="system.html" class="active">The System</a>
-      <a href="price.html">Pricing</a>
-      <a href="contact.html">Contact</a>
-    </div>
-  </nav>
 
-  <section class="section">
+  <!-- Site Header -->
+  <header class="site-header">
+    <div class="header-container">
+      <div class="header-left">
+        <a href="index.html">
+          <img src="images/slc-logo.png" alt="Silver Lining Consulting LLC" class="nav-logo">
+        </a>
+      </div>
+      <div class="header-right">
+        <nav>
+          <a href="index.html">Home</a>
+          <a href="system.html">The System</a>
+          <a href="price.html">Pricing</a>
+          <a href="contact.html">Contact</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main>
     <h1>ALEX™ Real Estate Stress Test</h1>
     <p>Run an intelligent analysis to evaluate your real estate investment risk and opportunity.</p>
 
     <form id="stressForm">
-      <label for="address">Property Address</label>
       <input type="text" id="address" placeholder="Enter full address" required>
-
-      <label for="rate">Interest Rate (%)</label>
-      <input type="number" id="rate" step="0.1" placeholder="Enter interest rate" required>
-
+      <input type="number" id="rate" step="0.1" placeholder="Enter interest rate (%)" required>
       <button type="submit">Run Stress Test</button>
     </form>
 
-    <div id="results" class="results-box"></div>
-  </section>
+    <div id="results"></div>
+  </main>
 
-  <footer>© 2026 Silver Lining Consulting LLC | ALEX™ Decision Infrastructure</footer>
+  <footer>
+    © 2026 Silver Lining Consulting LLC | ALEX™ Decision Infrastructure
+  </footer>
 
-  <script src="scripts.js"></script>
+  <script>
+    document.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', e => {
+        const href = link.getAttribute('href');
+        if (href && !href.startsWith('#')) {
+          e.preventDefault();
+          document.body.classList.add('fade-out');
+          setTimeout(() => {
+            window.location.href = href;
+          }, 400);
+        }
+      });
+    });
+  </script>
+
 </body>
 </html>

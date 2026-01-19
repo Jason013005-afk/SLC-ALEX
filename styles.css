@@ -1,8 +1,6 @@
 /* ==============================
-   ALEX™ Global Styles
+   Global Layout
    ============================== */
-
-/* Reset & Body */
 * {
   margin: 0;
   padding: 0;
@@ -11,88 +9,77 @@
 
 body {
   font-family: 'Poppins', sans-serif;
-  color: #222;
   background: url('images/hero-bg.png') no-repeat center center fixed;
   background-size: cover;
+  color: #d4af37;
   line-height: 1.6;
+  opacity: 0;
+  animation: fadeIn 1.2s ease-in forwards;
 }
 
 /* ==============================
-   Navigation Bar
+   Header Banner
    ============================== */
-header {
-  background: rgba(255, 255, 255, 0.85);
+.site-header {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.8);
   backdrop-filter: blur(6px);
-  padding: 10px 40px;
+  border-bottom: 1px solid #d4af37;
   position: sticky;
   top: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   z-index: 1000;
-  border-bottom: 1px solid #d9d9d9;
+  animation: fadeIn 1s ease-in-out;
 }
 
-/* Logo */
-.nav-left a {
+.header-container {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  text-decoration: none;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 10px 40px;
 }
 
-.nav-logo {
-  width: 288px; /* ~3 inches on screen */
+.header-left img.nav-logo {
+  width: 288px;
   height: auto;
   display: block;
 }
 
-@media (max-width: 600px) {
-  .nav-logo {
-    width: 180px;
-  }
-}
-
-/* Navigation Links */
-.nav-links a {
-  color: #222;
+.header-right nav a {
+  color: #d4af37;
   text-decoration: none;
-  margin-left: 25px;
   font-weight: 600;
+  margin-left: 25px;
   transition: color 0.3s ease;
 }
 
-.nav-links a:hover {
-  color: #d4af37; /* Gold */
+.header-right nav a:hover {
+  color: #fff;
 }
 
 /* ==============================
-   Main Content Wrapper
+   Main Content
    ============================== */
 main {
   max-width: 900px;
-  background: rgba(255, 255, 255, 0.88);
+  background: rgba(0, 0, 0, 0.6);
+  color: #f8f8f8;
   margin: 60px auto;
   padding: 40px;
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  animation: fadeIn 1.2s ease-in;
 }
 
-/* ==============================
-   Headings
-   ============================== */
 h1, h2, h3 {
   text-align: center;
-  color: #222;
+  color: #d4af37;
   margin-bottom: 20px;
 }
 
-h1 span,
-h2 span {
-  color: #d4af37;
-}
-
 /* ==============================
-   Stress Test Form
+   Forms + Buttons
    ============================== */
 form {
   display: flex;
@@ -102,88 +89,85 @@ form {
   margin: 0 auto;
 }
 
-input[type="text"],
-input[type="number"],
-textarea {
+input, textarea {
   padding: 12px;
-  border: 1px solid #ccc;
+  border: 1px solid #d4af37;
   border-radius: 6px;
   font-size: 1rem;
-  width: 100%;
+  background: rgba(255, 255, 255, 0.95);
+  color: #000;
 }
 
-button {
-  background-color: #ffcc00;
+button, .button-link {
+  background-color: #d4af37;
   color: #000;
   border: none;
   border-radius: 6px;
-  padding: 14px;
+  padding: 14px 20px;
   font-size: 1rem;
   cursor: pointer;
   font-weight: 600;
   transition: background-color 0.3s ease, transform 0.2s ease;
+  text-decoration: none;
+  display: inline-block;
 }
 
-button:hover {
-  background-color: #d4af37;
+button:hover, .button-link:hover {
+  background-color: #ffd700;
   transform: scale(1.03);
 }
 
 /* ==============================
-   Results Section
+   Results
    ============================== */
 #results {
   margin-top: 30px;
   padding: 25px;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
-  text-align: left;
-}
-
-#results h3 {
-  color: #d4af37;
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-#results p {
-  margin: 8px 0;
-  font-size: 1rem;
-}
-
-#results strong {
-  color: #000;
+  background: rgba(0, 0, 0, 0.75);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
 }
 
 /* ==============================
    Footer
    ============================== */
 footer {
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(0, 0, 0, 0.8);
   text-align: center;
   padding: 20px 0;
-  color: #555;
+  color: #d4af37;
   font-size: 0.9rem;
-  border-top: 1px solid #d9d9d9;
+  border-top: 1px solid #d4af37;
   position: relative;
   bottom: 0;
   width: 100%;
 }
 
 /* ==============================
-   Responsive Adjustments
+   Animations
+   ============================== */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.fade-out {
+  opacity: 0;
+  transition: opacity 0.8s ease-in-out;
+}
+
+/* ==============================
+   Responsive
    ============================== */
 @media (max-width: 768px) {
-  header {
+  .header-container {
     flex-direction: column;
     text-align: center;
   }
-
-  .nav-links {
-    margin-top: 10px;
+  .header-right nav a {
+    display: inline-block;
+    margin: 10px;
   }
-
   main {
     margin: 40px 20px;
     padding: 30px;
