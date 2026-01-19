@@ -1,135 +1,119 @@
-/* === Global Reset === */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: 'Arial', sans-serif;
-}
-
-/* === Page Background === */
-body {
-  background: url('images/hero-bg.png') no-repeat center center fixed;
-  background-size: cover;
-  color: #fff;
-  min-height: 100vh;
+/* NAVIGATION */
+.navbar {
   display: flex;
-  flex-direction: column;
-}
-
-/* === Header === */
-header {
-  background: rgba(51, 51, 51, 0.95);
-  display: flex;
-  align-items: center;
   justify-content: space-between;
-  padding: 12px 50px;
+  align-items: center;
+  padding: 15px 50px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-header img {
-  height: 50px;
+.navbar .logo {
+  font-size: 1.5em;
+  color: #ffcc00;
+  font-weight: 700;
+  letter-spacing: 1px;
 }
 
-nav a {
-  color: #FFD700;
+.navbar a {
+  margin: 0 12px;
   text-decoration: none;
-  margin-left: 25px;
-  font-weight: bold;
-  font-size: 1rem;
-  transition: color 0.3s ease;
+  color: #333;
+  font-weight: 500;
+  transition: 0.3s;
 }
 
-nav a:hover {
-  color: #fff;
+.navbar a:hover,
+.navbar .active {
+  color: #ffcc00;
 }
 
-/* === Main Content Box === */
-main {
-  background: rgba(50, 50, 50, 0.9);
-  border-radius: 10px;
-  max-width: 900px;
-  margin: 60px auto;
-  padding: 50px;
+/* MAIN SECTION */
+.main-section {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding-top: 60px;
+  background: url('images/kitchen.jpg') no-repeat center center fixed;
+  background-size: cover;
+}
+
+/* FORM BOX */
+.form-container {
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 12px;
+  padding: 40px;
+  width: 420px;
   text-align: center;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
 }
 
-/* === Buttons === */
-button,
-input[type="submit"] {
-  background-color: #FFD700;
-  color: black;
-  border: none;
-  border-radius: 5px;
-  padding: 10px 20px;
-  cursor: pointer;
-  font-weight: bold;
-  transition: background-color 0.3s ease;
+.form-container h1 {
+  color: #ffcc00;
+  font-size: 1.5em;
+  margin-bottom: 10px;
 }
 
-button:hover,
-input[type="submit"]:hover {
-  background-color: #ffef66;
-}
-
-/* === Form Inputs === */
-input,
-textarea {
-  width: 100%;
-  padding: 12px;
-  margin: 12px 0;
-  border: none;
-  border-radius: 5px;
-  font-size: 1rem;
-}
-
-/* === Headings & Text === */
-h1, h2, h3 {
-  color: #FFD700;
+.form-container p {
+  color: #333;
   margin-bottom: 20px;
 }
 
-p {
-  color: #fff;
+label {
+  display: block;
+  text-align: left;
+  font-weight: 600;
+  color: #333;
+  margin-top: 10px;
+}
+
+input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  margin-top: 5px;
   margin-bottom: 15px;
-  line-height: 1.6;
 }
 
-/* === Footer === */
-footer {
-  background: rgba(51, 51, 51, 0.95);
-  color: #ddd;
-  text-align: center;
-  padding: 15px;
-  font-size: 0.9rem;
-  margin-top: auto;
+button {
+  width: 100%;
+  background: #ffcc00;
+  color: #000;
+  border: none;
+  border-radius: 6px;
+  padding: 12px;
+  font-size: 1em;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.3s ease-in-out;
 }
 
-/* === System Page (Stress Test) === */
-#stressForm {
-  margin-bottom: 30px;
+button:hover {
+  background: #e6b800;
 }
 
-.result-box {
-  background: rgba(70, 70, 70, 0.8);
-  border-radius: 8px;
+/* RESULTS BOX */
+.results-box {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 10px;
   padding: 20px;
   margin-top: 20px;
-  color: #fff;
+  text-align: left;
+  color: #111;
+  font-size: 0.95em;
+  transition: all 0.3s ease-in-out;
 }
 
-/* === Responsive === */
-@media (max-width: 768px) {
-  header {
-    flex-direction: column;
-    text-align: center;
-  }
-
-  nav {
-    margin-top: 10px;
-  }
-
-  main {
-    width: 90%;
-    padding: 30px;
-  }
+/* FOOTER */
+footer {
+  text-align: center;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #333;
+  font-size: 0.9em;
+  position: fixed;
+  width: 100%;
+  bottom: 0;
 }

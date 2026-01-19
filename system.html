@@ -1,86 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ALEX™ Real Estate Stress Test</title>
-  <link rel="stylesheet" href="styles.css" />
-  <style>
-    body {
-      margin: 0;
-      font-family: 'Arial', sans-serif;
-      background: url('images/kitchen.jpg') center/cover no-repeat;
-      color: white;
-      text-align: center;
-    }
-
-    header {
-      background: rgba(0, 0, 0, 0.6);
-      padding: 20px;
-      font-weight: bold;
-      font-size: 22px;
-    }
-
-    .container {
-      background: rgba(0, 0, 0, 0.7);
-      width: 80%;
-      max-width: 600px;
-      margin: 100px auto;
-      padding: 40px;
-      border-radius: 10px;
-    }
-
-    input, button {
-      width: 90%;
-      padding: 12px;
-      margin: 10px 0;
-      border: none;
-      border-radius: 5px;
-      font-size: 16px;
-    }
-
-    input {
-      background-color: #fff;
-      color: #000;
-    }
-
-    button {
-      background-color: #ffcc00;
-      color: #000;
-      font-weight: bold;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-
-    button:hover {
-      background-color: #ffaa00;
-    }
-
-    #results {
-      margin-top: 20px;
-      background: rgba(255, 255, 255, 0.1);
-      padding: 15px;
-      border-radius: 8px;
-    }
-  </style>
+  <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
-  <header>ALEX™ Real Estate Stress Test</header>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-left">
+      <h2 class="logo">ALEX™</h2>
+    </div>
+    <div class="nav-right">
+      <a href="index.html">Home</a>
+      <a href="system.html" class="active">The System</a>
+      <a href="price.html">Pricing</a>
+      <a href="contact.html">Contact</a>
+    </div>
+  </nav>
 
-  <div class="container">
-    <h2>Run an intelligent analysis to evaluate your real estate investment risk.</h2>
+  <!-- Main Container -->
+  <section class="main-section">
+    <div class="form-container">
+      <h1>ALEX™ Real Estate Stress Test</h1>
+      <p>Run an intelligent analysis to evaluate your real estate investment risk and opportunity.</p>
 
-    <form id="stressForm">
-      <input id="propertyAddress" type="text" placeholder="Property Address" required />
-      <input id="interestRate" type="number" step="0.1" placeholder="Interest Rate (%)" required />
-      <button id="runButton" type="submit">Run Stress Test</button>
-    </form>
+      <!-- Stress Test Form -->
+      <form id="stressForm">
+        <label for="address">Property Address</label>
+        <input type="text" id="address" placeholder="Enter full address" required>
 
-    <div id="results"></div>
-  </div>
+        <label for="rate">Interest Rate (%)</label>
+        <input type="number" id="rate" step="0.1" placeholder="Enter interest rate" required>
 
-  <footer style="margin-top:50px; background:rgba(0,0,0,0.5); padding:10px;">
-    © 2026 Silver Lining Consulting LLC | ALEX™ Decision Infrastructure
+        <button type="submit">Run Stress Test</button>
+      </form>
+
+      <!-- Results Display -->
+      <div id="results" class="results-box"></div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <p>© 2026 Silver Lining Consulting LLC | ALEX™ Decision Infrastructure</p>
   </footer>
 
   <script src="scripts.js"></script>

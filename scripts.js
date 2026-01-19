@@ -1,61 +1,72 @@
-console.log("✅ ALEX frontend loaded successfully");
+// ======================================
+// ALEX™ Real Estate Stress Test - Frontend
+// ======================================
 
-// Backend API endpoint
-const backendUrl = "http://localhost:4000/api/stress";
-console.log("Using backend:", backendUrl);
+const backendUrl = "http://127.0.0.1:4000/api/stress";
 
 document.addEventListener("DOMContentLoaded", () => {
-  const form = document.querySelector("form");
-  const addressInput = document.getElementById("propertyAddress");
-  const rateInput = document.getElementById("interestRate");
-  const runButton = document.getElementById("runButton");
-  const resultBox = document.getElementById("results");
+  const form = document.getElementById("stressForm");
+  const resultsBox = document.getElementById("results");
 
-  if (!form || !addressInput || !rateInput || !runButton || !resultBox) {
-    console.error("❌ Missing elements in system.html — check IDs.");
+  if (!form) {
+    console.error("❌ stressForm not found in DOM");
     return;
   }
 
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
 
-    const address = addressInput.value.trim();
-    const rate = parseFloat(rateInput.value.trim());
+    const address = document.getElementById("address").value.trim();
+    const rate = parseFloat(document.getElementById("rate").value);
 
     if (!address || isNaN(rate)) {
-      alert("Please enter a valid address and interest rate.");
+      resultsBox.innerHTML = `<p style="color:red;">Please enter both a valid address and interest rate.</p>`;
       return;
     }
 
-    runButton.disabled = true;
-    runButton.textContent = "Running...";
-    resultBox.innerHTML = "<p>Running analysis...</p>";
+    resultsBox.innerHTML = `<p>⏳ Running intelligent stress analysis...</p>`;
 
     try {
-      const res = await fetch(backendUrl, {
+      const response = await fetch(backendUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ address, rate }),
       });
 
-      if (!res.ok) throw new Error(`Backend returned ${res.status}`);
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
 
-      const data = await res.json();
-      console.log("✅ Got response from backend:", data);
+      const data = await response.json();
 
-      resultBox.innerHTML = `
+      if (data.error) {
+        resultsBox.innerHTML = `<p style="color:red;">${data.error}</p>`;
+        return;
+      }
+
+      // Generate derived metrics
+      const estimatedValue = Number(data.estimatedValue) || 0;
+      const estimatedRent = Number(data.estimatedRent) || 0;
+      const arv = estimatedValue * 1.05;
+      const flipPrice = estimatedValue * 0.85;
+      const wholesalePrice = estimatedValue * 0.70;
+
+      // Render results cleanly
+      resultsBox.innerHTML = `
         <h3>Results</h3>
-        <p><strong>Address:</strong> ${data.address || address}</p>
-        <p><strong>Estimated Value:</strong> $${data.estimatedValue?.toLocaleString() || "N/A"}</p>
-        <p><strong>Rent Estimate:</strong> $${data.estimatedRent?.toLocaleString() || "N/A"}</p>
-        <p><strong>Risk Score:</strong> ${data.riskScore || "N/A"}</p>
+        <p><strong>Address:</strong> ${data.address}</p>
+        <p><strong>Estimated Value:</strong> $${estimatedValue.toLocaleString()}</p>
+        <p><strong>After Repair Value (ARV):</strong> $${arv.toLocaleString()}</p>
+        <p><strong>Wholesale Price (70% Rule):</strong> $${wholesalePrice.toLocaleString()}</p>
+        <p><strong>Best Flip Purchase Price (85%):</strong> $${flipPrice.toLocaleString()}</p>
+        <p><strong>Rent Estimate:</strong> $${estimatedRent.toLocaleString()}</p>
+        <p><strong>Risk Score:</strong> ${data.riskScore}</p>
+        <p><em>${data.message}</em></p>
       `;
+
     } catch (err) {
-      console.error("❌ Error:", err);
-      resultBox.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
-    } finally {
-      runButton.disabled = false;
-      runButton.textContent = "Run Stress Test";
+      console.error("Error:", err);
+      resultsBox.innerHTML = `<p style="color:red;">⚠️ Error: ${err.message}</p>`;
     }
   });
 });
