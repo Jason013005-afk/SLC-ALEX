@@ -1,110 +1,191 @@
-/* ===== GLOBAL ===== */
-body {
+/* ==============================
+   ALEX™ Global Styles
+   ============================== */
+
+/* Reset & Body */
+* {
   margin: 0;
-  font-family: 'Poppins', sans-serif;
-  background: url('images/kitchen.jpg') no-repeat center center fixed;
-  background-size: cover;
-  color: #222;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-/* ===== NAVBAR ===== */
-.navbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px 50px;
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+body {
+  font-family: 'Poppins', sans-serif;
+  color: #222;
+  background: url('images/hero-bg.png') no-repeat center center fixed;
+  background-size: cover;
+  line-height: 1.6;
+}
+
+/* ==============================
+   Navigation Bar
+   ============================== */
+header {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(6px);
+  padding: 10px 40px;
   position: sticky;
   top: 0;
-  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 1000;
+  border-bottom: 1px solid #d9d9d9;
 }
 
-/* ===== LOGO ===== */
-.nav-logo {
-  height: auto;
-  width: 280px;
-  display: block;
-}
-
+/* Logo */
 .nav-left a {
   display: flex;
   align-items: center;
   text-decoration: none;
 }
 
-/* ===== LINKS ===== */
-.navbar a {
-  margin: 0 12px;
+.nav-logo {
+  width: 288px; /* ~3 inches on screen */
+  height: auto;
+  display: block;
+}
+
+@media (max-width: 600px) {
+  .nav-logo {
+    width: 180px;
+  }
+}
+
+/* Navigation Links */
+.nav-links a {
+  color: #222;
   text-decoration: none;
-  color: #333;
-  font-weight: 500;
-  transition: 0.3s;
+  margin-left: 25px;
+  font-weight: 600;
+  transition: color 0.3s ease;
 }
 
-.navbar a:hover,
-.navbar .active {
-  color: #ffcc00;
+.nav-links a:hover {
+  color: #d4af37; /* Gold */
 }
 
-/* ===== MAIN SECTIONS ===== */
-.section {
+/* ==============================
+   Main Content Wrapper
+   ============================== */
+main {
+  max-width: 900px;
+  background: rgba(255, 255, 255, 0.88);
+  margin: 60px auto;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* ==============================
+   Headings
+   ============================== */
+h1, h2, h3 {
+  text-align: center;
+  color: #222;
+  margin-bottom: 20px;
+}
+
+h1 span,
+h2 span {
+  color: #d4af37;
+}
+
+/* ==============================
+   Stress Test Form
+   ============================== */
+form {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 80vh;
-  text-align: center;
-  padding: 60px 20px;
-  background: rgba(255, 255, 255, 0.9);
-  margin: 40px auto;
-  border-radius: 12px;
-  width: 80%;
-  max-width: 900px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  gap: 15px;
+  max-width: 500px;
+  margin: 0 auto;
 }
 
-/* ===== BUTTONS ===== */
-button, .cta-btn {
-  background: #ffcc00;
-  border: none;
-  color: #000;
-  padding: 12px 25px;
+input[type="text"],
+input[type="number"],
+textarea {
+  padding: 12px;
+  border: 1px solid #ccc;
   border-radius: 6px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: 0.3s;
-}
-
-button:hover, .cta-btn:hover {
-  background: #e6b800;
-}
-
-/* ===== RESULTS ===== */
-.results-box {
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 10px;
-  padding: 20px;
-  margin-top: 20px;
-  text-align: left;
-  color: #111;
-  font-size: 0.95em;
-}
-
-/* ===== FOOTER ===== */
-footer {
-  text-align: center;
-  padding: 20px;
-  background: rgba(255, 255, 255, 0.9);
-  color: #333;
-  font-size: 0.9em;
-  position: fixed;
+  font-size: 1rem;
   width: 100%;
-  bottom: 0;
 }
 
-/* ===== RESPONSIVE ===== */
-@media (max-width: 600px) {
-  .nav-logo { width: 180px; }
-  .section { width: 90%; padding: 40px 15px; }
+button {
+  background-color: #ffcc00;
+  color: #000;
+  border: none;
+  border-radius: 6px;
+  padding: 14px;
+  font-size: 1rem;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+button:hover {
+  background-color: #d4af37;
+  transform: scale(1.03);
+}
+
+/* ==============================
+   Results Section
+   ============================== */
+#results {
+  margin-top: 30px;
+  padding: 25px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+  text-align: left;
+}
+
+#results h3 {
+  color: #d4af37;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+#results p {
+  margin: 8px 0;
+  font-size: 1rem;
+}
+
+#results strong {
+  color: #000;
+}
+
+/* ==============================
+   Footer
+   ============================== */
+footer {
+  background: rgba(255, 255, 255, 0.9);
+  text-align: center;
+  padding: 20px 0;
+  color: #555;
+  font-size: 0.9rem;
+  border-top: 1px solid #d9d9d9;
+  position: relative;
+  bottom: 0;
+  width: 100%;
+}
+
+/* ==============================
+   Responsive Adjustments
+   ============================== */
+@media (max-width: 768px) {
+  header {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .nav-links {
+    margin-top: 10px;
+  }
+
+  main {
+    margin: 40px 20px;
+    padding: 30px;
+  }
 }
