@@ -1,72 +1,64 @@
-// ======================================
-// ALEX™ Real Estate Stress Test - Frontend
-// ======================================
+// ===============================
+// ALEX™ Stress Test Integration
+// ===============================
+const SUPABASE_URL = "https://doernvgjlswszteywylb.supabase.co";
+const SUPABASE_KEY = "YOUR_SUPABASE_ANON_KEY"; // replace this with your anon key
+const SUPABASE_TABLE = "stress_tests";
 
-const backendUrl = "http://127.0.0.1:4000/api/stress";
+// Initialize Supabase client
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-document.addEventListener("DOMContentLoaded", () => {
-  const form = document.getElementById("stressForm");
-  const resultsBox = document.getElementById("results");
+// Handle form submit
+document.getElementById("stressForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
 
-  if (!form) {
-    console.error("❌ stressForm not found in DOM");
+  const address = document.getElementById("address").value.trim();
+  const interestRate = parseFloat(document.getElementById("rate").value);
+
+  // Example quick placeholder logic until your backend formula is ready:
+  const estimatedValue = Math.floor(Math.random() * 500000) + 150000;
+  const rent = Math.floor(estimatedValue * 0.004);
+  const monthlyPayment = ((interestRate / 100 / 12) * estimatedValue) / (1 - Math.pow(1 + (interestRate / 100 / 12), -360));
+  const roi = ((rent * 12) / estimatedValue * 100).toFixed(2);
+  const appreciation5yr = (estimatedValue * 1.25).toFixed(2); // placeholder 25% growth
+  const source = "alex-intelligence";
+
+  // Save to Supabase
+  const { data, error } = await db
+    .from(SUPABASE_TABLE)
+    .insert([
+      {
+        address,
+        estimatedValue,
+        rent,
+        interestRate,
+        monthlyPayment,
+        roi,
+        appreciation5yr,
+        source
+      }
+    ])
+    .select();
+
+  if (error) {
+    console.error(error);
+    document.getElementById("results").innerHTML =
+      `<p style="color:red;">Error saving to database: ${error.message}</p>`;
     return;
   }
 
-  form.addEventListener("submit", async (event) => {
-    event.preventDefault();
-
-    const address = document.getElementById("address").value.trim();
-    const rate = parseFloat(document.getElementById("rate").value);
-
-    if (!address || isNaN(rate)) {
-      resultsBox.innerHTML = `<p style="color:red;">Please enter both a valid address and interest rate.</p>`;
-      return;
-    }
-
-    resultsBox.innerHTML = `<p>⏳ Running intelligent stress analysis...</p>`;
-
-    try {
-      const response = await fetch(backendUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ address, rate }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Server error: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (data.error) {
-        resultsBox.innerHTML = `<p style="color:red;">${data.error}</p>`;
-        return;
-      }
-
-      // Generate derived metrics
-      const estimatedValue = Number(data.estimatedValue) || 0;
-      const estimatedRent = Number(data.estimatedRent) || 0;
-      const arv = estimatedValue * 1.05;
-      const flipPrice = estimatedValue * 0.85;
-      const wholesalePrice = estimatedValue * 0.70;
-
-      // Render results cleanly
-      resultsBox.innerHTML = `
-        <h3>Results</h3>
-        <p><strong>Address:</strong> ${data.address}</p>
-        <p><strong>Estimated Value:</strong> $${estimatedValue.toLocaleString()}</p>
-        <p><strong>After Repair Value (ARV):</strong> $${arv.toLocaleString()}</p>
-        <p><strong>Wholesale Price (70% Rule):</strong> $${wholesalePrice.toLocaleString()}</p>
-        <p><strong>Best Flip Purchase Price (85%):</strong> $${flipPrice.toLocaleString()}</p>
-        <p><strong>Rent Estimate:</strong> $${estimatedRent.toLocaleString()}</p>
-        <p><strong>Risk Score:</strong> ${data.riskScore}</p>
-        <p><em>${data.message}</em></p>
-      `;
-
-    } catch (err) {
-      console.error("Error:", err);
-      resultsBox.innerHTML = `<p style="color:red;">⚠️ Error: ${err.message}</p>`;
-    }
-  });
+  // Display results dynamically
+  const result = data[0];
+  document.getElementById("results").innerHTML = `
+    <h3>Results</h3>
+    <p><strong>Address:</strong> ${result.address}</p>
+    <p><strong>Estimated Value:</strong> $${Number(result.estimatedValue).toLocaleString()}</p>
+    <p><strong>Rent Estimate:</strong> $${Number(result.rent).toLocaleString()}</p>
+    <p><strong>Interest Rate:</strong> ${result.interestRate}%</p>
+    <p><strong>Monthly Payment:</strong> $${Number(result.monthlyPayment).toLocaleString()}</p>
+    <p><strong>ROI:</strong> ${result.roi}%</p>
+    <p><strong>5-Year Appreciation:</strong> $${Number(result.appreciation5yr).toLocaleString()}</p>
+    <p><em>Saved to database successfully!</em></p>
+  `;
 });

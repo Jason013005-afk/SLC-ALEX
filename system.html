@@ -1,18 +1,65 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ALEX™ Real Estate Stress Test</title>
-  <link rel="stylesheet" href="styles.css">
-  <script defer src="scripts.js"></script>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body {
+      background: url('images/hero-bg.png') no-repeat center center fixed;
+      background-size: cover;
+      animation: fadeIn 0.5s ease-in;
+    }
+    @keyframes fadeIn { from {opacity: 0;} to {opacity: 1;} }
+
+    main {
+      max-width: 700px;
+      margin: 150px auto 80px auto;
+      padding: 30px;
+      background: rgba(0,0,0,0.6);
+      border-radius: 12px;
+      color: #f5c542;
+      text-align: center;
+    }
+    input, button {
+      width: 90%;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 6px;
+      border: none;
+      font-size: 1em;
+    }
+    input {
+      background: #fff;
+    }
+    button {
+      background: #f5c542;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #ffde72;
+    }
+    #results {
+      margin-top: 25px;
+      text-align: left;
+      color: #fff3d1;
+      background: rgba(0,0,0,0.5);
+      padding: 15px;
+      border-radius: 8px;
+    }
+  </style>
 </head>
+
 <body>
+  <!-- ======= HEADER ======= -->
   <header class="site-header">
     <div class="header-container">
       <div class="header-left">
         <a href="index.html">
-          <img src="images/slc-logo.png" alt="Silver Lining Consulting LLC" class="nav-logo">
+          <img src="images/slc-logo.png" alt="Silver Lining Consulting LLC" class="nav-logo" />
         </a>
       </div>
       <div class="header-right">
@@ -26,13 +73,14 @@
     </div>
   </header>
 
+  <!-- ======= MAIN CONTENT ======= -->
   <main>
     <h1>ALEX™ Real Estate Stress Test</h1>
     <p>Run an intelligent analysis to evaluate your real estate investment risk and opportunity.</p>
 
     <form id="stressForm">
-      <input type="text" id="address" placeholder="Enter full address" required>
-      <input type="number" id="rate" step="0.1" placeholder="Enter interest rate (%)" required>
+      <input type="text" id="address" placeholder="Enter full address" required />
+      <input type="number" id="rate" step="0.1" placeholder="Enter interest rate (%)" required />
       <button type="submit">Run Stress Test</button>
     </form>
 
@@ -43,16 +91,62 @@
     © 2026 Silver Lining Consulting LLC | ALEX™ Decision Infrastructure
   </footer>
 
+  <!-- ======= SUPABASE + SCRIPT ======= -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script>
+    // ======= CONFIG =======
+    const SUPABASE_URL = "https://doernvgjlswszteywylb.supabase.co";
+    const SUPABASE_KEY = "YOUR_SUPABASE_ANON_KEY"; // replace with your anon key
+    const SUPABASE_TABLE = "stress_tests";
+    const { createClient } = supabase;
+    const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // ======= FORM HANDLER =======
+    document.getElementById("stressForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const address = document.getElementById("address").value.trim();
+      const interestRate = parseFloat(document.getElementById("rate").value);
+
+      // Temporary calculation logic — replace later with API or real model
+      const estimatedValue = Math.floor(Math.random() * 400000) + 150000;
+      const rent = Math.floor(estimatedValue * 0.004);
+      const monthlyPayment = ((interestRate / 100 / 12) * estimatedValue) / (1 - Math.pow(1 + (interestRate / 100 / 12), -360));
+      const roi = ((rent * 12) / estimatedValue * 100).toFixed(2);
+      const appreciation5yr = (estimatedValue * 1.25).toFixed(2);
+      const source = "alex-intelligence";
+
+      const { data, error } = await db.from(SUPABASE_TABLE).insert([
+        { address, estimatedValue, rent, interestRate, monthlyPayment, roi, appreciation5yr, source }
+      ]).select();
+
+      if (error) {
+        console.error(error);
+        document.getElementById("results").innerHTML = `<p style="color:red;">Error saving to database: ${error.message}</p>`;
+        return;
+      }
+
+      const r = data[0];
+      document.getElementById("results").innerHTML = `
+        <h3>Results</h3>
+        <p><strong>Address:</strong> ${r.address}</p>
+        <p><strong>Estimated Value:</strong> $${Number(r.estimatedValue).toLocaleString()}</p>
+        <p><strong>Rent Estimate:</strong> $${Number(r.rent).toLocaleString()}</p>
+        <p><strong>Interest Rate:</strong> ${r.interestRate}%</p>
+        <p><strong>Monthly Payment:</strong> $${Number(r.monthlyPayment).toLocaleString()}</p>
+        <p><strong>ROI:</strong> ${r.roi}%</p>
+        <p><strong>5-Year Appreciation:</strong> $${Number(r.appreciation5yr).toLocaleString()}</p>
+        <p><em>Saved to Supabase successfully.</em></p>
+      `;
+    });
+
+    // ======= PAGE FADE TRANSITION =======
     document.querySelectorAll('a').forEach(link => {
       link.addEventListener('click', e => {
         const href = link.getAttribute('href');
         if (href && !href.startsWith('#')) {
           e.preventDefault();
           document.body.classList.add('fade-out');
-          setTimeout(() => {
-            window.location.href = href;
-          }, 400);
+          setTimeout(() => { window.location.href = href; }, 400);
         }
       });
     });
