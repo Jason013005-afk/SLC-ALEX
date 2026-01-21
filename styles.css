@@ -1,198 +1,78 @@
-/* ==============================
-   Global Layout
-   ============================== */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: 'Poppins', sans-serif;
-  background: url('images/hero-bg.png') no-repeat center center fixed;
-  background-size: cover;
-  color: #d4af37;
-  line-height: 1.6;
-  opacity: 0;
-  animation: fadeIn 1.2s ease-in forwards;
-  padding-top: 120px; /* ensures content doesn't hide under fixed header */
-}
-
-/* ==============================
-   Header Banner
-   ============================== */
+/* --- Header + Logo Fix --- */
 .site-header {
-  width: 100%;
-  background: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(6px);
-  border-bottom: 1px solid #d4af37;
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 2000;
-  animation: fadeIn 1s ease-in-out;
-}
-
-.header-container {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 10px 40px;
+  background: rgba(0, 0, 0, 0.85);
+  padding: 10px 30px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 10;
 }
 
-/* ===== Logo Fix ===== */
-.header-left {
+.logo-container {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
 }
 
-.nav-logo {
-  width: 288px;         /* about 3 inches visually */
-  height: auto;
-  display: block;
-  position: relative;
-  z-index: 2001;
-  image-rendering: -webkit-optimize-contrast;
-  mix-blend-mode: normal;
+.site-logo {
+  height: 60px;       /* ⬅️ adjust this if you want it smaller/larger */
+  width: auto;
+  object-fit: contain;
 }
 
-/* ===== Nav Links ===== */
-.header-right nav a {
-  color: #d4af37;
-  text-decoration: none;
+/* Keep nav clean on right */
+.nav-links a {
+  color: gold;
   font-weight: 600;
+  text-decoration: none;
   margin-left: 25px;
   transition: color 0.3s ease;
 }
 
-.header-right nav a:hover {
-  color: #fff;
+.nav-links a:hover,
+.nav-links a.active {
+  color: white;
 }
 
-/* ==============================
-   Main Content
-   ============================== */
+/* Push page content below fixed header */
 main {
-  max-width: 900px;
-  background: rgba(0, 0, 0, 0.6);
-  color: #f8f8f8;
-  margin: 60px auto;
-  padding: 40px;
+  margin-top: 120px;
+  background: rgba(0, 0, 0, 0.65);
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 30px;
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-  animation: fadeIn 1.2s ease-in;
+  color: gold;
 }
 
-h1, h2, h3 {
-  text-align: center;
-  color: #d4af37;
-  margin-bottom: 20px;
-}
-
-/* ==============================
-   Forms + Buttons
-   ============================== */
-form {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  max-width: 500px;
-  margin: 0 auto;
-}
-
-input, textarea {
-  padding: 12px;
-  border: 1px solid #d4af37;
-  border-radius: 6px;
-  font-size: 1rem;
-  background: rgba(255, 255, 255, 0.95);
-  color: #000;
-}
-
-button, .button-link {
-  background-color: #d4af37;
-  color: #000;
-  border: none;
-  border-radius: 6px;
-  padding: 14px 20px;
-  font-size: 1rem;
-  cursor: pointer;
-  font-weight: 600;
-  transition: background-color 0.3s ease, transform 0.2s ease;
-  text-decoration: none;
-  display: inline-block;
-}
-
-button:hover, .button-link:hover {
-  background-color: #ffd700;
-  transform: scale(1.03);
-}
-
-/* ==============================
-   Results
-   ============================== */
-#results {
-  margin-top: 30px;
-  padding: 25px;
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.75);
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
-}
-
-/* ==============================
-   Footer
-   ============================== */
-footer {
-  background: rgba(0, 0, 0, 0.8);
-  text-align: center;
-  padding: 20px 0;
-  color: #d4af37;
-  font-size: 0.9rem;
-  border-top: 1px solid #d4af37;
-  position: relative;
-  bottom: 0;
+/* Input + button styling for system form */
+form input,
+form button {
   width: 100%;
+  padding: 12px;
+  margin-bottom: 10px;
+  border-radius: 6px;
+  border: none;
+  font-size: 1rem;
 }
 
-/* ==============================
-   Animations
-   ============================== */
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+form button {
+  background-color: gold;
+  color: black;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
-.fade-out {
-  opacity: 0;
-  transition: opacity 0.8s ease-in-out;
+form button:hover {
+  background-color: #d4af37;
 }
 
-/* ==============================
-   Responsive
-   ============================== */
-@media (max-width: 768px) {
-  .header-container {
-    flex-direction: column;
-    text-align: center;
-  }
-
-  .header-right nav a {
-    display: inline-block;
-    margin: 10px;
-  }
-
-  main {
-    margin: 40px 20px;
-    padding: 30px;
-  }
-
-  .nav-logo {
-    width: 180px;
-  }
-}
+/* Footer stays at bottom */
 body {
   display: flex;
   flex-direction: column;
