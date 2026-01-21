@@ -193,3 +193,20 @@ footer {
     width: 180px;
   }
 }
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+main {
+  flex: 1;
+}
+
+footer {
+  background: rgba(0, 0, 0, 0.85);
+  color: gold;
+  text-align: center;
+  padding: 10px;
+  font-size: 0.9rem;
+}
