@@ -15,6 +15,7 @@ body {
   line-height: 1.6;
   opacity: 0;
   animation: fadeIn 1.2s ease-in forwards;
+  padding-top: 120px; /* ensures content doesn't hide under fixed header */
 }
 
 /* ==============================
@@ -22,12 +23,13 @@ body {
    ============================== */
 .site-header {
   width: 100%;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(6px);
   border-bottom: 1px solid #d4af37;
-  position: sticky;
+  position: fixed;
   top: 0;
-  z-index: 1000;
+  left: 0;
+  z-index: 2000;
   animation: fadeIn 1s ease-in-out;
 }
 
@@ -40,12 +42,24 @@ body {
   padding: 10px 40px;
 }
 
-.header-left img.nav-logo {
-  width: 288px;
-  height: auto;
-  display: block;
+/* ===== Logo Fix ===== */
+.header-left {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
 }
 
+.nav-logo {
+  width: 288px;         /* about 3 inches visually */
+  height: auto;
+  display: block;
+  position: relative;
+  z-index: 2001;
+  image-rendering: -webkit-optimize-contrast;
+  mix-blend-mode: normal;
+}
+
+/* ===== Nav Links ===== */
 .header-right nav a {
   color: #d4af37;
   text-decoration: none;
@@ -164,12 +178,18 @@ footer {
     flex-direction: column;
     text-align: center;
   }
+
   .header-right nav a {
     display: inline-block;
     margin: 10px;
   }
+
   main {
     margin: 40px 20px;
     padding: 30px;
+  }
+
+  .nav-logo {
+    width: 180px;
   }
 }
