@@ -1,61 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ALEX™ | Silver Lining Consulting</title>
-  <link rel="stylesheet" href="styles.css">
-</head>
-<body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ALEX™ | Silver Lining Consulting LLC</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
 
-  <!-- Site Header -->
-  <header class="site-header">
-    <div class="header-container">
-      <div class="header-left">
-        <a href="index.html">
-          <img src="images/slc-logo.png" alt="Silver Lining Consulting LLC" class="nav-logo">
-        </a>
+  <body>
+    <header class="site-header">
+      <div class="logo-container">
+        <img src="images/slc-logo.png" alt="SLC Logo" class="site-logo" />
       </div>
-      <div class="header-right">
-        <nav>
-          <a href="index.html">Home</a>
-          <a href="system.html">The System</a>
-          <a href="price.html">Pricing</a>
-          <a href="contact.html">Contact</a>
-        </nav>
+      <nav class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="system.html">The System</a>
+        <a href="price.html">Pricing</a>
+        <a href="contact.html">Contact</a>
+      </nav>
+    </header>
+
+    <main class="hero-section">
+      <div class="hero-content">
+        <h1>Turn Real Estate Decisions into Engineered Discipline</h1>
+        <p>
+          ALEX™ by Silver Lining Consulting LLC stress-tests your deals,
+          surfaces hidden risks, and empowers precision-based investment
+          decisions.
+        </p>
+        <a href="system.html" class="cta-button">Run a Stress Test</a>
       </div>
-    </div>
-  </header>
+    </main>
 
-  <main>
-    <h1>Turn Real Estate Decisions into Engineered Discipline</h1>
-    <p>
-      ALEX™ by Silver Lining Consulting LLC stress-tests your deals, surfaces hidden risks,
-      and empowers precision-based investment decisions.
-    </p>
-    <p style="text-align:center; margin-top:20px;">
-      <a href="system.html" class="button-link">Run a Stress Test</a>
-    </p>
-  </main>
+    <footer class="site-footer">
+      © 2026 Silver Lining Consulting LLC | ALEX™ Decision Infrastructure
+    </footer>
 
-  <footer>
-    © 2026 Silver Lining Consulting LLC | ALEX™ Decision Infrastructure
-  </footer>
-
-  <script>
-    document.querySelectorAll('a').forEach(link => {
-      link.addEventListener('click', e => {
-        const href = link.getAttribute('href');
-        if (href && !href.startsWith('#')) {
-          e.preventDefault();
-          document.body.classList.add('fade-out');
-          setTimeout(() => {
-            window.location.href = href;
-          }, 400);
-        }
+    <script>
+      // Smooth fade-out navigation effect
+      document.querySelectorAll("a").forEach((link) => {
+        link.addEventListener("click", (e) => {
+          const href = link.getAttribute("href");
+          if (href && !href.startsWith("#")) {
+            e.preventDefault();
+            document.body.classList.add("fade-out");
+            setTimeout(() => {
+              window.location.href = href;
+            }, 400); // Match CSS transition
+          }
+        });
       });
-    });
-  </script>
-
-</body>
+    </script>
+  </body>
 </html>
