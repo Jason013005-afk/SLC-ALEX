@@ -1,0 +1,40 @@
+.tool-wrapper {
+  max-width: 900px;
+  margin: 80px auto;
+}
+
+.card {
+  background: #1c1c1c;
+  padding: 30px;
+  border-radius: 12px;
+}
+
+input {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 20px;
+}
+
+button {
+  width: 100%;
+  padding: 14px;
+  background: gold;
+  border: none;
+  font-weight: bold;
+}
+
+.results {
+  margin-top: 40px;
+}
+
+.result-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.risk.low { background: #1e4620; }
+.risk.medium { background: #5c4b00; }
+.risk.high { background: #5c1e1e; }
+
+.hidden { display: none; }

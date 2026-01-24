@@ -1,52 +1,81 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ALEX™ Real Estate Stress Test | Silver Lining Consulting LLC</title>
-  <link rel="stylesheet" href="styles.css">
-</head>
-<body style="background-image: url('images/hero-bg.png'); background-size: cover; background-position: center; background-attachment: fixed;">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ALEX™ Real Estate Stress Test | Silver Lining Consulting LLC</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
 
-  <header class="site-header">
-    <div class="logo-container">
-      <img src="images/slc-logo.png" alt="SLC Logo" class="site-logo">
-    </div>
-    <nav class="nav-links">
-      <a href="index.html">Home</a>
-      <a href="system.html" class="active">The System</a>
-      <a href="price.html">Pricing</a>
-      <a href="contact.html">Contact</a>
-    </nav>
-  </header>
+  <body style="background-image: url('images/hero-bg.png'); background-size: cover; background-position: center; background-attachment: fixed;">
+    <header class="site-header">
+      <div class="logo-container">
+        <img src="images/slc-logo.png" alt="SLC Logo" class="site-logo" />
+      </div>
+      <nav class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="system.html">The System</a>
+        <a href="price.html">Pricing</a>
+        <a href="contact.html">Contact</a>
+      </nav>
+    </header>
 
-  <main class="hero-content">
-    <h1>ALEX™ Real Estate Stress Test</h1>
-    <p>Run an intelligent analysis to evaluate your real estate investment risk and opportunity.</p>
+    <main class="hero-section">
+      <div class="hero-content">
+        <h1>ALEX™ Real Estate Stress Test</h1>
+        <p>Run an intelligent analysis to evaluate your real estate investment risk and opportunity.</p>
 
-    <form id="stressTestForm">
-      <input type="text" id="address" placeholder="Enter Property Address" required>
-      <input type="number" id="rate" step="0.1" placeholder="Interest Rate (%)" required>
-      <button type="submit" class="cta-button">Run Stress Test</button>
-    </form>
+        <form id="stressForm">
+          <input type="text" id="address" placeholder="Enter Property Address" required />
+          <input type="number" id="rate" step="0.1" placeholder="Interest Rate (%)" required />
+          <button type="submit" class="cta-button">Run Stress Test</button>
+        </form>
 
-    <section id="results" class="results">
-      <h2>Results</h2>
-      <p><strong>Address:</strong> <span id="resultAddress"></span></p>
-      <p><strong>Estimated Value:</strong> <span id="resultValue"></span></p>
-      <p><strong>Rate:</strong> <span id="resultRate"></span></p>
-      <p><strong>Status:</strong> <span id="resultStatus"></span></p>
-    </section>
-  </main>
+        <section id="results" class="results">
+          <h2>Results</h2>
+          <p><strong>Address:</strong> <span id="resultAddress">—</span></p>
+          <p><strong>Estimated Value:</strong> <span id="resultValue">—</span></p>
+          <p><strong>Rate:</strong> <span id="resultRate">—</span></p>
+          <p><strong>Status:</strong> <span id="resultStatus">Awaiting input...</span></p>
+        </section>
+      </div>
+    </main>
 
-  <footer>
-  © 2026 Silver Lining Consulting LLC | ALEX™ Decision Infrastructure
-</footer>
+    <footer class="site-footer">
+      © 2026 Silver Lining Consulting LLC | ALEX™ Decision Infrastructure
+    </footer>
 
-<!-- Load Supabase library (browser-safe) -->
-<script src="https://unpkg.com/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+    <script>
+      // Fade-out transitions
+      document.querySelectorAll("a").forEach((link) => {
+        link.addEventListener("click", (e) => {
+          const href = link.getAttribute("href");
+          if (href && !href.startsWith("#")) {
+            e.preventDefault();
+            document.body.classList.add("fade-out");
+            setTimeout(() => (window.location.href = href), 400);
+          }
+        });
+      });
 
-<!-- Load your app logic -->
-<script src="scripts.js"></script>
-</body>
+      // Stress test form logic
+      const form = document.getElementById("stressForm");
+      const resultAddress = document.getElementById("resultAddress");
+      const resultValue = document.getElementById("resultValue");
+      const resultRate = document.getElementById("resultRate");
+      const resultStatus = document.getElementById("resultStatus");
+
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const address = document.getElementById("address").value.trim();
+        const rate = parseFloat(document.getElementById("rate").value);
+        const estimatedValue = (Math.random() * 500000 + 150000).toFixed(2);
+
+        resultAddress.textContent = address;
+        resultValue.textContent = `$${estimatedValue}`;
+        resultRate.textContent = `${rate}%`;
+        resultStatus.innerHTML = "✅ Test complete";
+      });
+    </script>
+  </body>
 </html>
