@@ -6,53 +6,40 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f6f6f6;
+      background: #f2f2f2;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
     }
     .card {
-      background: #fff;
+      background: white;
       padding: 24px;
-      border-radius: 8px;
       width: 320px;
+      border-radius: 8px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
     h2 {
       text-align: center;
-      margin-bottom: 16px;
     }
     input, select, button {
       width: 100%;
-      padding: 10px;
-      margin-bottom: 12px;
+      margin-top: 12px;
+      padding: 8px;
       font-size: 14px;
     }
-    button {
-      cursor: pointer;
-    }
-    .result {
-      margin-top: 12px;
+    #result {
+      margin-top: 16px;
       text-align: center;
       font-weight: bold;
-    }
-    .error {
-      color: #b00020;
     }
   </style>
 </head>
 <body>
-
   <div class="card">
     <h2>HUD SAFMR Lookup</h2>
 
-    <input
-      id="zip"
-      type="text"
-      placeholder="ZIP Code"
-      maxlength="5"
-    />
+    <input id="zip" placeholder="ZIP Code" />
 
     <select id="bedrooms">
       <option value="0">Studio</option>
@@ -64,48 +51,35 @@
 
     <button onclick="getRent()">Get Rent</button>
 
-    <div id="result" class="result"></div>
+    <div id="result"></div>
   </div>
 
   <script>
     async function getRent() {
       const zip = document.getElementById("zip").value.trim();
       const bedrooms = Number(document.getElementById("bedrooms").value);
+
       const result = document.getElementById("result");
-
-      result.textContent = "";
-      result.className = "result";
-
-      if (!zip || zip.length !== 5) {
-        result.textContent = "Enter a valid 5-digit ZIP";
-        result.classList.add("error");
-        return;
-      }
+      result.textContent = "Loading...";
 
       try {
         const res = await fetch("/api/rent", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ zip, bedrooms })
         });
 
         const data = await res.json();
 
-        if (!res.ok) {
-          result.textContent = data.error || "Error";
-          result.classList.add("error");
-          return;
+        if (data.error) {
+          result.textContent = data.error;
+        } else {
+          result.textContent = `$${data.rent.toLocaleString()} / month`;
         }
-
-        result.textContent = `Rent: $${data.rent}`;
       } catch (err) {
-        result.textContent = "Server not reachable";
-        result.classList.add("error");
+        result.textContent = "Request failed";
       }
     }
   </script>
-
 </body>
 </html>
