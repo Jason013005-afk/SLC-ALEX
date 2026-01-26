@@ -1,28 +1,29 @@
 import express from "express";
 import fs from "fs";
+import path from "path";
 import csv from "csv-parser";
 
 const app = express();
-app.use(express.json());
-
 const PORT = 8080;
-const CSV_PATH = "./fy2024_safmrs.clean.csv";
 
+/* ---------- MIDDLEWARE ---------- */
+app.use(express.json());
+app.use(express.static("public")); // 👈 THIS FIXES THE WEBSITE ISSUE
+
+/* ---------- DATA ---------- */
+const CSV_PATH = "./fy2024_safmrs.clean.csv";
 const hudData = [];
 
-/* ---------------- CSV LOAD ---------------- */
-
+/* ---------- LOAD CSV ---------- */
 function clean(v) {
-  if (v === undefined || v === null) return null;
-  const n = Number(String(v).replace(/[$,]/g, ""));
-  return Number.isNaN(n) ? null : n;
+  if (v === null || v === undefined || v === "") return null;
+  return Number(String(v).replace(/[$,]/g, ""));
 }
 
 function loadCSV() {
   fs.createReadStream(CSV_PATH)
     .pipe(csv({ headers: false }))
     .on("data", (row) => {
-      // Skip header row
       if (!row[0] || row[0].toLowerCase().includes("zip")) return;
 
       const zip = String(row[0]).padStart(5, "0");
@@ -30,7 +31,7 @@ function loadCSV() {
       hudData.push({
         zip,
         rents: {
-          0: clean(row[3]),   // OBR
+          0: clean(row[3]),   // Studio
           1: clean(row[6]),   // 1BR
           2: clean(row[9]),   // 2BR
           3: clean(row[12]),  // 3BR
@@ -45,8 +46,7 @@ function loadCSV() {
 
 loadCSV();
 
-/* ---------------- ROUTES ---------------- */
-
+/* ---------- ROUTES ---------- */
 app.get("/health", (req, res) => {
   res.json({ status: "ok", rows: hudData.length });
 });
@@ -54,7 +54,7 @@ app.get("/health", (req, res) => {
 app.post("/api/rent", (req, res) => {
   const { zip, bedrooms } = req.body;
 
-  if (zip === undefined || bedrooms === undefined) {
+  if (!zip || bedrooms === undefined) {
     return res.status(400).json({ error: "zip and bedrooms required" });
   }
 
@@ -67,8 +67,8 @@ app.post("/api/rent", (req, res) => {
 
   const rent = record.rents[bedrooms];
 
-  // ✅ THIS IS THE CRITICAL FIX
-  if (rent === null || Number.isNaN(rent)) {
+  // IMPORTANT: 0 is valid — only null/undefined is missing
+  if (rent === null || rent === undefined) {
     return res.status(404).json({
       error: "No rent for bedroom count",
       zip: z,
@@ -76,15 +76,10 @@ app.post("/api/rent", (req, res) => {
     });
   }
 
-  res.json({
-    zip: z,
-    bedrooms,
-    rent
-  });
+  res.json({ zip: z, bedrooms, rent });
 });
 
-/* ---------------- START SERVER ---------------- */
-
+/* ---------- START ---------- */
 app.listen(PORT, () => {
-  console.log(`✅ ALEX backend running on http://127.0.0.1:${PORT}`);
+  console.log(`✅ ALEX backend running at http://127.0.0.1:${PORT}`);
 });

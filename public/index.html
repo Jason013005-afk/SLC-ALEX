@@ -2,37 +2,110 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Silver Lining Consulting</title>
-  <link rel="stylesheet" href="styles.css" />
+  <title>HUD SAFMR Lookup</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f6f6f6;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .card {
+      background: #fff;
+      padding: 24px;
+      border-radius: 8px;
+      width: 320px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 12px;
+      font-size: 14px;
+    }
+    button {
+      cursor: pointer;
+    }
+    .result {
+      margin-top: 12px;
+      text-align: center;
+      font-weight: bold;
+    }
+    .error {
+      color: #b00020;
+    }
+  </style>
 </head>
 <body>
 
-  <div class="logo">
-    <img src="images/slc-logo.png" alt="Silver Lining Consulting">
+  <div class="card">
+    <h2>HUD SAFMR Lookup</h2>
+
+    <input
+      id="zip"
+      type="text"
+      placeholder="ZIP Code"
+      maxlength="5"
+    />
+
+    <select id="bedrooms">
+      <option value="0">Studio</option>
+      <option value="1">1 Bedroom</option>
+      <option value="2">2 Bedroom</option>
+      <option value="3">3 Bedroom</option>
+      <option value="4">4 Bedroom</option>
+    </select>
+
+    <button onclick="getRent()">Get Rent</button>
+
+    <div id="result" class="result"></div>
   </div>
 
-  <nav>
-    <a href="index.html">Home</a>
-    <a href="system.html">The System</a>
-    <a href="pricing.html">Pricing</a>
-    <a href="contact.html">Contact</a>
-  </nav>
+  <script>
+    async function getRent() {
+      const zip = document.getElementById("zip").value.trim();
+      const bedrooms = Number(document.getElementById("bedrooms").value);
+      const result = document.getElementById("result");
 
-  <main class="page">
-    <div class="card">
-      <h1>Real Estate Decisions, De-Risked</h1>
-      <p>
-        ALEX™ is a deterministic real-estate stress testing engine that tells you
-        whether to sell, flip, wholesale, rent, or hold — before you risk capital.
-      </p>
+      result.textContent = "";
+      result.className = "result";
 
-      <button onclick="location.href='system.html'">
-        Run a Stress Test
-      </button>
-    </div>
-  </main>
+      if (!zip || zip.length !== 5) {
+        result.textContent = "Enter a valid 5-digit ZIP";
+        result.classList.add("error");
+        return;
+      }
 
-  <footer>© 2026 Silver Lining Consulting LLC</footer>
+      try {
+        const res = await fetch("/api/rent", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ zip, bedrooms })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          result.textContent = data.error || "Error";
+          result.classList.add("error");
+          return;
+        }
+
+        result.textContent = `Rent: $${data.rent}`;
+      } catch (err) {
+        result.textContent = "Server not reachable";
+        result.classList.add("error");
+      }
+    }
+  </script>
 
 </body>
 </html>
