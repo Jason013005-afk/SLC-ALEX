@@ -1,49 +1,137 @@
 import express from "express";
-import cors from "cors";
-import { createClient } from "@supabase/supabase-js";
+import fs from "fs";
+import path from "path";
+import csv from "csv-parser";
 import dotenv from "dotenv";
 
 dotenv.config();
 
 const app = express();
-app.use(cors());
 app.use(express.json());
-app.use(express.static("public"));
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+const PORT = 8080;
+const CSV_PATH = path.join(process.cwd(), "fy2024_safmrs.csv");
 
-app.post("/api/stress-test", async (req, res) => {
-  const { address, rate } = req.body;
+let hudData = [];
 
-  if (!address || !rate) {
-    return res.status(400).json({ error: "Missing input" });
+/* -------------------- HELPERS -------------------- */
+
+function normalize(str) {
+  return String(str || "")
+    .toLowerCase()
+    .replace(/[\s$_,-]/g, "");
+}
+
+function normalizeZip(zip) {
+  return String(zip).trim().padStart(5, "0");
+}
+
+function parseMoney(val) {
+  if (!val) return null;
+  return Number(String(val).replace(/[^0-9.]/g, ""));
+}
+
+/* -------------------- LOAD CSV -------------------- */
+
+function loadCSV() {
+  return new Promise((resolve, reject) => {
+    if (!fs.existsSync(CSV_PATH)) {
+      return reject(new Error("CSV file not found"));
+    }
+
+    const rows = [];
+
+    fs.createReadStream(CSV_PATH)
+      .pipe(csv())
+      .on("data", (row) => rows.push(row))
+      .on("end", () => {
+        if (rows.length === 0) {
+          return reject(new Error("CSV loaded but has 0 rows"));
+        }
+        resolve(rows);
+      })
+      .on("error", reject);
+  });
+}
+
+(async () => {
+  try {
+    hudData = await loadCSV();
+    console.log(`🔥 HUD CSV loaded: ${hudData.length} rows`);
+  } catch (err) {
+    console.error("❌ CSV LOAD FAILED:", err.message);
+    process.exit(1);
+  }
+})();
+
+/* -------------------- ROUTES -------------------- */
+
+app.get("/health", (req, res) => {
+  res.json({ status: "ok", rows: hudData.length });
+});
+
+app.post("/api/rent", (req, res) => {
+  const { zip, bedrooms } = req.body;
+
+  if (!zip || !bedrooms) {
+    return res.status(400).json({
+      error: "zip and bedrooms required",
+    });
   }
 
-  // Placeholder model (replace later)
-  const estimatedValue = Math.round(300000 + Math.random() * 100000);
-  const cashFlow = Math.round(1500 + Math.random() * 1000);
-  const dscr = Number((cashFlow / 1000).toFixed(2));
-  const risk = dscr >= 1.5 ? "LOW" : dscr >= 1.2 ? "MEDIUM" : "HIGH";
+  const targetZip = normalizeZip(zip);
 
-  await supabase.from("stress_tests").insert({
-    address,
-    rate,
-    estimated_value: estimatedValue
-  });
+  // Find ZIP column dynamically
+  const zipKey = Object.keys(hudData[0]).find(
+    (k) => normalize(k) === "zipcode"
+  );
+
+  if (!zipKey) {
+    return res.status(500).json({ error: "ZIP column not found in CSV" });
+  }
+
+  const row = hudData.find(
+    (r) => normalizeZip(r[zipKey]) === targetZip
+  );
+
+  if (!row) {
+    return res.status(404).json({
+      error: "ZIP not found in HUD data",
+      zip: targetZip,
+    });
+  }
+
+  // Find correct SAFMR bedroom column
+  const rentKey = Object.keys(row).find((k) =>
+    normalize(k).includes(`safmr${bedrooms}br`)
+  );
+
+  if (!rentKey) {
+    return res.status(404).json({
+      error: "Bedroom rent column not found",
+      bedrooms,
+    });
+  }
+
+  const rent = parseMoney(row[rentKey]);
+
+  if (!rent) {
+    return res.status(404).json({
+      error: "Rent value missing",
+      zip: targetZip,
+      bedrooms,
+    });
+  }
 
   res.json({
-    address,
-    rate,
-    estimatedValue,
-    cashFlow,
-    dscr,
-    risk
+    zip: targetZip,
+    bedrooms,
+    rent,
   });
 });
 
-app.listen(8080, () =>
-  console.log("Server running at http://127.0.0.1:8080")
-);
+/* -------------------- START -------------------- */
+
+app.listen(PORT, () => {
+  console.log(`✅ ALEX backend running on http://127.0.0.1:${PORT}`);
+});

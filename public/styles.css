@@ -1,44 +1,90 @@
-body.dark {
+html, body {
   margin: 0;
-  font-family: Inter, system-ui, sans-serif;
-  background: #111;
-  color: #f5f5f5;
+  padding: 0;
+  min-height: 100%;
 }
 
-.nav {
+body {
+  font-family: Arial, sans-serif;
+  color: #fff;
+  background:
+    linear-gradient(
+      rgba(0,0,0,0.45),
+      rgba(0,0,0,0.45)
+    ),
+    url("images/hero-bg.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+/* Header */
+header {
   display: flex;
   justify-content: space-between;
-  padding: 20px 40px;
-  background: #000;
+  align-items: center;
+  padding: 24px 40px;
 }
 
-.nav a {
-  color: gold;
-  margin-left: 20px;
+.logo img {
+  width: 384px; /* 4 inches */
+  height: auto;
+}
+
+nav a {
+  margin-left: 24px;
   text-decoration: none;
+  color: #d4af37;
+  font-weight: 600;
 }
 
-.logo { height: 40px; }
-
-.hero {
-  height: 80vh;
-  background-size: cover;
-  position: relative;
+nav a:hover {
+  text-decoration: underline;
 }
 
-.hero-overlay {
-  background: rgba(0,0,0,0.7);
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 60px;
+/* Center card */
+.card {
+  max-width: 520px;
+  margin: 80px auto;
+  background: rgba(0,0,0,0.65);
+  padding: 32px;
+  border-radius: 12px;
+  text-align: center;
 }
 
-.btn-primary {
-  background: gold;
-  color: black;
-  padding: 14px 24px;
-  text-decoration: none;
-  width: fit-content;
+input, button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 12px;
+  border-radius: 6px;
+  border: none;
+}
+
+button {
+  background: #d4af37;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+.results {
+  margin-top: 20px;
+  text-align: left;
+}
+
+table.sensitivity {
+  width: 100%;
+  margin-top: 20px;
+  border-collapse: collapse;
+}
+
+table.sensitivity th,
+table.sensitivity td {
+  border: 1px solid #555;
+  padding: 8px;
+  text-align: center;
 }

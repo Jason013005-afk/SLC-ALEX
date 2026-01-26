@@ -4,38 +4,45 @@
   <meta charset="UTF-8" />
   <title>ALEX™ Stress Test</title>
   <link rel="stylesheet" href="styles.css" />
-  <link rel="stylesheet" href="tool.css" />
-  <script defer src="app.js"></script>
-  <script defer src="site.js"></script>
 </head>
-<body class="dark">
 
-<nav class="nav">
-  <img src="images/slc-logo.png" class="logo" />
-  <div class="nav-links">
+<body>
+<header>
+  <div class="logo">
+    <img src="images/slc-logo.png" alt="Silver Lining Consulting">
+  </div>
+  <nav>
     <a href="index.html">Home</a>
     <a href="system.html">The System</a>
     <a href="pricing.html">Pricing</a>
     <a href="contact.html">Contact</a>
-  </div>
-</nav>
+  </nav>
+</header>
 
-<main class="tool-wrapper">
-  <h1>ALEX™ Real Estate Stress Test</h1>
+<div class="card">
+  <h1>ALEX™ Stress Test</h1>
 
-  <div class="card">
-    <label>Property Address</label>
-    <input id="address" />
+  <input id="address" placeholder="Property Address" />
+  <input id="rate" type="number" step="0.01" placeholder="Interest Rate (%)" />
 
-    <label>Interest Rate (%)</label>
-    <input id="rate" type="number" step="0.01" />
+  <button onclick="runStressTest()">Run Stress Test</button>
 
-    <button onclick="runTest()">Run Stress Test</button>
-  </div>
+  <div id="results" class="results"></div>
 
-  <div id="results" class="results hidden"></div>
-</main>
+  <h2>Exit Sensitivity</h2>
+  <table class="sensitivity">
+    <thead>
+      <tr>
+        <th>Hold \ Cap</th>
+        <th>5.5%</th>
+        <th>6.0%</th>
+        <th>6.5%</th>
+      </tr>
+    </thead>
+    <tbody id="sensitivityTable"></tbody>
+  </table>
+</div>
 
-<footer>© 2026 Silver Lining Consulting LLC</footer>
+<script src="system.js"></script>
 </body>
 </html>
