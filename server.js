@@ -1,70 +1,51 @@
 import express from "express";
 import fs from "fs";
-import path from "path";
 import csv from "csv-parser";
-import dotenv from "dotenv";
-
-dotenv.config();
 
 const app = express();
 app.use(express.json());
 
 const PORT = 8080;
-const CSV_PATH = path.join(process.cwd(), "fy2024_safmrs.csv");
+const CSV_PATH = "./fy2024_safmrs.clean.csv";
 
-let hudData = [];
+const hudData = [];
 
-/* -------------------- HELPERS -------------------- */
+/* ---------------- CSV LOAD ---------------- */
 
-function normalize(str) {
-  return String(str || "")
-    .toLowerCase()
-    .replace(/[\s$_,-]/g, "");
+function clean(v) {
+  if (v === undefined || v === null) return null;
+  const n = Number(String(v).replace(/[$,]/g, ""));
+  return Number.isNaN(n) ? null : n;
 }
-
-function normalizeZip(zip) {
-  return String(zip).trim().padStart(5, "0");
-}
-
-function parseMoney(val) {
-  if (!val) return null;
-  return Number(String(val).replace(/[^0-9.]/g, ""));
-}
-
-/* -------------------- LOAD CSV -------------------- */
 
 function loadCSV() {
-  return new Promise((resolve, reject) => {
-    if (!fs.existsSync(CSV_PATH)) {
-      return reject(new Error("CSV file not found"));
-    }
+  fs.createReadStream(CSV_PATH)
+    .pipe(csv({ headers: false }))
+    .on("data", (row) => {
+      // Skip header row
+      if (!row[0] || row[0].toLowerCase().includes("zip")) return;
 
-    const rows = [];
+      const zip = String(row[0]).padStart(5, "0");
 
-    fs.createReadStream(CSV_PATH)
-      .pipe(csv())
-      .on("data", (row) => rows.push(row))
-      .on("end", () => {
-        if (rows.length === 0) {
-          return reject(new Error("CSV loaded but has 0 rows"));
+      hudData.push({
+        zip,
+        rents: {
+          0: clean(row[3]),   // OBR
+          1: clean(row[6]),   // 1BR
+          2: clean(row[9]),   // 2BR
+          3: clean(row[12]),  // 3BR
+          4: clean(row[15])   // 4BR
         }
-        resolve(rows);
-      })
-      .on("error", reject);
-  });
+      });
+    })
+    .on("end", () => {
+      console.log(`🔥 HUD CSV loaded: ${hudData.length} rows`);
+    });
 }
 
-(async () => {
-  try {
-    hudData = await loadCSV();
-    console.log(`🔥 HUD CSV loaded: ${hudData.length} rows`);
-  } catch (err) {
-    console.error("❌ CSV LOAD FAILED:", err.message);
-    process.exit(1);
-  }
-})();
+loadCSV();
 
-/* -------------------- ROUTES -------------------- */
+/* ---------------- ROUTES ---------------- */
 
 app.get("/health", (req, res) => {
   res.json({ status: "ok", rows: hudData.length });
@@ -73,64 +54,36 @@ app.get("/health", (req, res) => {
 app.post("/api/rent", (req, res) => {
   const { zip, bedrooms } = req.body;
 
-  if (!zip || !bedrooms) {
-    return res.status(400).json({
-      error: "zip and bedrooms required",
-    });
+  if (zip === undefined || bedrooms === undefined) {
+    return res.status(400).json({ error: "zip and bedrooms required" });
   }
 
-  const targetZip = normalizeZip(zip);
+  const z = String(zip).padStart(5, "0");
+  const record = hudData.find(r => r.zip === z);
 
-  // Find ZIP column dynamically
-  const zipKey = Object.keys(hudData[0]).find(
-    (k) => normalize(k) === "zipcode"
-  );
-
-  if (!zipKey) {
-    return res.status(500).json({ error: "ZIP column not found in CSV" });
+  if (!record) {
+    return res.status(404).json({ error: "ZIP not found", zip: z });
   }
 
-  const row = hudData.find(
-    (r) => normalizeZip(r[zipKey]) === targetZip
-  );
+  const rent = record.rents[bedrooms];
 
-  if (!row) {
+  // ✅ THIS IS THE CRITICAL FIX
+  if (rent === null || Number.isNaN(rent)) {
     return res.status(404).json({
-      error: "ZIP not found in HUD data",
-      zip: targetZip,
-    });
-  }
-
-  // Find correct SAFMR bedroom column
-  const rentKey = Object.keys(row).find((k) =>
-    normalize(k).includes(`safmr${bedrooms}br`)
-  );
-
-  if (!rentKey) {
-    return res.status(404).json({
-      error: "Bedroom rent column not found",
-      bedrooms,
-    });
-  }
-
-  const rent = parseMoney(row[rentKey]);
-
-  if (!rent) {
-    return res.status(404).json({
-      error: "Rent value missing",
-      zip: targetZip,
-      bedrooms,
+      error: "No rent for bedroom count",
+      zip: z,
+      bedrooms
     });
   }
 
   res.json({
-    zip: targetZip,
+    zip: z,
     bedrooms,
-    rent,
+    rent
   });
 });
 
-/* -------------------- START -------------------- */
+/* ---------------- START SERVER ---------------- */
 
 app.listen(PORT, () => {
   console.log(`✅ ALEX backend running on http://127.0.0.1:${PORT}`);
