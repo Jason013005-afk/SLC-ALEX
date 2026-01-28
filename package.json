@@ -1,13 +1,14 @@
 {
-  "name": "slc-alex",
-  "version": "1.0.0",
-  "description": "SLC-ALEX Property Analyzer",
-  "main": "services.cjs",
-  "scripts": {
-    "start": "node services.cjs"
-  },
-  "dependencies": {
-    "express": "^4.19.2",
-    "cors": "^2.8.5"
-  }
+      "name": "slc-alex",
+        "version": "1.0.0",
+          "private": true,
+            "main": "services.cjs",
+              "scripts": {
+                  "start": "node services.cjs"
+                    },
+                      "dependencies": {
+                          "express": "^4.19.2",
+                              "cors": "^2.8.5"
+                                }
+                                }
 }

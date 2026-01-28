@@ -1,46 +1,32 @@
-/* ================================
-   SLC-ALEX Frontend Script
-      ================================ */
+const API_BASE =
+  "https://orange-succotash-4jp59p697gqqh5559-4000.app.github.dev";
 
-      const API_BASE = "https://orange-succotash-4jp59p697gqqh5559-4000.app.github.dev";
+  const form = document.getElementById("stressForm");
+  const resultBox = document.getElementById("result");
 
-      document.addEventListener("DOMContentLoaded", () => {
-        const form = document.getElementById("analysisForm");
-          const resultBox = document.getElementById("result");
+  if (form) {
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
 
-            if (!form || !resultBox) {
-                console.error("Form or result container missing");
-                    return;
-                      }
+            const address = document.getElementById("address").value;
+                const interestRate = Number(
+                      document.getElementById("interestRate").value
+                          );
 
-                        form.addEventListener("submit", async (e) => {
-                            e.preventDefault();
+                              resultBox.textContent = "⏳ Running analysis...";
 
-                                resultBox.textContent = "⏳ Analyzing property...";
+                                  try {
+                                        const res = await fetch(`${API_BASE}/api/stress`, {
+                                                method: "POST",
+                                                        headers: { "Content-Type": "application/json" },
+                                                                body: JSON.stringify({ address, interestRate })
+                                                                      });
 
-                                    const address = document.getElementById("address").value;
-                                        const interest = document.getElementById("interest").value;
-
-                                            try {
-                                                  const response = await fetch(`${API_BASE}/api/analyze`, {
-                                                          method: "POST",
-                                                                  headers: { "Content-Type": "application/json" },
-                                                                          body: JSON.stringify({ address, interest })
-                                                                                });
-
-                                                                                      if (!response.ok) {
-                                                                                              throw new Error(`Server error ${response.status}`);
-                                                                                                    }
-
-                                                                                                          const data = await response.json();
-
-                                                                                                                resultBox.innerHTML = `
-                                                                                                                        <h3>✅ Analysis Result</h3>
-                                                                                                                                <pre>${JSON.stringify(data, null, 2)}</pre>
-                                                                                                                                      `;
-                                                                                                                                          } catch (err) {
-                                                                                                                                                console.error(err);
-                                                                                                                                                      resultBox.textContent = "❌ Backend connection failed.";
-                                                                                                                                                          }
-                                                                                                                                                            });
-                                                                                                                                                            });
+                                                                            const data = await res.json();
+                                                                                  resultBox.textContent = JSON.stringify(data, null, 2);
+                                                                                      } catch (err) {
+                                                                                            console.error(err);
+                                                                                                  resultBox.textContent = "❌ Backend connection failed";
+                                                                                                      }
+                                                                                                        });
+                                                                                                        }
