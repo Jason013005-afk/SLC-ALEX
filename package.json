@@ -4,13 +4,17 @@
           "description": "SLC-ALEX Property Analyzer",
             "main": "services.cjs",
               "scripts": {
-                  "start": "concurrently \"node services.cjs\" \"npx serve .\""
-                    },
-                      "dependencies": {
-                          "express": "^4.19.2",
-                              "cors": "^2.8.5",
-                                  "concurrently": "^8.2.2",
-                                      "serve": "^14.2.0"
-                                        }
-                                        }
+                  "backend": "node services.cjs",
+                      "frontend": "npx serve . -l 3000",
+                          "start": "concurrently \"npm run backend\" \"npm run frontend\""
+                            },
+                              "dependencies": {
+                                  "express": "^4.19.2",
+                                      "cors": "^2.8.5"
+                                        },
+                                          "devDependencies": {
+                                              "concurrently": "^8.2.2",
+                                                  "serve": "^14.2.3"
+                                                    }
+                                                    }
 }
