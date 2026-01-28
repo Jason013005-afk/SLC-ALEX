@@ -1,94 +1,50 @@
-// ===================================
-// SLC-ALEX Frontend Script (CLEAN)
-// ===================================
+/* ================================
+   SLC-ALEX Frontend Script
+      CLEAN + WORKING
+         ================================ */
 
-// 🔗 BACKEND BASE URL (PORT 4000)
-const BASE_URL = "https://orange-succotash-4jp59p697gqqh5559-4000.app.github.dev";
+         /* BACKEND BASE URL (PORT 4000) */
+         const API_BASE = "https://orange-succotash-4jp59p697gqqh5559-4000.app.github.dev";
 
-// ===================================
-// DOM ELEMENTS
-// ===================================
-const statusEl = document.getElementById("backend-status");
-const formEl = document.getElementById("property-form");
-const resultEl = document.getElementById("analysis-result");
+         /* DOM ELEMENTS */
+         const form = document.getElementById("analysisForm");
+         const resultBox = document.getElementById("result");
 
-// ===================================
-// BACKEND STATUS CHECK
-// ===================================
-async function checkBackendStatus() {
-  try {
-      const res = await fetch(`${BASE_URL}/health`);
-          if (!res.ok) throw new Error("Backend not reachable");
+         /* SAFETY CHECK */
+         if (!form || !resultBox) {
+           console.error("Required DOM elements not found");
+           }
 
-              const data = await res.json();
-                  statusEl.textContent = "🟢 Backend Connected";
-                      statusEl.style.color = "#00ff99";
-                          console.log("Backend OK:", data);
-                            } catch (err) {
-                                console.error("Backend check failed:", err);
-                                    statusEl.textContent = "🔴 Backend Connection Failed";
-                                        statusEl.style.color = "#ff4444";
-                                          }
-                                          }
+           /* FORM SUBMIT */
+           form?.addEventListener("submit", async (e) => {
+             e.preventDefault();
 
-                                          // ===================================
-                                          // PROPERTY ANALYSIS SUBMIT
-                                          // ===================================
-                                          async function analyzeProperty(address, interest) {
-                                            resultEl.innerHTML = "⏳ Analyzing property...";
+               resultBox.innerHTML = "⏳ Analyzing property…";
 
-                                              try {
-                                                  const res = await fetch(`${BASE_URL}/analyze`, {
-                                                        method: "POST",
-                                                              headers: {
-                                                                      "Content-Type": "application/json"
-                                                                            },
-                                                                                  body: JSON.stringify({
-                                                                                          address: address,
-                                                                                                  interestRate: interest
-                                                                                                        })
-                                                                                                            });
+                 const address = document.getElementById("address")?.value || "";
+                   const interest = document.getElementById("interest")?.value || "";
 
-                                                                                                                if (!res.ok) {
-                                                                                                                      throw new Error(`Server error ${res.status}`);
-                                                                                                                          }
+                     try {
+                         const res = await fetch(`${API_BASE}/api/analyze`, {
+                               method: "POST",
+                                     headers: {
+                                             "Content-Type": "application/json"
+                                                   },
+                                                         body: JSON.stringify({ address, interest })
+                                                             });
 
-                                                                                                                              const data = await res.json();
+                                                                 if (!res.ok) {
+                                                                       throw new Error(`Server error: ${res.status}`);
+                                                                           }
 
-                                                                                                                                  resultEl.innerHTML = `
-                                                                                                                                        <h3>📊 Analysis Result</h3>
-                                                                                                                                              <pre>${JSON.stringify(data, null, 2)}</pre>
-                                                                                                                                                  `;
-                                                                                                                                                    } catch (err) {
-                                                                                                                                                        console.error("Analysis failed:", err);
-                                                                                                                                                            resultEl.innerHTML = "❌ Failed to analyze property.";
-                                                                                                                                                              }
-                                                                                                                                                              }
+                                                                               const data = await res.json();
 
-                                                                                                                                                              // ===================================
-                                                                                                                                                              // FORM HANDLER
-                                                                                                                                                              // ===================================
-                                                                                                                                                              if (formEl) {
-                                                                                                                                                                formEl.addEventListener("submit", (e) => {
-                                                                                                                                                                    e.preventDefault();
-
-                                                                                                                                                                        const address = document.getElementById("address").value.trim();
-                                                                                                                                                                            const interest = parseFloat(
-                                                                                                                                                                                  document.getElementById("interest").value
-                                                                                                                                                                                      );
-
-                                                                                                                                                                                          if (!address || isNaN(interest)) {
-                                                                                                                                                                                                alert("Please enter a valid address and interest rate.");
-                                                                                                                                                                                                      return;
-                                                                                                                                                                                                          }
-
-                                                                                                                                                                                                              analyzeProperty(address, interest);
-                                                                                                                                                                                                                });
-                                                                                                                                                                                                                }
-
-                                                                                                                                                                                                                // ===================================
-                                                                                                                                                                                                                // INIT
-                                                                                                                                                                                                                // ===================================
-                                                                                                                                                                                                                document.addEventListener("DOMContentLoaded", () => {
-                                                                                                                                                                                                                  checkBackendStatus();
-                                                                                                                                                                                                                  });
+                                                                                   resultBox.innerHTML = `
+                                                                                         <h3>✅ Analysis Result</h3>
+                                                                                               <pre>${JSON.stringify(data, null, 2)}</pre>
+                                                                                                   `;
+                                                                                                     } catch (err) {
+                                                                                                         console.error(err);
+                                                                                                             resultBox.innerHTML = "❌ Backend connection failed.";
+                                                                                                               }
+                                                                                                               });
