@@ -1,62 +1,94 @@
-// ========================
-// SLC-ALEX FRONTEND SCRIPT
-// ========================
+// ===================================
+// SLC-ALEX Frontend Script (CLEAN)
+// ===================================
 
-// ✅ Backend base URL (use the one from your screenshot)
+// 🔗 BACKEND BASE URL (PORT 4000)
 const BASE_URL = "https://orange-succotash-4jp59p697gqqh5559-4000.app.github.dev";
 
-// ========================
-// Backend Connection Check
-// ========================
-async function BackendStatus() {
-  const statusEl = document.getElementById("backend-status");
+// ===================================
+// DOM ELEMENTS
+// ===================================
+const statusEl = document.getElementById("backend-status");
+const formEl = document.getElementById("property-form");
+const resultEl = document.getElementById("analysis-result");
 
-    try {
-        const res = await fetch(`${BASE_URL}/api/status`);
-            const data = await res.json();
+// ===================================
+// BACKEND STATUS CHECK
+// ===================================
+async function checkBackendStatus() {
+  try {
+      const res = await fetch(`${BASE_URL}/health`);
+          if (!res.ok) throw new Error("Backend not reachable");
 
-                statusEl.innerHTML = `🟢 ${data.message}`;
-                    statusEl.style.color = "lime";
-                        console.log("✅ Backend Connected");
-                          } catch (err) {
-                              statusEl.innerHTML = "🔴 Backend Connection Failed";
-                                  statusEl.style.color = "red";
-                                      console.error("❌ Backend Connection Error:", err);
-                                        }
-                                        }
+              const data = await res.json();
+                  statusEl.textContent = "🟢 Backend Connected";
+                      statusEl.style.color = "#00ff99";
+                          console.log("Backend OK:", data);
+                            } catch (err) {
+                                console.error("Backend check failed:", err);
+                                    statusEl.textContent = "🔴 Backend Connection Failed";
+                                        statusEl.style.color = "#ff4444";
+                                          }
+                                          }
 
-                                        // ========================
-                                        // Property Analyzer Function
-                                        // ========================
-                                        async function analyzeProperty() {
-                                          const address = document.getElementById("address").value;
-                                            const interest = document.getElementById("interest").value;
-                                              const resultEl = document.getElementById("result");
+                                          // ===================================
+                                          // PROPERTY ANALYSIS SUBMIT
+                                          // ===================================
+                                          async function analyzeProperty(address, interest) {
+                                            resultEl.innerHTML = "⏳ Analyzing property...";
 
-                                                if (!address) {
-                                                    resultEl.innerHTML = "⚠️ Please enter a property address.";
-                                                        return;
-                                                          }
+                                              try {
+                                                  const res = await fetch(`${BASE_URL}/analyze`, {
+                                                        method: "POST",
+                                                              headers: {
+                                                                      "Content-Type": "application/json"
+                                                                            },
+                                                                                  body: JSON.stringify({
+                                                                                          address: address,
+                                                                                                  interestRate: interest
+                                                                                                        })
+                                                                                                            });
 
-                                                            try {
-                                                                const res = await fetch(`${BASE_URL}/api/analyze`, {
-                                                                      method: "POST",
-                                                                            headers: { "Content-Type": "application/json" },
-                                                                                  body: JSON.stringify({ address, interest }),
-                                                                                      });
+                                                                                                                if (!res.ok) {
+                                                                                                                      throw new Error(`Server error ${res.status}`);
+                                                                                                                          }
 
-                                                                                          const data = await res.json();
-                                                                                              resultEl.innerHTML = `💰 Estimated ROI: ${data.roi}%`;
-                                                                                                } catch (err) {
-                                                                                                    console.error("❌ Property analysis error:", err);
-                                                                                                        resultEl.innerHTML = "❌ Failed to analyze property.";
-                                                                                                          }
-                                                                                                          }
+                                                                                                                              const data = await res.json();
 
-                                                                                                          // ========================
-                                                                                                          // Auto-run on page load
-                                                                                                          // ========================
-                                                                                                          document.addEventListener("DOMContentLoaded", () => {
-                                                                                                            BackendStatus();
-                                                                                                              document.getElementById("analyze-btn").addEventListener("click", analyzeProperty);
-                                                                                                              });
+                                                                                                                                  resultEl.innerHTML = `
+                                                                                                                                        <h3>📊 Analysis Result</h3>
+                                                                                                                                              <pre>${JSON.stringify(data, null, 2)}</pre>
+                                                                                                                                                  `;
+                                                                                                                                                    } catch (err) {
+                                                                                                                                                        console.error("Analysis failed:", err);
+                                                                                                                                                            resultEl.innerHTML = "❌ Failed to analyze property.";
+                                                                                                                                                              }
+                                                                                                                                                              }
+
+                                                                                                                                                              // ===================================
+                                                                                                                                                              // FORM HANDLER
+                                                                                                                                                              // ===================================
+                                                                                                                                                              if (formEl) {
+                                                                                                                                                                formEl.addEventListener("submit", (e) => {
+                                                                                                                                                                    e.preventDefault();
+
+                                                                                                                                                                        const address = document.getElementById("address").value.trim();
+                                                                                                                                                                            const interest = parseFloat(
+                                                                                                                                                                                  document.getElementById("interest").value
+                                                                                                                                                                                      );
+
+                                                                                                                                                                                          if (!address || isNaN(interest)) {
+                                                                                                                                                                                                alert("Please enter a valid address and interest rate.");
+                                                                                                                                                                                                      return;
+                                                                                                                                                                                                          }
+
+                                                                                                                                                                                                              analyzeProperty(address, interest);
+                                                                                                                                                                                                                });
+                                                                                                                                                                                                                }
+
+                                                                                                                                                                                                                // ===================================
+                                                                                                                                                                                                                // INIT
+                                                                                                                                                                                                                // ===================================
+                                                                                                                                                                                                                document.addEventListener("DOMContentLoaded", () => {
+                                                                                                                                                                                                                  checkBackendStatus();
+                                                                                                                                                                                                                  });

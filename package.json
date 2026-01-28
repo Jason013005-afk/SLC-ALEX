@@ -1,20 +1,13 @@
 {
-      "name": "slc-alex",
-        "version": "1.0.0",
-          "description": "SLC-ALEX Property Analyzer",
-            "main": "services.cjs",
-              "scripts": {
-                  "backend": "node services.cjs",
-                      "frontend": "npx serve . -l 3000",
-                          "start": "concurrently \"npm run backend\" \"npm run frontend\""
-                            },
-                              "dependencies": {
-                                  "express": "^4.19.2",
-                                      "cors": "^2.8.5"
-                                        },
-                                          "devDependencies": {
-                                              "concurrently": "^8.2.2",
-                                                  "serve": "^14.2.3"
-                                                    }
-                                                    }
+  "name": "slc-alex",
+  "version": "1.0.0",
+  "description": "SLC-ALEX Property Analyzer",
+  "main": "services.cjs",
+  "scripts": {
+    "start": "node services.cjs"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "cors": "^2.8.5"
+  }
 }
