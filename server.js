@@ -1,101 +1,70 @@
-/**
- * ALEX™ Server | Silver Lining Consulting LLC
- * -------------------------------------------------------
- * Handles property stress test submissions
- * and connects securely to your Supabase database.
- */
-
 import express from "express";
-import cors from "cors";
+import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
-import { createClient } from "@supabase/supabase-js";
-import dotenv from "dotenv";
+import csv from "csv-parser";
 
-dotenv.config();
-
-// ----- Setup -----
 const app = express();
-app.use(cors());
+const PORT = 8080;
+
+// -------------------- MIDDLEWARE --------------------
 app.use(express.json());
-app.use(express.static(".")); // serve your HTML/CSS/JS directly
+app.use(express.static("public"));
 
-// ----- Paths -----
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// -------------------- LOAD CSV --------------------
+const CSV_PATH = path.join(process.cwd(), "fy2024_safmrs.fixed.csv");
 
-// ----- Supabase Connection -----
-const SUPABASE_URL = process.env.SUPABASE_URL || "https://doernvgjlswszteywylb.supabase.co";
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "YOUR_SUPABASE_SERVICE_ROLE_KEY_HERE";
+const rentByZip = {}; 
+/*
+Expected CSV headers (exact):
+ZIP,SAFMR_0BR,SAFMR_1BR,SAFMR_2BR,SAFMR_3BR,SAFMR_4BR
+*/
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+fs.createReadStream(CSV_PATH)
+  .pipe(csv())
+  .on("data", (row) => {
+    const zip = String(row.ZIP).trim();
+    rentByZip[zip] = {
+      0: Number(row.SAFMR_0BR),
+      1: Number(row.SAFMR_1BR),
+      2: Number(row.SAFMR_2BR),
+      3: Number(row.SAFMR_3BR),
+      4: Number(row.SAFMR_4BR),
+    };
+  })
+  .on("end", () => {
+    console.log("🔥 HUD CSV loaded:", Object.keys(rentByZip).length, "ZIPs");
+  });
 
-// ----- Routes -----
-
-// Serve system page (so direct /system.html works cleanly)
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
+// -------------------- ROUTES --------------------
+app.get("/health", (req, res) => {
+  res.json({ status: "ok", zips: Object.keys(rentByZip).length });
 });
 
-app.get("/system", (req, res) => {
-  res.sendFile(path.join(__dirname, "system.html"));
-});
+app.post("/api/rent", (req, res) => {
+  const { zip, bedrooms } = req.body;
 
-// Core stress test API
-app.post("/api/stress-test", async (req, res) => {
-  try {
-    const { address, rate } = req.body;
+  if (!zip || bedrooms === undefined) {
+    return res.status(400).json({ error: "zip and bedrooms required" });
+  }
 
-    if (!address || !rate) {
-      return res.status(400).json({ error: "Missing required fields: address, rate" });
-    }
+  const zipData = rentByZip[String(zip)];
+  if (!zipData) {
+    return res.status(404).json({ error: "ZIP not found", zip });
+  }
 
-    console.log(`➡️ Running stress test for: ${address} @ ${rate}%`);
-
-    // --- Example: Estimate property value (replace with real API later)
-    const estimatedValue = (Math.random() * 500000 + 150000).toFixed(2);
-
-    // Insert or update Supabase record
-    const { data, error } = await supabase
-      .from("stress_tests")
-      .insert([{ address, rate, estimatedValue, source: "system-page" }])
-      .select();
-
-    if (error) {
-      console.error("❌ Supabase insert error:", error.message);
-      return res.status(500).json({ error: error.message });
-    }
-
-    console.log("✅ Stress test recorded:", data);
-    res.json({
-      message: "Stress test completed successfully",
-      result: data[0],
+  const rent = zipData[Number(bedrooms)];
+  if (!rent || rent <= 0) {
+    return res.status(404).json({
+      error: "No rent for bedroom count",
+      zip,
+      bedrooms,
     });
-  } catch (err) {
-    console.error("💥 Server error:", err.message);
-    res.status(500).json({ error: "Internal Server Error" });
   }
+
+  res.json({ zip, bedrooms: Number(bedrooms), rent });
 });
 
-// Endpoint to retrieve past stress tests
-app.get("/api/stress-tests", async (req, res) => {
-  try {
-    const { data, error } = await supabase
-      .from("stress_tests")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (error) throw error;
-
-    res.json({ records: data });
-  } catch (err) {
-    console.error("💥 Fetch error:", err.message);
-    res.status(500).json({ error: "Failed to fetch records" });
-  }
-});
-
-// ----- Start Server -----
-const PORT = process.env.PORT || 8080;
+// -------------------- START --------------------
 app.listen(PORT, () => {
-  console.log(`🚀 ALEX Server running at http://127.0.0.1:${PORT}`);
+  console.log(`🚀 ALEX server running at http://127.0.0.1:${PORT}`);
 });
