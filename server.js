@@ -2,44 +2,49 @@ import express from "express";
 import fs from "fs";
 import path from "path";
 import csv from "csv-parser";
+import cors from "cors";
 
 const app = express();
 const PORT = 8080;
 
-// -------------------- MIDDLEWARE --------------------
+// middleware
+app.use(cors());
 app.use(express.json());
-app.use(express.static("public"));
 
-// -------------------- LOAD CSV --------------------
-const CSV_PATH = path.join(process.cwd(), "fy2024_safmrs.fixed.csv");
-
-const rentByZip = {}; 
-/*
-Expected CSV headers (exact):
-ZIP,SAFMR_0BR,SAFMR_1BR,SAFMR_2BR,SAFMR_3BR,SAFMR_4BR
-*/
+// --------------------
+// Load CSV into memory
+// --------------------
+const DATA = {};
+const CSV_PATH = path.join(process.cwd(), "fy2024_safmrs.clean.csv");
 
 fs.createReadStream(CSV_PATH)
   .pipe(csv())
   .on("data", (row) => {
-    const zip = String(row.ZIP).trim();
-    rentByZip[zip] = {
-      0: Number(row.SAFMR_0BR),
-      1: Number(row.SAFMR_1BR),
-      2: Number(row.SAFMR_2BR),
-      3: Number(row.SAFMR_3BR),
-      4: Number(row.SAFMR_4BR),
+    const zip = row.zip || row.ZIP || row.Zip;
+    if (!zip) return;
+
+    DATA[zip] = {
+      0: Number(row["0BR"] || row["0"] || row["Studio"]),
+      1: Number(row["1BR"] || row["1"]),
+      2: Number(row["2BR"] || row["2"]),
+      3: Number(row["3BR"] || row["3"]),
+      4: Number(row["4BR"] || row["4"]),
     };
   })
   .on("end", () => {
-    console.log("🔥 HUD CSV loaded:", Object.keys(rentByZip).length, "ZIPs");
+    console.log(`🔥 HUD CSV loaded: ${Object.keys(DATA).length} ZIPs`);
   });
 
-// -------------------- ROUTES --------------------
+// --------------------
+// Health check
+// --------------------
 app.get("/health", (req, res) => {
-  res.json({ status: "ok", zips: Object.keys(rentByZip).length });
+  res.json({ status: "ok", zips: Object.keys(DATA).length });
 });
 
+// --------------------
+// RENT API (THIS WAS MISSING / BROKEN)
+// --------------------
 app.post("/api/rent", (req, res) => {
   const { zip, bedrooms } = req.body;
 
@@ -47,24 +52,24 @@ app.post("/api/rent", (req, res) => {
     return res.status(400).json({ error: "zip and bedrooms required" });
   }
 
-  const zipData = rentByZip[String(zip)];
+  const zipData = DATA[zip];
   if (!zipData) {
-    return res.status(404).json({ error: "ZIP not found", zip });
+    return res.status(404).json({ error: "ZIP not found" });
   }
 
-  const rent = zipData[Number(bedrooms)];
-  if (!rent || rent <= 0) {
-    return res.status(404).json({
-      error: "No rent for bedroom count",
-      zip,
-      bedrooms,
-    });
+  const rent = zipData[bedrooms];
+  if (!rent || Number.isNaN(rent)) {
+    return res.status(404).json({ error: "No rent for bedroom count" });
   }
 
-  res.json({ zip, bedrooms: Number(bedrooms), rent });
+  res.json({
+    zip,
+    bedrooms,
+    rent,
+  });
 });
 
-// -------------------- START --------------------
+// --------------------
 app.listen(PORT, () => {
   console.log(`🚀 ALEX server running at http://127.0.0.1:${PORT}`);
 });
