@@ -1,85 +1,101 @@
+/**
+ * ALEX™ Server | Silver Lining Consulting LLC
+ * -------------------------------------------------------
+ * Handles property stress test submissions
+ * and connects securely to your Supabase database.
+ */
+
 import express from "express";
-import fs from "fs";
+import cors from "cors";
 import path from "path";
-import csv from "csv-parser";
+import { fileURLToPath } from "url";
+import { createClient } from "@supabase/supabase-js";
+import dotenv from "dotenv";
 
+dotenv.config();
+
+// ----- Setup -----
 const app = express();
-const PORT = 8080;
-
-/* ---------- MIDDLEWARE ---------- */
+app.use(cors());
 app.use(express.json());
-app.use(express.static("public")); // 👈 THIS FIXES THE WEBSITE ISSUE
+app.use(express.static(".")); // serve your HTML/CSS/JS directly
 
-/* ---------- DATA ---------- */
-const CSV_PATH = "./fy2024_safmrs.clean.csv";
-const hudData = [];
+// ----- Paths -----
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-/* ---------- LOAD CSV ---------- */
-function clean(v) {
-  if (v === null || v === undefined || v === "") return null;
-  return Number(String(v).replace(/[$,]/g, ""));
-}
+// ----- Supabase Connection -----
+const SUPABASE_URL = process.env.SUPABASE_URL || "https://doernvgjlswszteywylb.supabase.co";
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "YOUR_SUPABASE_SERVICE_ROLE_KEY_HERE";
 
-function loadCSV() {
-  fs.createReadStream(CSV_PATH)
-    .pipe(csv({ headers: false }))
-    .on("data", (row) => {
-      if (!row[0] || row[0].toLowerCase().includes("zip")) return;
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-      const zip = String(row[0]).padStart(5, "0");
+// ----- Routes -----
 
-      hudData.push({
-        zip,
-        rents: {
-          0: clean(row[3]),   // Studio
-          1: clean(row[6]),   // 1BR
-          2: clean(row[9]),   // 2BR
-          3: clean(row[12]),  // 3BR
-          4: clean(row[15])   // 4BR
-        }
-      });
-    })
-    .on("end", () => {
-      console.log(`🔥 HUD CSV loaded: ${hudData.length} rows`);
-    });
-}
-
-loadCSV();
-
-/* ---------- ROUTES ---------- */
-app.get("/health", (req, res) => {
-  res.json({ status: "ok", rows: hudData.length });
+// Serve system page (so direct /system.html works cleanly)
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "index.html"));
 });
 
-app.post("/api/rent", (req, res) => {
-  const { zip, bedrooms } = req.body;
-
-  if (!zip || bedrooms === undefined) {
-    return res.status(400).json({ error: "zip and bedrooms required" });
-  }
-
-  const z = String(zip).padStart(5, "0");
-  const record = hudData.find(r => r.zip === z);
-
-  if (!record) {
-    return res.status(404).json({ error: "ZIP not found", zip: z });
-  }
-
-  const rent = record.rents[bedrooms];
-
-  // IMPORTANT: 0 is valid — only null/undefined is missing
-  if (rent === null || rent === undefined) {
-    return res.status(404).json({
-      error: "No rent for bedroom count",
-      zip: z,
-      bedrooms
-    });
-  }
-
-  res.json({ zip: z, bedrooms, rent });
+app.get("/system", (req, res) => {
+  res.sendFile(path.join(__dirname, "system.html"));
 });
 
-/* ---------- START ---------- */
+// Core stress test API
+app.post("/api/stress-test", async (req, res) => {
+  try {
+    const { address, rate } = req.body;
+
+    if (!address || !rate) {
+      return res.status(400).json({ error: "Missing required fields: address, rate" });
+    }
+
+    console.log(`➡️ Running stress test for: ${address} @ ${rate}%`);
+
+    // --- Example: Estimate property value (replace with real API later)
+    const estimatedValue = (Math.random() * 500000 + 150000).toFixed(2);
+
+    // Insert or update Supabase record
+    const { data, error } = await supabase
+      .from("stress_tests")
+      .insert([{ address, rate, estimatedValue, source: "system-page" }])
+      .select();
+
+    if (error) {
+      console.error("❌ Supabase insert error:", error.message);
+      return res.status(500).json({ error: error.message });
+    }
+
+    console.log("✅ Stress test recorded:", data);
+    res.json({
+      message: "Stress test completed successfully",
+      result: data[0],
+    });
+  } catch (err) {
+    console.error("💥 Server error:", err.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// Endpoint to retrieve past stress tests
+app.get("/api/stress-tests", async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from("stress_tests")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    res.json({ records: data });
+  } catch (err) {
+    console.error("💥 Fetch error:", err.message);
+    res.status(500).json({ error: "Failed to fetch records" });
+  }
+});
+
+// ----- Start Server -----
+const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
-  console.log(`✅ ALEX backend running at http://127.0.0.1:${PORT}`);
+  console.log(`🚀 ALEX Server running at http://127.0.0.1:${PORT}`);
 });
