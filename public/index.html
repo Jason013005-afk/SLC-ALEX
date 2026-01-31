@@ -2,65 +2,92 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>HUD SAFMR Lookup</title>
+  <title>ALEX Rent Lookup</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f2f2f2;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
+      background: #f7f7f7;
+      padding: 40px;
     }
+
     .card {
+      max-width: 420px;
+      margin: auto;
       background: white;
       padding: 24px;
-      width: 320px;
       border-radius: 8px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
-    h2 {
-      text-align: center;
+
+    h1 {
+      margin-top: 0;
     }
+
+    label {
+      display: block;
+      margin-top: 16px;
+      font-weight: bold;
+    }
+
     input, select, button {
       width: 100%;
-      margin-top: 12px;
-      padding: 8px;
-      font-size: 14px;
+      padding: 10px;
+      margin-top: 6px;
+      font-size: 16px;
     }
-    #result {
-      margin-top: 16px;
-      text-align: center;
-      font-weight: bold;
+
+    button {
+      margin-top: 20px;
+      cursor: pointer;
+    }
+
+    .result {
+      margin-top: 20px;
+      padding: 12px;
+      background: #eef;
+      border-radius: 6px;
+      white-space: pre-wrap;
+      font-family: monospace;
+    }
+
+    .error {
+      background: #fee;
+      color: #900;
     }
   </style>
 </head>
 <body>
+
   <div class="card">
-    <h2>HUD SAFMR Lookup</h2>
+    <h1>Rent Lookup</h1>
 
-    <input id="zip" placeholder="ZIP Code" />
+    <label for="zip">ZIP Code</label>
+    <input id="zip" type="text" placeholder="e.g. 61936" />
 
+    <label for="bedrooms">Bedrooms</label>
     <select id="bedrooms">
       <option value="0">Studio</option>
       <option value="1">1 Bedroom</option>
-      <option value="2">2 Bedroom</option>
-      <option value="3">3 Bedroom</option>
-      <option value="4">4 Bedroom</option>
+      <option value="2">2 Bedrooms</option>
+      <option value="3">3 Bedrooms</option>
+      <option value="4">4 Bedrooms</option>
     </select>
 
-    <button onclick="getRent()">Get Rent</button>
+    <button onclick="lookupRent()">Get Rent</button>
 
-    <div id="result"></div>
+    <div id="result" class="result"></div>
   </div>
 
   <script>
-    async function getRent() {
+    async function lookupRent() {
       const zip = document.getElementById("zip").value.trim();
       const bedrooms = Number(document.getElementById("bedrooms").value);
+      const resultEl = document.getElementById("result");
 
-      const result = document.getElementById("result");
-      result.textContent = "Loading...";
+      resultEl.classList.remove("error");
+      resultEl.textContent = "Loading...";
 
       try {
         const res = await fetch("/api/rent", {
@@ -71,15 +98,20 @@
 
         const data = await res.json();
 
-        if (data.error) {
-          result.textContent = data.error;
-        } else {
-          result.textContent = `$${data.rent.toLocaleString()} / month`;
+        if (!res.ok || data.error) {
+          resultEl.classList.add("error");
+          resultEl.textContent = JSON.stringify(data, null, 2);
+          return;
         }
+
+        resultEl.textContent = JSON.stringify(data, null, 2);
+
       } catch (err) {
-        result.textContent = "Request failed";
+        resultEl.classList.add("error");
+        resultEl.textContent = err.message;
       }
     }
   </script>
+
 </body>
 </html>
