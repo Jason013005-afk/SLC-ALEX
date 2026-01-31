@@ -1,119 +1,88 @@
 import express from "express";
 import fs from "fs";
-import path from "path";
 import csv from "csv-parser";
-import cors from "cors";
+import path from "path";
 
 const app = express();
 const PORT = 8080;
 
-app.use(cors());
 app.use(express.json());
+app.use(express.static("public"));
 
-// --------------------
-// DATA STORES
-// --------------------
-const SAFMR_BY_ZIP = {};
-const FMR_BY_AREA = {};
+/* ---------- LOAD SAFMR (ZIP → HUD AREA) ---------- */
+const safmrByZip = new Map();
 
-// --------------------
-// LOAD SAFMR (ZIP → AREA)
-// --------------------
-const SAFMR_PATH = path.join(process.cwd(), "fy2024_safmrs.clean.csv");
-
-fs.createReadStream(SAFMR_PATH)
+fs.createReadStream("fy2024_safmrs.clean.csv")
   .pipe(csv())
   .on("data", (row) => {
-    const zip = row["ZIP CODE"]?.replace(/"/g, "").trim();
-    const area = row["HUD Area Code"]?.replace(/"/g, "").trim();
-    if (zip && area) {
-      SAFMR_BY_ZIP[zip] = area;
-    }
+    const zip = row["ZIP CODE"];
+    const hud = row["HUD Area Code"];
+    if (zip && hud) safmrByZip.set(zip, hud);
   })
   .on("end", () => {
-    console.log(`🔥 SAFMR loaded: ${Object.keys(SAFMR_BY_ZIP).length} ZIPs`);
+    console.log(`🔥 SAFMR loaded: ${safmrByZip.size} ZIPs`);
   });
 
-// --------------------
-// LOAD FMR (AREA → RENTS)
-// --------------------
-const FMR_PATH = path.join(process.cwd(), "fy2024_fmr_county.csv");
+/* ---------- LOAD FMR (HUD AREA → RENTS) ---------- */
+const fmrByArea = new Map();
 
-fs.createReadStream(FMR_PATH)
+fs.createReadStream("fy2024_fmr_county.csv")
   .pipe(csv())
   .on("data", (row) => {
-    const area = row["hud_area_code"]?.trim();
-    if (!area) return;
+    const area = row.hud_area_code;
+    if (!area || fmrByArea.has(area)) return;
 
-    FMR_BY_AREA[area] = {
-      0: Number(row["fmr_0"]) || null,
-      1: Number(row["fmr_1"]) || null,
-      2: Number(row["fmr_2"]) || null,
-      3: Number(row["fmr_3"]) || null,
-      4: Number(row["fmr_4"]) || null
-    };
+    fmrByArea.set(area, {
+      0: Number(row.fmr_0),
+      1: Number(row.fmr_1),
+      2: Number(row.fmr_2),
+      3: Number(row.fmr_3),
+      4: Number(row.fmr_4),
+    });
   })
   .on("end", () => {
-    console.log(`🔥 FMR loaded: ${Object.keys(FMR_BY_AREA).length} areas`);
+    console.log(`🔥 FMR loaded: ${fmrByArea.size} areas`);
   });
 
-// --------------------
-// HEALTH CHECK
-// --------------------
-app.get("/api/health", (req, res) => {
-  res.json({
-    status: "ok",
-    zipCount: Object.keys(SAFMR_BY_ZIP).length,
-    areaCount: Object.keys(FMR_BY_AREA).length
-  });
+/* ---------- ROUTES ---------- */
+app.get("/", (req, res) => {
+  res.sendFile(path.join(process.cwd(), "public", "index.html"));
 });
 
-// --------------------
-// RENT LOOKUP
-// --------------------
+app.get("/api/health", (req, res) => {
+  res.json({ status: "ok", zipCount: safmrByZip.size });
+});
+
 app.post("/api/rent", (req, res) => {
   const { zip, bedrooms } = req.body;
-  const br = String(bedrooms);
+  const br = Number(bedrooms);
 
-  if (!zip || br === undefined) {
-    return res.status(400).json({ error: "zip and bedrooms required" });
+  const hudArea = safmrByZip.get(zip);
+  if (!hudArea) {
+    return res.status(404).json({ error: "ZIP not found in SAFMR" });
   }
 
-  const area = SAFMR_BY_ZIP[zip];
-  if (!area) {
-    return res.json({
-      zip,
-      bedrooms,
-      error: "ZIP not mapped to HUD area"
-    });
+  const fmr = fmrByArea.get(hudArea);
+  if (!fmr || fmr[br] == null) {
+    return res.status(404).json({ error: "FMR missing for HUD area" });
   }
 
-  const rents = FMR_BY_AREA[area];
-  if (!rents || !rents[br]) {
-    return res.json({
-      zip,
-      bedrooms,
-      hudArea: area,
-      error: "No FMR available for this area"
-    });
-  }
-
-  const base = rents[br];
+  const rent = fmr[br];
 
   res.json({
     zip,
-    bedrooms,
-    hudArea: area,
-    rent: base,
+    bedrooms: br,
+    hudArea,
+    rent,
     paymentStandards: {
-      "90%": Math.round(base * 0.9),
-      "100%": base,
-      "110%": Math.round(base * 1.1)
-    }
+      "90%": Math.round(rent * 0.9),
+      "100%": rent,
+      "110%": Math.round(rent * 1.1),
+    },
   });
 });
 
-// --------------------
+/* ---------- START ---------- */
 app.listen(PORT, () => {
   console.log(`🚀 ALEX server running at http://127.0.0.1:${PORT}`);
 });
