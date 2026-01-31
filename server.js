@@ -1,140 +1,117 @@
-import express from "express";
 import fs from "fs";
-import path from "path";
 import csv from "csv-parser";
+import express from "express";
 import cors from "cors";
 
 const app = express();
-const PORT = 8080;
-
 app.use(cors());
 app.use(express.json());
 
-// ============================
-// Data stores
-// ============================
-const SAFMR_BY_ZIP = {};
-const FMR_BY_AREA = {};
+const SAFMR_FILE = "fy2024_safmrs.clean.csv";
+const FMR_FILE = "fy2024_fmr_county.csv";
 
-// ============================
-// File paths
-// ============================
-const SAFMR_PATH = path.join(process.cwd(), "fy2024_safmrs.clean.csv");
-const FMR_PATH = path.join(process.cwd(), "fy2024_fmr_county.csv");
+const safmrByZip = new Map();        // zip -> { areaCode, rents[] }
+const fmrByArea = new Map();         // METROxxxx -> { fmr_0..fmr_4 }
 
-// ============================
-// Load SAFMR (ZIP-level)
-// ============================
-fs.createReadStream(SAFMR_PATH)
+// ---------- LOAD SAFMR ----------
+fs.createReadStream(SAFMR_FILE)
   .pipe(csv())
   .on("data", (row) => {
-    const zip = row["ZIP CODE"]?.replace(/"/g, "").trim();
-    const hudArea = row["HUD Area Code"]?.replace(/"/g, "").trim();
+    const zip = row["ZIP CODE"]?.replace(/"/g, "");
+    if (!zip) return;
 
-    if (!zip || !hudArea) return;
+    const areaCode = row["HUD Area Code"]?.replace(/"/g, "");
 
-    SAFMR_BY_ZIP[zip] = {
-      hudArea,
-      rents: {
-        0: Number(row["SAFMR 0BR"]) || null,
-        1: Number(row["SAFMR 1BR"]) || null,
-        2: Number(row["SAFMR 2BR"]) || null,
-        3: Number(row["SAFMR 3BR"]) || null,
-        4: Number(row["SAFMR 4BR"]) || null,
-      },
-    };
+    const rents = [
+      row["SAFMR 0BR"],
+      row["SAFMR 1BR"],
+      row["SAFMR 2BR"],
+      row["SAFMR 3BR"],
+      row["SAFMR 4BR"],
+    ].map(v => {
+      if (!v) return null;
+      return Number(v.replace(/[^0-9]/g, ""));
+    });
+
+    safmrByZip.set(zip, { areaCode, rents });
   })
   .on("end", () => {
-    console.log(`🔥 SAFMR loaded: ${Object.keys(SAFMR_BY_ZIP).length} ZIPs`);
+    console.log(`🔥 SAFMR loaded: ${safmrByZip.size} ZIPs`);
   });
 
-// ============================
-// Load FMR (Metro / County)
-// ============================
-fs.createReadStream(FMR_PATH)
+// ---------- LOAD FMR ----------
+fs.createReadStream(FMR_FILE)
   .pipe(csv())
   .on("data", (row) => {
-    const hudArea = row["hud_area_code"]?.trim();
-    if (!hudArea) return;
+    const area = row["hud_area_code"];
+    if (!area) return;
 
-    FMR_BY_AREA[hudArea] = {
-      0: Number(row["fmr_0"]) || null,
-      1: Number(row["fmr_1"]) || null,
-      2: Number(row["fmr_2"]) || null,
-      3: Number(row["fmr_3"]) || null,
-      4: Number(row["fmr_4"]) || null,
-    };
+    fmrByArea.set(area, {
+      0: Number(row["fmr_0"]),
+      1: Number(row["fmr_1"]),
+      2: Number(row["fmr_2"]),
+      3: Number(row["fmr_3"]),
+      4: Number(row["fmr_4"]),
+    });
   })
   .on("end", () => {
-    console.log(`🔥 FMR loaded: ${Object.keys(FMR_BY_AREA).length} areas`);
+    console.log(`🔥 FMR loaded: ${fmrByArea.size} areas`);
   });
 
-// ============================
-// Health
-// ============================
+// ---------- HEALTH ----------
 app.get("/api/health", (req, res) => {
   res.json({
     status: "ok",
-    safmrZips: Object.keys(SAFMR_BY_ZIP).length,
-    fmrAreas: Object.keys(FMR_BY_AREA).length,
+    safmrZips: safmrByZip.size,
+    fmrAreas: fmrByArea.size
   });
 });
 
-// ============================
-// Rent lookup
-// ============================
+// ---------- RENT ----------
 app.post("/api/rent", (req, res) => {
-  const { zip, bedrooms } = req.body;
+  const zip = String(req.body.zip || "").trim();
+  const br = Number(req.body.bedrooms);
 
-  if (!zip || bedrooms === undefined) {
-    return res.status(400).json({
-      error: "zip and bedrooms required",
-    });
+  if (!zip || isNaN(br) || br < 0 || br > 4) {
+    return res.status(400).json({ error: "Invalid zip or bedrooms" });
   }
 
-  const safmr = SAFMR_BY_ZIP[zip];
-  if (!safmr) {
-    return res.status(404).json({
-      error: "ZIP not found in SAFMR dataset",
-    });
-  }
+  const safmr = safmrByZip.get(zip);
 
-  // 1️⃣ SAFMR if available
-  const safmrRent = safmr.rents[bedrooms];
-  if (safmrRent) {
+  // 1️⃣ SAFMR (ZIP LEVEL)
+  if (safmr && safmr.rents[br]) {
     return res.json({
       zip,
-      bedrooms,
+      bedrooms: br,
       source: "SAFMR",
-      rent: safmrRent,
+      rent: safmr.rents[br]
     });
   }
 
-  // 2️⃣ FMR fallback via HUD area code
-  const fmr = FMR_BY_AREA[safmr.hudArea];
-  const fmrRent = fmr?.[bedrooms];
-
-  if (fmrRent) {
-    return res.json({
-      zip,
-      bedrooms,
-      source: "FMR (Metro/County)",
-      hudArea: safmr.hudArea,
-      rent: fmrRent,
-    });
+  // 2️⃣ FMR FALLBACK (METRO / COUNTY)
+  if (safmr?.areaCode) {
+    const fmr = fmrByArea.get(safmr.areaCode);
+    if (fmr && fmr[br]) {
+      return res.json({
+        zip,
+        bedrooms: br,
+        source: "FMR",
+        hudArea: safmr.areaCode,
+        rent: fmr[br]
+      });
+    }
   }
 
-  // 3️⃣ Nothing available
-  return res.json({
+  // 3️⃣ FINAL FAILURE (EXPLICIT)
+  return res.status(404).json({
     zip,
-    bedrooms,
-    error: "No SAFMR or FMR available",
+    bedrooms: br,
+    error: "No SAFMR or FMR available"
   });
 });
 
-// ============================
-// Start
-// ============================
+// ---------- START ----------
+const PORT = 8080;
 app.listen(PORT, () => {
   console.log(`🚀 ALEX server running at http://127.0.0.1:${PORT}`);
 });
