@@ -17,9 +17,7 @@ app.use(express.json());
 function toNumber(value) {
   if (!value) return null;
   return Number(
-    String(value)
-      .replace(/[$,]/g, "")
-      .trim()
+    String(value).replace(/[$,]/g, "").trim()
   ) || null;
 }
 
@@ -57,7 +55,6 @@ fs.createReadStream(CSV_PATH)
 // Routes
 // ============================
 
-// Health check
 app.get("/api/health", (req, res) => {
   res.json({
     status: "ok",
@@ -65,7 +62,6 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// Rent lookup
 app.post("/api/rent", (req, res) => {
   const { zip, bedrooms } = req.body;
 
@@ -77,7 +73,41 @@ app.post("/api/rent", (req, res) => {
 
   const data = HUD_DATA[zip];
 
-  // ZIP not in dataset at all
   if (!data) {
     return res.status(404).json({
-      error: "ZIP not found in HUD
+      error: "ZIP not found in HUD dataset"
+    });
+  }
+
+  const rent = data[String(bedrooms)];
+
+  if (rent == null) {
+    return res.status(200).json({
+      zip,
+      bedrooms,
+      hudStatus: "SAFMR unavailable",
+      message: "HUD does not publish SAFMR for this ZIP",
+      nextStep: "Use county/metro FMR fallback or market rent estimate"
+    });
+  }
+
+  res.json({
+    zip,
+    bedrooms,
+    hudStatus: "SAFMR available",
+    rent,
+    paymentStandards: {
+      "90%": Math.round(rent * 0.9),
+      "100%": rent,
+      "110%": Math.round(rent * 1.1)
+    }
+  });
+});
+
+// ============================
+// Start server
+// ============================
+
+app.listen(PORT, () => {
+  console.log(`🚀 ALEX server running at http://127.0.0.1:${PORT}`);
+});
