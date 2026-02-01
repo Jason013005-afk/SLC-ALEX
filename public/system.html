@@ -2,47 +2,33 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>ALEX™ Stress Test</title>
+  <title>Property Analysis | ALEX</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
-
 <body>
-<header>
-  <div class="logo">
-    <img src="images/slc-logo.png" alt="Silver Lining Consulting">
-  </div>
-  <nav>
-    <a href="index.html">Home</a>
-    <a href="system.html">The System</a>
-    <a href="pricing.html">Pricing</a>
-    <a href="contact.html">Contact</a>
-  </nav>
-</header>
 
-<div class="card">
-  <h1>ALEX™ Stress Test</h1>
+  <header class="site-header">
+    <div class="logo">ALEX</div>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="system.html" class="active">System</a>
+      <a href="pricing.html">Pricing</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+  </header>
 
-  <input id="address" placeholder="Property Address" />
-  <input id="rate" type="number" step="0.01" placeholder="Interest Rate (%)" />
+  <main class="system-container">
+    <h1>Real Estate Analysis Tool</h1>
 
-  <button onclick="runStressTest()">Run Stress Test</button>
+    <div class="form">
+      <input id="zip" placeholder="ZIP Code" />
+      <input id="bedrooms" type="number" min="0" max="6" placeholder="Bedrooms" />
+      <button onclick="analyze()">Analyze Property</button>
+    </div>
 
-  <div id="results" class="results"></div>
+    <pre id="output">Enter a ZIP and bedrooms to run analysis.</pre>
+  </main>
 
-  <h2>Exit Sensitivity</h2>
-  <table class="sensitivity">
-    <thead>
-      <tr>
-        <th>Hold \ Cap</th>
-        <th>5.5%</th>
-        <th>6.0%</th>
-        <th>6.5%</th>
-      </tr>
-    </thead>
-    <tbody id="sensitivityTable"></tbody>
-  </table>
-</div>
-
-<script src="system.js"></script>
+  <script src="system.js"></script>
 </body>
 </html>
