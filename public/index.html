@@ -2,75 +2,152 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>ALEX Rent Lookup</title>
+  <title>ALEX – Rent Analysis Tool</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #f4f6f8;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f5f7fb;
+      padding: 40px;
     }
-    .card {
+
+    .app {
+      max-width: 900px;
+      margin: auto;
       background: white;
-      padding: 24px;
-      border-radius: 8px;
-      width: 360px;
-      box-shadow: 0 4px 12px rgba(0,0,0,.1);
+      padding: 32px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
     }
-    input, select, button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
+
+    h1 {
+      margin-bottom: 8px;
     }
+
+    p {
+      color: #555;
+      margin-bottom: 24px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    input {
+      flex: 1;
+      padding: 12px;
+      font-size: 16px;
+    }
+
     button {
+      padding: 12px 20px;
+      font-size: 16px;
       background: #2563eb;
       color: white;
       border: none;
+      border-radius: 6px;
       cursor: pointer;
     }
-    pre {
-      background: #eef2ff;
+
+    button:hover {
+      background: #1e4fd8;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
       padding: 10px;
-      margin-top: 15px;
-      white-space: pre-wrap;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+    }
+
+    th {
+      background: #f1f3f8;
+    }
+
+    .source {
+      font-size: 13px;
+      color: #666;
     }
   </style>
 </head>
 <body>
 
-<div class="card">
-  <h2>Rent Lookup</h2>
+<div class="app">
+  <h1>Rent Analysis</h1>
+  <p>HUD & Section 8 rent limits by ZIP code (SAFMR / FMR)</p>
 
-  <input id="zip" placeholder="ZIP Code" />
-  <select id="bedrooms">
-    <option value="0">Studio</option>
-    <option value="1">1 Bedroom</option>
-    <option value="2">2 Bedroom</option>
-    <option value="3">3 Bedroom</option>
-    <option value="4">4 Bedroom</option>
-  </select>
+  <div class="controls">
+    <input id="zip" placeholder="Enter ZIP code (e.g. 02724)" />
+    <button onclick="runAnalysis()">Analyze</button>
+  </div>
 
-  <button onclick="lookup()">Get Rent</button>
-
-  <pre id="output"></pre>
+  <div id="results"></div>
 </div>
 
 <script>
-async function lookup() {
-  const zip = document.getElementById("zip").value;
-  const bedrooms = document.getElementById("bedrooms").value;
+async function runAnalysis() {
+  const zip = document.getElementById("zip").value.trim();
+  const results = document.getElementById("results");
 
-  const res = await fetch("/api/rent", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ zip, bedrooms })
-  });
+  if (!zip) {
+    results.innerHTML = "Enter a ZIP code.";
+    return;
+  }
 
-  const data = await res.json();
-  document.getElementById("output").textContent =
-    JSON.stringify(data, null, 2);
+  results.innerHTML = "Loading rent data…";
+
+  const labels = ["Studio", "1 Bedroom", "2 Bedroom", "3 Bedroom", "4 Bedroom"];
+  let rows = "";
+
+  for (let br = 0; br <= 4; br++) {
+    const res = await fetch("/api/rent", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ zip, bedrooms: br })
+    });
+
+    const data = await res.json();
+
+    if (!data.rent) continue;
+
+    rows += `
+      <tr>
+        <td>${labels[br]}</td>
+        <td>$${data.rent}</td>
+        <td>$${data.paymentStandards["90%"]}</td>
+        <td>$${data.paymentStandards["100%"]}</td>
+        <td>$${data.paymentStandards["110%"]}</td>
+        <td class="source">${data.source}</td>
+      </tr>
+    `;
+  }
+
+  if (!rows) {
+    results.innerHTML = "No HUD rent data available for this ZIP.";
+    return;
+  }
+
+  results.innerHTML = `
+    <table>
+      <tr>
+        <th>Unit</th>
+        <th>Rent</th>
+        <th>90%</th>
+        <th>100%</th>
+        <th>110%</th>
+        <th>Source</th>
+      </tr>
+      ${rows}
+    </table>
+  `;
 }
 </script>
 
