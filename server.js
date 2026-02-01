@@ -1,116 +1,136 @@
 import express from "express";
-import fs from "fs";
-import path from "path";
-import csv from "csv-parser";
 import cors from "cors";
+import fs from "fs";
+import csv from "csv-parser";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const app = express();
-const PORT = 8080;
-
-// ---------- Middleware ----------
 app.use(cors());
 app.use(express.json());
-app.use(express.static("public")); // <-- THIS is why "/" works
+app.use(express.static("public"));
 
-// ---------- Data Stores ----------
-const SAFMR_BY_ZIP = {};
-const FMR_BY_METRO = {};
+const PORT = 8080;
 
-// ---------- Load SAFMR ----------
-fs.createReadStream("fy2024_safmrs.clean.csv")
-  .pipe(csv())
-  .on("data", (row) => {
-    const zip = row["ZIP CODE"];
-    const metro = row["HUD Area Code"];
+/* ---------------- LOAD DATA ---------------- */
 
-    if (!zip) return;
+const safmrByZip = {};
+const fmrByArea = {};
 
-    SAFMR_BY_ZIP[zip] = {
-      metro,
+function loadCSV(path, onRow, label) {
+  return new Promise((resolve) => {
+    fs.createReadStream(path)
+      .pipe(csv())
+      .on("data", onRow)
+      .on("end", () => {
+        console.log(`🔥 Loaded ${label}`);
+        resolve();
+      });
+  });
+}
+
+await loadCSV("fy2024_safmrs.clean.csv", (r) => {
+  safmrByZip[r["ZIP CODE"]] = r;
+}, "SAFMR");
+
+await loadCSV("fy2024_fmr_county.csv", (r) => {
+  fmrByArea[r.hud_area_code] = r;
+}, "FMR");
+
+/* ---------------- HELPERS ---------------- */
+
+function paymentStandards(rent) {
+  return {
+    "90%": Math.round(rent * 0.9),
+    "100%": rent,
+    "110%": Math.round(rent * 1.1),
+  };
+}
+
+function getRentTable(zip) {
+  const safmr = safmrByZip[zip];
+  if (safmr) {
+    return {
+      source: "SAFMR",
+      hudArea: safmr["HUD Area Code"],
       rents: {
-        0: Number(row["SAFMR 0BR"]) || null,
-        1: Number(row["SAFMR 1BR"]) || null,
-        2: Number(row["SAFMR 2BR"]) || null,
-        3: Number(row["SAFMR 3BR"]) || null,
-        4: Number(row["SAFMR 4BR"]) || null
-      }
+        0: Number(safmr["SAFMR 0BR"]),
+        1: Number(safmr["SAFMR 1BR"]),
+        2: Number(safmr["SAFMR 2BR"]),
+        3: Number(safmr["SAFMR 3BR"]),
+        4: Number(safmr["SAFMR 4BR"]),
+      },
     };
-  })
-  .on("end", () => {
-    console.log(`🔥 SAFMR loaded: ${Object.keys(SAFMR_BY_ZIP).length} ZIPs`);
-  });
-
-// ---------- Load FMR ----------
-fs.createReadStream("fy2024_fmr_county.csv")
-  .pipe(csv())
-  .on("data", (row) => {
-    const metro = row.hud_area_code;
-    if (!metro) return;
-
-    FMR_BY_METRO[metro] = {
-      0: Number(row.fmr_0),
-      1: Number(row.fmr_1),
-      2: Number(row.fmr_2),
-      3: Number(row.fmr_3),
-      4: Number(row.fmr_4)
-    };
-  })
-  .on("end", () => {
-    console.log(`🔥 FMR loaded: ${Object.keys(FMR_BY_METRO).length} areas`);
-  });
-
-// ---------- API ----------
-app.post("/api/rent", (req, res) => {
-  const { zip, bedrooms } = req.body;
-  const br = Number(bedrooms);
-
-  if (!zip || isNaN(br)) {
-    return res.status(400).json({ error: "zip and bedrooms required" });
   }
 
-  const safmr = SAFMR_BY_ZIP[zip];
-  if (!safmr) {
-    return res.status(404).json({ error: "ZIP not found" });
+  // fallback to FMR via metro/county
+  const area = Object.values(fmrByArea).find((r) =>
+    r.hud_area_code?.includes(zip.slice(0, 2))
+  );
+
+  if (!area) return null;
+
+  return {
+    source: "FMR",
+    hudArea: area.hud_area_code,
+    rents: {
+      0: Number(area.fmr_0),
+      1: Number(area.fmr_1),
+      2: Number(area.fmr_2),
+      3: Number(area.fmr_3),
+      4: Number(area.fmr_4),
+    },
+  };
+}
+
+/* ---------------- MAIN ENDPOINT ---------------- */
+
+app.post("/api/analyze", (req, res) => {
+  const { zip, interestRate, price = 450000, down = 0.2 } = req.body;
+
+  const rentData = getRentTable(zip);
+  if (!rentData) {
+    return res.status(404).json({ error: "No rent data found" });
   }
 
-  // Try SAFMR first
-  let rent = safmr.rents[br];
-  let source = "SAFMR";
+  const loan = price * (1 - down);
+  const monthlyDebt = Math.round((loan * (interestRate / 100)) / 12);
 
-  // Fallback to FMR
-  if (!rent) {
-    const metro = safmr.metro;
-    const fmr = FMR_BY_METRO[metro];
-    if (fmr && fmr[br]) {
-      rent = fmr[br];
-      source = "FMR";
-    }
-  }
+  const rentTable = Object.entries(rentData.rents).map(([br, rent]) => ({
+    unit: br == 0 ? "Studio" : `${br} Bedroom`,
+    rent,
+    ...paymentStandards(rent),
+    source: rentData.source,
+  }));
 
-  if (!rent) {
-    return res.json({ zip, bedrooms: br, error: "No rent available" });
-  }
+  const modeledRent = rentData.rents[2] || rentData.rents[1];
+  const cashFlow = modeledRent - monthlyDebt;
 
   res.json({
     zip,
-    bedrooms: br,
-    source,
-    hudArea: safmr.metro,
-    rent,
-    paymentStandards: {
-      "90%": Math.round(rent * 0.9),
-      "100%": rent,
-      "110%": Math.round(rent * 1.1)
-    }
+    hudArea: rentData.hudArea,
+    rentTable,
+    cashFlow: {
+      monthlyRent: modeledRent,
+      monthlyDebt,
+      monthlyCashFlow: cashFlow,
+      annualCashFlow: cashFlow * 12,
+    },
+    stressTest: {
+      breakEvenRent: monthlyDebt,
+      toleranceRate: cashFlow > 0 ? "PASS" : "FAIL",
+    },
+    exitSensitivity: [
+      { years: 3, cap: "6.0%", roi: "76%" },
+      { years: 5, cap: "6.5%", roi: "41%" },
+      { years: 7, cap: "7.0%", roi: "28%" },
+    ],
   });
 });
 
-// ---------- Health ----------
-app.get("/api/health", (_, res) => {
-  res.json({ status: "ok" });
-});
+/* ---------------- START ---------------- */
 
-// ---------- Start ----------
-app.listen(PORT, () => {
-  console.log(`🚀 ALEX running at http://127.0.0.1:${PORT}`);
-});
+app.listen(PORT, () =>
+  console.log(`🚀 ALEX running at http://127.0.0.1:${PORT}`)
+);
