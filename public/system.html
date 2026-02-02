@@ -7,28 +7,40 @@
 </head>
 <body>
 
-  <header class="site-header">
-    <div class="logo">ALEX</div>
-    <nav>
-      <a href="index.html">Home</a>
-      <a href="system.html" class="active">System</a>
-      <a href="pricing.html">Pricing</a>
-      <a href="contact.html">Contact</a>
-    </nav>
-  </header>
+<header class="site-header">
+  <div class="logo">ALEX</div>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="system.html" class="active">System</a>
+    <a href="pricing.html">Pricing</a>
+    <a href="contact.html">Contact</a>
+  </nav>
+</header>
 
-  <main class="system-container">
-    <h1>Real Estate Analysis Tool</h1>
+<main class="system-container">
+  <h1>Real Estate Analysis</h1>
 
-    <div class="form">
-      <input id="zip" placeholder="ZIP Code" />
-      <input id="bedrooms" type="number" min="0" max="6" placeholder="Bedrooms" />
-      <button onclick="analyze()">Analyze Property</button>
-    </div>
+  <div class="form">
+    <input id="zip" placeholder="ZIP Code" />
+    <input id="rate" placeholder="Interest Rate (%)" />
+    <button onclick="analyze()">Analyze Property</button>
+  </div>
 
-    <pre id="output">Enter a ZIP and bedrooms to run analysis.</pre>
-  </main>
+  <table id="results" class="results-table" hidden>
+    <thead>
+      <tr>
+        <th>Unit</th>
+        <th>Rent</th>
+        <th>90%</th>
+        <th>100%</th>
+        <th>110%</th>
+        <th>Source</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</main>
 
-  <script src="system.js"></script>
+<script src="system.js"></script>
 </body>
 </html>

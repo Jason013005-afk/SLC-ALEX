@@ -1,32 +1,36 @@
 async function analyze() {
   const zip = document.getElementById("zip").value.trim();
-  const bedrooms = Number(document.getElementById("bedrooms").value);
-  const output = document.getElementById("output");
+  const rate = Number(document.getElementById("rate").value);
 
-  if (!zip || Number.isNaN(bedrooms)) {
-    output.textContent = "Please enter a ZIP code and bedroom count.";
+  if (!zip || !rate) {
+    alert("Enter ZIP and interest rate");
     return;
   }
 
-  output.textContent = "Running analysis...";
+  const res = await fetch("/api/analyze", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ zip, interestRate: rate })
+  });
 
-  try {
-    const res = await fetch("/api/rent", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ zip, bedrooms })
-    });
+  const data = await res.json();
 
-    const data = await res.json();
+  const table = document.getElementById("results");
+  const body = table.querySelector("tbody");
+  body.innerHTML = "";
 
-    if (!res.ok) {
-      output.textContent = data.error || "Error running analysis.";
-      return;
-    }
+  data.results.forEach(r => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${r.unit}</td>
+      <td>$${r.rent}</td>
+      <td>$${r.p90}</td>
+      <td>$${r.p100}</td>
+      <td>$${r.p110}</td>
+      <td>${r.source}</td>
+    `;
+    body.appendChild(tr);
+  });
 
-    output.textContent = JSON.stringify(data, null, 2);
-  } catch (err) {
-    output.textContent = "Server error. Is backend running?";
-    console.error(err);
-  }
+  table.hidden = false;
 }
