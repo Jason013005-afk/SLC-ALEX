@@ -1,8 +1,8 @@
 import express from "express";
-import fs from "fs";
-import path from "path";
-import csv from "csv-parser";
 import cors from "cors";
+import fs from "fs";
+import csv from "csv-parser";
+import path from "path";
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
 
@@ -12,158 +12,94 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 8080;
+const PORT = 8080;
 
-/* =========================
-   MIDDLEWARE
-========================= */
 app.use(cors());
 app.use(express.json());
+
+// ✅ Serve static frontend
 app.use(express.static(path.join(__dirname, "public")));
 
-/* =========================
-   DATA STORES
-========================= */
-const SAFMR = new Map(); // ZIP -> { hudArea, rents[] }
-const FMR = new Map();   // hudArea -> rents[]
+// --------------------
+// LOAD DATA
+// --------------------
+const safmrByZip = {};
+const fmrByArea = {};
 
-/* =========================
-   LOAD SAFMR
-========================= */
-fs.createReadStream("fy2024_safmrs.clean.csv")
-  .pipe(csv())
-  .on("data", row => {
-    const zip = row["ZIP CODE"];
-    const hudArea = row["HUD Area Code"];
-
-    if (!zip || !hudArea) return;
-
-    const rents = [
-      Number(row["0BR"]),
-      Number(row["1BR"]),
-      Number(row["2BR"]),
-      Number(row["3BR"]),
-      Number(row["4BR"])
-    ];
-
-    SAFMR.set(zip, { hudArea, rents });
-  })
-  .on("end", () => {
-    console.log("🔥 Loaded SAFMR");
+function loadCSV(file, onRow, label) {
+  return new Promise((resolve) => {
+    fs.createReadStream(file)
+      .pipe(csv())
+      .on("data", onRow)
+      .on("end", () => {
+        console.log(`🔥 Loaded ${label}`);
+        resolve();
+      });
   });
+}
 
-/* =========================
-   LOAD FMR (METRO + COUNTY)
-========================= */
-const loadFMR = file =>
-  fs.createReadStream(file)
-    .pipe(csv())
-    .on("data", row => {
-      const hudArea = row["HUD Area Code"];
-      if (!hudArea) return;
+// SAFMR
+await loadCSV("fy2024_safmrs.clean.csv", (r) => {
+  if (r["ZIP CODE"] && r["HUD Area Code"]) {
+    safmrByZip[r["ZIP CODE"]] = r["HUD Area Code"];
+  }
+}, "SAFMR");
 
-      const rents = [
-        Number(row["0BR"]),
-        Number(row["1BR"]),
-        Number(row["2BR"]),
-        Number(row["3BR"]),
-        Number(row["4BR"])
-      ];
+// FMR
+await loadCSV("fy2024_fmr_county.csv", (r) => {
+  if (r.hud_area_code) {
+    fmrByArea[r.hud_area_code] = {
+      fmr_0: Number(r.fmr_0),
+      fmr_1: Number(r.fmr_1),
+      fmr_2: Number(r.fmr_2),
+      fmr_3: Number(r.fmr_3),
+      fmr_4: Number(r.fmr_4),
+    };
+  }
+}, "FMR");
 
-      FMR.set(hudArea, rents);
-    });
-
-loadFMR("fy2024_fmr_metro.csv");
-loadFMR("fy2024_fmr_county.csv");
-
-console.log("🔥 Loaded FMR");
-
-/* =========================
-   API: RENT LOOKUP
-========================= */
+// --------------------
+// API
+// --------------------
 app.post("/api/rent", (req, res) => {
   const { zip, bedrooms } = req.body;
+  const br = Math.min(Number(bedrooms), 4);
 
-  if (!zip || bedrooms === undefined) {
-    return res.status(400).json({ error: "zip and bedrooms required" });
+  const hudArea = safmrByZip[zip];
+  if (!hudArea || !fmrByArea[hudArea]) {
+    return res.status(404).json({
+      error: "No SAFMR or FMR available",
+      zip,
+      bedrooms: br,
+    });
   }
 
-  // SAFMR first
-  if (SAFMR.has(zip)) {
-    const { hudArea, rents } = SAFMR.get(zip);
-    const rent = rents[bedrooms];
+  const rent = fmrByArea[hudArea][`fmr_${br}`];
 
-    if (rent) {
-      return res.json({
-        zip,
-        bedrooms,
-        source: "SAFMR",
-        hudArea,
-        rent,
-        paymentStandards: {
-          "90%": Math.round(rent * 0.9),
-          "100%": rent,
-          "110%": Math.round(rent * 1.1)
-        }
-      });
-    }
-
-    // fallback to FMR using HUD area
-    if (FMR.has(hudArea)) {
-      const fmrRent = FMR.get(hudArea)[bedrooms];
-      if (fmrRent) {
-        return res.json({
-          zip,
-          bedrooms,
-          source: "FMR",
-          hudArea,
-          rent: fmrRent,
-          paymentStandards: {
-            "90%": Math.round(fmrRent * 0.9),
-            "100%": fmrRent,
-            "110%": Math.round(fmrRent * 1.1)
-          }
-        });
-      }
-    }
-  }
-
-  return res.status(404).json({
+  res.json({
     zip,
-    bedrooms,
-    error: "No SAFMR or FMR available"
+    bedrooms: br,
+    source: "FMR",
+    hudArea,
+    rent,
+    paymentStandards: {
+      "90%": Math.round(rent * 0.9),
+      "100%": rent,
+      "110%": Math.round(rent * 1.1),
+    },
   });
 });
 
-/* =========================
-   PAGE ROUTING (EXPRESS 5 SAFE)
-========================= */
-app.get("/", (_, res) =>
-  res.sendFile(path.join(__dirname, "public/index.html"))
-);
-
-app.get("/system.html", (_, res) =>
-  res.sendFile(path.join(__dirname, "public/system.html"))
-);
-
-app.get("/pricing.html", (_, res) =>
-  res.sendFile(path.join(__dirname, "public/pricing.html"))
-);
-
-app.get("/contact.html", (_, res) =>
-  res.sendFile(path.join(__dirname, "public/contact.html"))
-);
-
-/* =========================
-   FALLBACK (NO "*" BUG)
-========================= */
-app.use((req, res) => {
-  res.sendFile(path.join(__dirname, "public/index.html"));
+// --------------------
+// HEALTH CHECK
+// --------------------
+app.get("/api/health", (req, res) => {
+  res.json({ status: "ok" });
 });
 
-/* =========================
-   START SERVER
-========================= */
+// --------------------
+// START SERVER
+// --------------------
 app.listen(PORT, () => {
   console.log(`🚀 ALEX running at http://127.0.0.1:${PORT}`);
 });
