@@ -17,22 +17,33 @@ app.use(express.static(path.join(__dirname, "public")));
 // ===============================
 // DATA STORES
 // ===============================
-const SAFMR = new Map(); // key: ZIP-BEDS
-const FMR = new Map();   // key: ZIP-BEDS
 
-const normalizeZip = z =>
-  z?.toString().replace(/\D/g, "").padStart(5, "0");
+// SAFMR: ZIP-BEDROOM → rent
+const SAFMR = new Map();
+
+// ZIP → HUD METRO AREA NAME
+const ZIP_TO_AREA = new Map();
+
+// FMR: AREA-BEDROOM → rent
+const FMR = new Map();
+
+const normalizeZip = z => z?.toString().trim().padStart(5, "0");
 
 // ===============================
-// LOAD SAFMR (ZIP-BASED)
+// LOAD SAFMR (ZIP-LEVEL)
 // ===============================
-async function loadSAFMR() {
+function loadSAFMR() {
   return new Promise(resolve => {
     fs.createReadStream("fy2024_safmrs.clean.csv")
       .pipe(csv())
       .on("data", row => {
         const zip = normalizeZip(row["ZIP CODE"]);
-        if (!zip) return;
+        const area = row["HUD Metro Fair Market Rent Area Name"];
+
+        if (!zip || !area) return;
+
+        // Map ZIP → HUD AREA
+        ZIP_TO_AREA.set(zip, area);
 
         const beds = [
           ["0", "SAFMR 0BR"],
@@ -57,22 +68,22 @@ async function loadSAFMR() {
       })
       .on("end", () => {
         console.log(`🔥 SAFMR loaded: ${SAFMR.size} records`);
+        console.log(`🧭 ZIP→HUD areas: ${ZIP_TO_AREA.size}`);
         resolve();
       });
   });
 }
 
 // ===============================
-// LOAD FMR (ZIP FALLBACK)
+// LOAD FMR (METRO-LEVEL)
 // ===============================
-async function loadFMR() {
+function loadFMR() {
   return new Promise(resolve => {
     fs.createReadStream("fy2024_fmr_metro.csv")
       .pipe(csv())
       .on("data", row => {
-        // HUD ships this column literally as "ZIP\nCode"
-        const zip = normalizeZip(row["ZIP\nCode"]);
-        if (!zip) return;
+        const area = row["HUD Metro Fair Market Rent Area Name"];
+        if (!area) return;
 
         const beds = [
           ["0", "erap_fmr_br0"],
@@ -86,7 +97,7 @@ async function loadFMR() {
           const rent = Number(row[col]);
           if (!rent) return;
 
-          FMR.set(`${zip}-${b}`, {
+          FMR.set(`${area}-${b}`, {
             rent,
             p90: Math.round(rent * 0.9),
             p100: rent,
@@ -103,35 +114,40 @@ async function loadFMR() {
 }
 
 // ===============================
-// API: ANALYZE (SAFMR → FMR FALLBACK)
+// API: ANALYZE
 // ===============================
 app.post("/api/analyze", (req, res) => {
   const { zip, bedrooms } = req.body;
 
   const z = normalizeZip(zip);
   const b = String(bedrooms ?? 0);
-  const key = `${z}-${b}`;
 
-  const safmr = SAFMR.get(key);
-  const fmr = FMR.get(key);
-
-  if (safmr) {
+  // 1️⃣ Try SAFMR (ZIP-level)
+  const safmrKey = `${z}-${b}`;
+  if (SAFMR.has(safmrKey)) {
     return res.json({
       zip: z,
       bedrooms: Number(b),
-      ...safmr
+      ...SAFMR.get(safmrKey)
     });
   }
 
-  if (fmr) {
-    return res.json({
-      zip: z,
-      bedrooms: Number(b),
-      ...fmr
-    });
+  // 2️⃣ Fallback to FMR via HUD AREA
+  const area = ZIP_TO_AREA.get(z);
+  if (area) {
+    const fmrKey = `${area}-${b}`;
+    if (FMR.has(fmrKey)) {
+      return res.json({
+        zip: z,
+        bedrooms: Number(b),
+        hudArea: area,
+        ...FMR.get(fmrKey)
+      });
+    }
   }
 
-  return res.json({
+  // 3️⃣ Nothing found
+  res.json({
     error: "No HUD rent data found",
     zip: z,
     bedrooms: Number(b)
@@ -139,7 +155,7 @@ app.post("/api/analyze", (req, res) => {
 });
 
 // ===============================
-// PAGE ROUTES (EXPRESS 5 SAFE)
+// PAGE ROUTES
 // ===============================
 app.get("/", (_, res) =>
   res.sendFile(path.join(__dirname, "public/index.html"))
