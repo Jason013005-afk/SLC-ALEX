@@ -7,15 +7,9 @@ import { fileURLToPath } from "url";
 
 dotenv.config();
 
-// ===============================
-// PATH SETUP
-// ===============================
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// ===============================
-// APP SETUP
-// ===============================
 const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
@@ -23,21 +17,17 @@ app.use(express.static(path.join(__dirname, "public")));
 // ===============================
 // DATA STORES
 // ===============================
-const SAFMR = new Map();
+const SAFMR = new Map(); // key: ZIP-BEDS
+const FMR = new Map();   // key: ZIP-BEDS
 
 const normalizeZip = z =>
-  z ? z.toString().trim().padStart(5, "0") : null;
-
-const parseMoney = v =>
-  Number(String(v ?? "").replace(/,/g, ""));
+  z?.toString().replace(/\D/g, "").padStart(5, "0");
 
 // ===============================
 // LOAD SAFMR (ZIP-BASED)
 // ===============================
-function loadSAFMR() {
+async function loadSAFMR() {
   return new Promise(resolve => {
-    let count = 0;
-
     fs.createReadStream("fy2024_safmrs.clean.csv")
       .pipe(csv())
       .on("data", row => {
@@ -45,37 +35,75 @@ function loadSAFMR() {
         if (!zip) return;
 
         const beds = [
-          ["0", "SAFMR 0BR", "SAFMR 0BR - 90% Payment Standard", "SAFMR 0BR - 110% Payment Standard"],
-          ["1", "SAFMR 1BR", "SAFMR 1BR - 90% Payment Standard", "SAFMR 1BR - 110% Payment Standard"],
-          ["2", "SAFMR 2BR", "SAFMR 2BR - 90% Payment Standard", "SAFMR 2BR - 110% Payment Standard"],
-          ["3", "SAFMR 3BR", "SAFMR 3BR - 90% Payment Standard", "SAFMR 3BR - 110% Payment Standard"],
-          ["4", "SAFMR 4BR", "SAFMR 4BR - 90% Payment Standard", "SAFMR 4BR - 110% Payment Standard"]
+          ["0", "SAFMR 0BR"],
+          ["1", "SAFMR 1BR"],
+          ["2", "SAFMR 2BR"],
+          ["3", "SAFMR 3BR"],
+          ["4", "SAFMR 4BR"]
         ];
 
-        for (const [b, base, p90c, p110c] of beds) {
-          const rent = parseMoney(row[base]);
-          if (!Number.isFinite(rent) || rent <= 0) continue;
+        beds.forEach(([b, col]) => {
+          const rent = Number(row[col]);
+          if (!rent) return;
 
           SAFMR.set(`${zip}-${b}`, {
             rent,
-            p90: parseMoney(row[p90c]) || Math.round(rent * 0.9),
+            p90: Math.round(rent * 0.9),
             p100: rent,
-            p110: parseMoney(row[p110c]) || Math.round(rent * 1.1),
+            p110: Math.round(rent * 1.1),
             source: "SAFMR"
           });
-
-          count++;
-        }
+        });
       })
       .on("end", () => {
-        console.log(`🔥 SAFMR loaded: ${count} records`);
+        console.log(`🔥 SAFMR loaded: ${SAFMR.size} records`);
         resolve();
       });
   });
 }
 
 // ===============================
-// API: ANALYZE
+// LOAD FMR (ZIP FALLBACK)
+// ===============================
+async function loadFMR() {
+  return new Promise(resolve => {
+    fs.createReadStream("fy2024_fmr_metro.csv")
+      .pipe(csv())
+      .on("data", row => {
+        // HUD ships this column literally as "ZIP\nCode"
+        const zip = normalizeZip(row["ZIP\nCode"]);
+        if (!zip) return;
+
+        const beds = [
+          ["0", "erap_fmr_br0"],
+          ["1", "erap_fmr_br1"],
+          ["2", "erap_fmr_br2"],
+          ["3", "erap_fmr_br3"],
+          ["4", "erap_fmr_br4"]
+        ];
+
+        beds.forEach(([b, col]) => {
+          const rent = Number(row[col]);
+          if (!rent) return;
+
+          FMR.set(`${zip}-${b}`, {
+            rent,
+            p90: Math.round(rent * 0.9),
+            p100: rent,
+            p110: Math.round(rent * 1.1),
+            source: "FMR"
+          });
+        });
+      })
+      .on("end", () => {
+        console.log(`🔥 FMR loaded: ${FMR.size} records`);
+        resolve();
+      });
+  });
+}
+
+// ===============================
+// API: ANALYZE (SAFMR → FMR FALLBACK)
 // ===============================
 app.post("/api/analyze", (req, res) => {
   const { zip, bedrooms } = req.body;
@@ -84,25 +112,34 @@ app.post("/api/analyze", (req, res) => {
   const b = String(bedrooms ?? 0);
   const key = `${z}-${b}`;
 
-  const result = SAFMR.get(key);
+  const safmr = SAFMR.get(key);
+  const fmr = FMR.get(key);
 
-  if (!result) {
+  if (safmr) {
     return res.json({
-      error: "No SAFMR data found",
       zip: z,
-      bedrooms: Number(b)
+      bedrooms: Number(b),
+      ...safmr
     });
   }
 
-  res.json({
+  if (fmr) {
+    return res.json({
+      zip: z,
+      bedrooms: Number(b),
+      ...fmr
+    });
+  }
+
+  return res.json({
+    error: "No HUD rent data found",
     zip: z,
-    bedrooms: Number(b),
-    ...result
+    bedrooms: Number(b)
   });
 });
 
 // ===============================
-// PAGE ROUTES (NO WILDCARDS)
+// PAGE ROUTES (EXPRESS 5 SAFE)
 // ===============================
 app.get("/", (_, res) =>
   res.sendFile(path.join(__dirname, "public/index.html"))
@@ -124,6 +161,7 @@ app.get("/contact", (_, res) =>
 // START SERVER
 // ===============================
 await loadSAFMR();
+await loadFMR();
 
 app.listen(8080, () => {
   console.log("🚀 ALEX running at http://127.0.0.1:8080");
