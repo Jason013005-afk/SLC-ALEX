@@ -14,35 +14,26 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-// ===============================
-// DATA STORES
-// ===============================
 const SAFMR = new Map();
 const FMR = new Map();
 
-const normalizeZip = z => z?.toString().trim().padStart(5, "0");
+const normalizeZip = z => String(z || "").trim().padStart(5, "0");
 
 // ===============================
-// LOAD SAFMR WITH DEBUGGING
+// LOAD SAFMR (ZIP BASED)
 // ===============================
 function loadSAFMR() {
   return new Promise(resolve => {
-    let headerLogged = false;
+    let rows = 0;
+
     fs.createReadStream("fy2024_safmrs.clean.csv")
       .pipe(csv())
-      .on("headers", headers => {
-        console.log("📄 SAFMR Headers:", headers);
-        headerLogged = true;
-      })
+      .on("headers", h => console.log("📄 SAFMR Headers:", h))
       .on("data", row => {
-        const rawZip = row["ZIP CODE"];
-        const zip = normalizeZip(rawZip);
-        // DEBUG LOG: See what ZIPs are being parsed
-        if (rawZip || zip) {
-          console.log("RAW ZIP:", rawZip, "NORMALIZED:", zip);
-        }
-        // Only load valid ZIPs
-        if (!zip || zip.length !== 5 || !/^\d{5}$/.test(zip)) return;
+        rows++;
+
+        const zip = normalizeZip(row["ZIP CODE"]);
+        if (!/^\d{5}$/.test(zip)) return;
 
         const beds = [
           ["0", "SAFMR 0BR"],
@@ -53,8 +44,8 @@ function loadSAFMR() {
         ];
 
         beds.forEach(([b, col]) => {
-          const rent = Number(row[col]);
-          if (!rent) return;
+          const rent = Number(String(row[col]).replace(/[^0-9.]/g, ""));
+          if (isNaN(rent)) return;
 
           SAFMR.set(`${zip}-${b}`, {
             rent,
@@ -73,32 +64,28 @@ function loadSAFMR() {
 }
 
 // ===============================
-// LOAD FMR (NO CHANGES YET, STILL LOGS SIZE)
+// LOAD FMR (METRO BASED)
 // ===============================
 function loadFMR() {
   return new Promise(resolve => {
-    let headerLogged = false;
     fs.createReadStream("fy2024_fmr_metro.csv")
       .pipe(csv())
-      .on("headers", headers => {
-        console.log("📄 FMR Headers:", headers);
-        headerLogged = true;
-      })
+      .on("headers", h => console.log("📄 FMR Headers:", h))
       .on("data", row => {
         const area = row["HUD Metro Fair Market Rent Area Name"];
         if (!area) return;
 
         const beds = [
-          ["0", "FMR 0BR"],
-          ["1", "FMR 1BR"],
-          ["2", "FMR 2BR"],
-          ["3", "FMR 3BR"],
-          ["4", "FMR 4BR"]
+          ["0", "erap_fmr_br0"],
+          ["1", "erap_fmr_br1"],
+          ["2", "erap_fmr_br2"],
+          ["3", "erap_fmr_br3"],
+          ["4", "erap_fmr_br4"]
         ];
 
         beds.forEach(([b, col]) => {
-          const rent = Number(row[col]);
-          if (!rent) return;
+          const rent = Number(String(row[col]).replace(/[^0-9.]/g, ""));
+          if (isNaN(rent)) return;
 
           FMR.set(`${area}-${b}`, {
             rent,
@@ -117,33 +104,33 @@ function loadFMR() {
 }
 
 // ===============================
-// API: ANALYZE
+// API
 // ===============================
 app.post("/api/analyze", (req, res) => {
-  const { zip, bedrooms } = req.body;
+  const { zip, bedrooms = 0 } = req.body;
+
   const z = normalizeZip(zip);
-  const b = String(bedrooms ?? 0);
+  const b = String(bedrooms);
 
-  const key = `${z}-${b}`;
-  const result = SAFMR.get(key);
+  const safmr = SAFMR.get(`${z}-${b}`);
 
-  if (!result) {
+  if (!safmr) {
     return res.json({
       error: "No SAFMR data found",
       zip: z,
-      bedrooms: b
+      bedrooms: Number(b)
     });
   }
 
   res.json({
     zip: z,
     bedrooms: Number(b),
-    ...result
+    ...safmr
   });
 });
 
 // ===============================
-// SAFE PAGE ROUTES (NO '*')
+// STATIC ROUTES
 // ===============================
 app.get("/", (_, res) =>
   res.sendFile(path.join(__dirname, "public/index.html"))
@@ -162,7 +149,7 @@ app.get("/contact", (_, res) =>
 );
 
 // ===============================
-// START SERVER
+// START
 // ===============================
 await loadSAFMR();
 await loadFMR();
