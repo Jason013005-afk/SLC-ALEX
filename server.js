@@ -14,130 +14,78 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-// ===============================
-// DATA STORES
-// ===============================
 const SAFMR = new Map();
-const FMR = new Map();
-const normalizeZip = z => z?.toString().trim().padStart(5, "0");
 
-// ===============================
-// LOAD SAFMR (ZIP-level HUD data)
-// ===============================
+const normalizeZip = z => z?.toString().replace(/\D/g,"").padStart(5,"0");
+
 function loadSAFMR() {
   return new Promise(resolve => {
+
+    let headerLogged = false;
+
     fs.createReadStream("fy2024_safmrs.clean.csv")
       .pipe(csv())
       .on("data", row => {
-        const zip = normalizeZip(row["ZIP CODE"]);
+
+        if (!headerLogged) {
+          console.log("📄 SAFMR Headers:", Object.keys(row));
+          headerLogged = true;
+        }
+
+        const zipKey = Object.keys(row).find(k => k.toLowerCase().includes("zip"));
+        if (!zipKey) return;
+
+        const zip = normalizeZip(row[zipKey]);
         if (!zip) return;
-        const beds = [
-          ["0", "SAFMR 0BR"],
-          ["1", "SAFMR 1BR"],
-          ["2", "SAFMR 2BR"],
-          ["3", "SAFMR 3BR"],
-          ["4", "SAFMR 4BR"]
-        ];
-        beds.forEach(([b, col]) => {
+
+        ["0","1","2","3","4"].forEach(b => {
+          const col = Object.keys(row).find(k => k.includes(`SAFMR ${b}BR`));
+          if (!col) return;
+
           const rent = Number(row[col]);
-          if (isNaN(rent) || rent === 0) return; // skip missing or zero values
+          if (!rent) return;
+
           SAFMR.set(`${zip}-${b}`, {
             rent,
-            p90: Math.round(rent * 0.9),
+            p90: Math.round(rent * .9),
             p100: rent,
             p110: Math.round(rent * 1.1),
             source: "SAFMR"
           });
         });
+
       })
       .on("end", () => {
-        console.log(`🔥 SAFMR loaded: ${SAFMR.size} records`);
+        console.log("🔥 SAFMR Loaded:", SAFMR.size);
         resolve();
       });
   });
 }
 
-// ===============================
-// LOAD FMR (Metro-level HUD data)
-// ===============================
-function loadFMR() {
-  return new Promise(resolve => {
-    fs.createReadStream("fy2024_fmr_metro.csv")
-      .pipe(csv())
-      .on("data", row => {
-        const area = row["HUD Metro Fair Market Rent Area Name"];
-        if (!area) return;
-        const beds = [
-          ["0", "FMR 0BR"],
-          ["1", "FMR 1BR"],
-          ["2", "FMR 2BR"],
-          ["3", "FMR 3BR"],
-          ["4", "FMR 4BR"]
-        ];
-        beds.forEach(([b, col]) => {
-          const rent = Number(row[col]);
-          if (isNaN(rent) || rent === 0) return; // skip missing or zero values
-          FMR.set(`${area}-${b}`, {
-            rent,
-            p90: Math.round(rent * 0.9),
-            p100: rent,
-            p110: Math.round(rent * 1.1),
-            source: "FMR"
-          });
-        });
-      })
-      .on("end", () => {
-        console.log(`🔥 FMR loaded: ${FMR.size} records`);
-        resolve();
-      });
-  });
-}
+app.post("/api/analyze", (req,res)=>{
 
-// ===============================
-// API: ANALYZE (SAFMR only!)
-// ===============================
-app.post("/api/analyze", (req, res) => {
-  const { zip, bedrooms } = req.body;
-  const z = normalizeZip(zip);
-  const b = String(bedrooms ?? 0);
-  const key = `${z}-${b}`;
-  const result = SAFMR.get(key);
-  if (!result) {
+  const zip = normalizeZip(req.body.zip);
+  const beds = String(req.body.bedrooms ?? 1);
+
+  const result = SAFMR.get(`${zip}-${beds}`);
+
+  if(!result){
     return res.json({
-      error: "No SAFMR data found",
-      zip: z,
-      bedrooms: b
+      error:"No SAFMR found",
+      zip,
+      beds,
+      sample:[...SAFMR.keys()].slice(0,5)
     });
   }
-  res.json({
-    zip: z,
-    bedrooms: Number(b),
-    ...result
-  });
+
+  res.json({ zip, bedrooms:Number(beds), ...result });
 });
 
-// ===============================
-// STATIC PAGE ROUTES
-// ===============================
-app.get("/", (_, res) =>
-  res.sendFile(path.join(__dirname, "public/index.html"))
-);
-app.get("/system", (_, res) =>
-  res.sendFile(path.join(__dirname, "public/system.html"))
-);
-app.get("/pricing", (_, res) =>
-  res.sendFile(path.join(__dirname, "public/pricing.html"))
-);
-app.get("/contact", (_, res) =>
-  res.sendFile(path.join(__dirname, "public/contact.html"))
-);
+app.get("/",(_,res)=>res.sendFile(path.join(__dirname,"public/index.html")));
+app.get("/system",(_,res)=>res.sendFile(path.join(__dirname,"public/system.html")));
+app.get("/pricing",(_,res)=>res.sendFile(path.join(__dirname,"public/pricing.html")));
+app.get("/contact",(_,res)=>res.sendFile(path.join(__dirname,"public/contact.html")));
 
-// ===============================
-// START SERVER
-// ===============================
 await loadSAFMR();
-await loadFMR();
 
-app.listen(8080, () => {
-  console.log("🚀 ALEX running at http://127.0.0.1:8080");
-});
+app.listen(8080,()=>console.log("🚀 ALEX live http://127.0.0.1:8080"));
