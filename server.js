@@ -14,78 +14,159 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
+// ===============================
+// DATA STORES
+// ===============================
 const SAFMR = new Map();
+const FMR = new Map();
 
-const normalizeZip = z => z?.toString().replace(/\D/g,"").padStart(5,"0");
+const normalizeZip = z => z?.toString().trim().padStart(5, "0");
 
+// ===============================
+// LOAD SAFMR WITH DEBUGGING
+// ===============================
 function loadSAFMR() {
   return new Promise(resolve => {
-
     let headerLogged = false;
-
     fs.createReadStream("fy2024_safmrs.clean.csv")
       .pipe(csv())
+      .on("headers", headers => {
+        console.log("📄 SAFMR Headers:", headers);
+        headerLogged = true;
+      })
       .on("data", row => {
-
-        if (!headerLogged) {
-          console.log("📄 SAFMR Headers:", Object.keys(row));
-          headerLogged = true;
+        const rawZip = row["ZIP CODE"];
+        const zip = normalizeZip(rawZip);
+        // DEBUG LOG: See what ZIPs are being parsed
+        if (rawZip || zip) {
+          console.log("RAW ZIP:", rawZip, "NORMALIZED:", zip);
         }
+        // Only load valid ZIPs
+        if (!zip || zip.length !== 5 || !/^\d{5}$/.test(zip)) return;
 
-        const zipKey = Object.keys(row).find(k => k.toLowerCase().includes("zip"));
-        if (!zipKey) return;
+        const beds = [
+          ["0", "SAFMR 0BR"],
+          ["1", "SAFMR 1BR"],
+          ["2", "SAFMR 2BR"],
+          ["3", "SAFMR 3BR"],
+          ["4", "SAFMR 4BR"]
+        ];
 
-        const zip = normalizeZip(row[zipKey]);
-        if (!zip) return;
-
-        ["0","1","2","3","4"].forEach(b => {
-          const col = Object.keys(row).find(k => k.includes(`SAFMR ${b}BR`));
-          if (!col) return;
-
+        beds.forEach(([b, col]) => {
           const rent = Number(row[col]);
           if (!rent) return;
 
           SAFMR.set(`${zip}-${b}`, {
             rent,
-            p90: Math.round(rent * .9),
+            p90: Math.round(rent * 0.9),
             p100: rent,
             p110: Math.round(rent * 1.1),
             source: "SAFMR"
           });
         });
-
       })
       .on("end", () => {
-        console.log("🔥 SAFMR Loaded:", SAFMR.size);
+        console.log(`🔥 SAFMR Loaded: ${SAFMR.size}`);
         resolve();
       });
   });
 }
 
-app.post("/api/analyze", (req,res)=>{
+// ===============================
+// LOAD FMR (NO CHANGES YET, STILL LOGS SIZE)
+// ===============================
+function loadFMR() {
+  return new Promise(resolve => {
+    let headerLogged = false;
+    fs.createReadStream("fy2024_fmr_metro.csv")
+      .pipe(csv())
+      .on("headers", headers => {
+        console.log("📄 FMR Headers:", headers);
+        headerLogged = true;
+      })
+      .on("data", row => {
+        const area = row["HUD Metro Fair Market Rent Area Name"];
+        if (!area) return;
 
-  const zip = normalizeZip(req.body.zip);
-  const beds = String(req.body.bedrooms ?? 1);
+        const beds = [
+          ["0", "FMR 0BR"],
+          ["1", "FMR 1BR"],
+          ["2", "FMR 2BR"],
+          ["3", "FMR 3BR"],
+          ["4", "FMR 4BR"]
+        ];
 
-  const result = SAFMR.get(`${zip}-${beds}`);
+        beds.forEach(([b, col]) => {
+          const rent = Number(row[col]);
+          if (!rent) return;
 
-  if(!result){
+          FMR.set(`${area}-${b}`, {
+            rent,
+            p90: Math.round(rent * 0.9),
+            p100: rent,
+            p110: Math.round(rent * 1.1),
+            source: "FMR"
+          });
+        });
+      })
+      .on("end", () => {
+        console.log(`🔥 FMR Loaded: ${FMR.size}`);
+        resolve();
+      });
+  });
+}
+
+// ===============================
+// API: ANALYZE
+// ===============================
+app.post("/api/analyze", (req, res) => {
+  const { zip, bedrooms } = req.body;
+  const z = normalizeZip(zip);
+  const b = String(bedrooms ?? 0);
+
+  const key = `${z}-${b}`;
+  const result = SAFMR.get(key);
+
+  if (!result) {
     return res.json({
-      error:"No SAFMR found",
-      zip,
-      beds,
-      sample:[...SAFMR.keys()].slice(0,5)
+      error: "No SAFMR data found",
+      zip: z,
+      bedrooms: b
     });
   }
 
-  res.json({ zip, bedrooms:Number(beds), ...result });
+  res.json({
+    zip: z,
+    bedrooms: Number(b),
+    ...result
+  });
 });
 
-app.get("/",(_,res)=>res.sendFile(path.join(__dirname,"public/index.html")));
-app.get("/system",(_,res)=>res.sendFile(path.join(__dirname,"public/system.html")));
-app.get("/pricing",(_,res)=>res.sendFile(path.join(__dirname,"public/pricing.html")));
-app.get("/contact",(_,res)=>res.sendFile(path.join(__dirname,"public/contact.html")));
+// ===============================
+// SAFE PAGE ROUTES (NO '*')
+// ===============================
+app.get("/", (_, res) =>
+  res.sendFile(path.join(__dirname, "public/index.html"))
+);
 
+app.get("/system", (_, res) =>
+  res.sendFile(path.join(__dirname, "public/system.html"))
+);
+
+app.get("/pricing", (_, res) =>
+  res.sendFile(path.join(__dirname, "public/pricing.html"))
+);
+
+app.get("/contact", (_, res) =>
+  res.sendFile(path.join(__dirname, "public/contact.html"))
+);
+
+// ===============================
+// START SERVER
+// ===============================
 await loadSAFMR();
+await loadFMR();
 
-app.listen(8080,()=>console.log("🚀 ALEX live http://127.0.0.1:8080"));
+app.listen(8080, () => {
+  console.log("🚀 ALEX running at http://127.0.0.1:8080");
+});
