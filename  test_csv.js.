@@ -1,0 +1,6 @@
+const fs = require('fs');
+const parse = require('csv-parse/sync').parse;
+
+const data = fs.readFileSync('fy2024_safmrs.clean.csv');
+const rows = parse(data, { columns: true, skip_empty_lines: true });
+console.log('Row count:', rows.length);
