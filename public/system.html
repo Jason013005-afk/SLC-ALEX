@@ -1,26 +1,158 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
   <title>ALEX™ Stress Test</title>
-  <link rel="stylesheet" href="/style.css">
+
+  <style>
+    * { box-sizing: border-box; font-family: Inter, system-ui, Arial; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(rgba(0,0,0,.55), rgba(0,0,0,.55)),
+        url("https://images.unsplash.com/photo-1600585154340-be6161a56a0c");
+      background-size: cover;
+      background-position: center;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card {
+      width: 420px;
+      background: rgba(0,0,0,.75);
+      backdrop-filter: blur(10px);
+      border-radius: 14px;
+      padding: 28px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.6);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 24px;
+      font-weight: 700;
+      letter-spacing: .5px;
+    }
+
+    label {
+      font-size: 13px;
+      opacity: .85;
+      display: block;
+      margin-top: 14px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      margin-top: 6px;
+      border-radius: 8px;
+      border: none;
+      font-size: 15px;
+    }
+
+    button {
+      margin-top: 20px;
+      width: 100%;
+      padding: 14px;
+      background: #d4af37;
+      color: #000;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button:hover { opacity: .9; }
+
+    .result {
+      margin-top: 22px;
+      background: rgba(20,120,40,.9);
+      padding: 16px;
+      border-radius: 10px;
+      font-size: 14px;
+      line-height: 1.5;
+      display: none;
+    }
+
+    .error {
+      background: rgba(160,40,40,.9);
+    }
+
+    footer {
+      margin-top: 18px;
+      text-align: center;
+      font-size: 11px;
+      opacity: .6;
+    }
+  </style>
 </head>
 <body>
-  <h1>ALEX™ Stress Test</h1>
 
-  <button onclick="runTest()">Test HUD</button>
+  <div class="card">
+    <h1>ALEX™ Stress Test</h1>
 
-  <pre id="out"></pre>
+    <label>Property Address (UI only)</label>
+    <input id="address" value="6 Kempton St Fall River MA" />
 
-  <script>
-    async function runTest() {
-      const res = await fetch("/api/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ zip: "76437", bedrooms: 1 })
-      });
-      document.getElementById("out").textContent =
-        JSON.stringify(await res.json(), null, 2);
+    <label>ZIP Code (HUD)</label>
+    <input id="zip" value="76437" />
+
+    <label>Bedrooms</label>
+    <input id="bedrooms" type="number" value="1" />
+
+    <label>Interest Rate (%)</label>
+    <input id="rate" value="6.5" />
+
+    <button onclick="runTest()">Run Stress Test</button>
+
+    <div id="result" class="result"></div>
+
+    <footer>© 2026 Silver Lining Consulting LLC</footer>
+  </div>
+
+<script>
+async function runTest() {
+  const zip = document.getElementById("zip").value.trim();
+  const bedrooms = document.getElementById("bedrooms").value.trim();
+  const resultBox = document.getElementById("result");
+
+  resultBox.style.display = "block";
+  resultBox.className = "result";
+  resultBox.textContent = "Running HUD analysis…";
+
+  try {
+    const res = await fetch("/api/analyze", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ zip, bedrooms: Number(bedrooms) })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || data.error) {
+      resultBox.classList.add("error");
+      resultBox.textContent = data.error || "HUD lookup failed";
+      return;
     }
-  </script>
+
+    resultBox.innerHTML = `
+      <strong>HUD Rent Result</strong><br><br>
+      ZIP: ${data.zip}<br>
+      Bedrooms: ${data.bedrooms}<br>
+      Rent: <strong>$${data.rent}</strong><br>
+      Metro: ${data.metro}<br>
+      Source: ${data.source}
+    `;
+  } catch (err) {
+    resultBox.classList.add("error");
+    resultBox.textContent = "Server not reachable";
+  }
+}
+</script>
+
 </body>
 </html>
