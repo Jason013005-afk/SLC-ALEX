@@ -1,137 +1,145 @@
-/**
- * ALEX – FINAL STABLE SERVER
- * - CommonJS (.cjs)
- * - SAFMR ONLY (HUD 2024)
- * - Static frontend support
- * - No over-engineering
- */
-
+// server.cjs
 require("dotenv").config();
-
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
 const { parse } = require("csv-parse/sync");
 
 const app = express();
-const PORT = process.env.PORT || 8080;
-
-/* =========================
-   MIDDLEWARE
-========================= */
+const PORT = 8080;
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static("public"));
 
 /* =========================
-   LOAD SAFMR DATA (ONCE)
+   LOAD HUD SAFMR DATA
 ========================= */
+
+const SAFMR_PATH = path.join(__dirname, "fy2024_safmrs.fixed.csv");
+const safmrByZip = {};
 
 console.log("🔄 Loading SAFMR data...");
 
-const SAFMR_FILE = path.join(__dirname, "fy2024_safmrs.clean.csv");
+const safmrCsv = fs.readFileSync(SAFMR_PATH);
+const safmrRows = parse(safmrCsv, {
+  columns: true,
+  skip_empty_lines: true
+});
 
-let safmrByZip = {};
+for (const row of safmrRows) {
+  const zip = row["ZIP Code"];
+  if (!zip) continue;
 
-try {
-  const csv = fs.readFileSync(SAFMR_FILE, "utf8");
-
-  const rows = parse(csv, {
-    columns: true,
-    skip_empty_lines: true,
-  });
-
-  rows.forEach((row) => {
-    const zip = String(row["ZIP Code"]).padStart(5, "0");
-
-    safmrByZip[zip] = {
-      metro: row["HUD Metro Fair Market Rent Area Name"],
-      rents: {
-        0: row["SAFMR 0BR"],
-        1: row["SAFMR 1BR"],
-        2: row["SAFMR 2BR"],
-        3: row["SAFMR 3BR"],
-        4: row["SAFMR 4BR"],
-      },
-    };
-  });
-
-  console.log(`🏠 SAFMR loaded: ${Object.keys(safmrByZip).length}`);
-} catch (err) {
-  console.error("❌ Failed to load SAFMR CSV:", err.message);
-  process.exit(1);
+  safmrByZip[zip] = {
+    metro: row["HUD Metro Fair Market Rent Area Name"],
+    rents: {
+      0: parseInt(row["SAFMR 0BR"]?.replace(/[^0-9]/g, "")),
+      1: parseInt(row["SAFMR 1BR"]?.replace(/[^0-9]/g, "")),
+      2: parseInt(row["SAFMR 2BR"]?.replace(/[^0-9]/g, "")),
+      3: parseInt(row["SAFMR 3BR"]?.replace(/[^0-9]/g, "")),
+      4: parseInt(row["SAFMR 4BR"]?.replace(/[^0-9]/g, ""))
+    }
+  };
 }
 
+console.log(`🏠 SAFMR loaded: ${Object.keys(safmrByZip).length}`);
+
 /* =========================
-   HELPERS
+   DECISION ENGINE (SPINE)
 ========================= */
 
-function parseRent(value) {
-  if (!value) return null;
-  return Number(String(value).replace(/[^0-9]/g, ""));
+function monthlyPayment({ loanAmount, rate, years = 30 }) {
+  const r = rate / 100 / 12;
+  const n = years * 12;
+  return Math.round((loanAmount * r) / (1 - Math.pow(1 + r, -n)));
+}
+
+function evaluateDeal({ rent, interestRate, purchasePrice, downPaymentPct }) {
+  const down = purchasePrice * (downPaymentPct / 100);
+  const loan = purchasePrice - down;
+  const payment = monthlyPayment({
+    loanAmount: loan,
+    rate: interestRate
+  });
+
+  const cashFlow = rent - payment;
+
+  let strategy = "pass";
+  if (cashFlow > 300) strategy = "hold";
+  if (cashFlow > 600) strategy = "excellent";
+
+  return {
+    monthlyPayment: payment,
+    cashFlow,
+    strategy
+  };
 }
 
 /* =========================
-   API ROUTES
+   API: /api/analyze
 ========================= */
 
 app.post("/api/analyze", (req, res) => {
-  const { zip, bedrooms } = req.body;
+  const required = [
+    "address",
+    "zip",
+    "bedrooms",
+    "interestRate",
+    "purchasePrice",
+    "downPaymentPct"
+  ];
 
-  if (!zip || bedrooms === undefined) {
-    return res.status(400).json({
-      error: "zip and bedrooms are required",
-    });
+  for (const key of required) {
+    if (req.body[key] === undefined) {
+      return res.status(400).json({
+        error: `Missing required field: ${key}`
+      });
+    }
   }
 
-  const z = String(zip).padStart(5, "0");
-  const b = Number(bedrooms);
+  const {
+    address,
+    zip,
+    bedrooms,
+    interestRate,
+    purchasePrice,
+    downPaymentPct
+  } = req.body;
 
-  const record = safmrByZip[z];
-  if (!record) {
+  const hud = safmrByZip[zip];
+  if (!hud) {
     return res.status(404).json({
-      error: "No SAFMR data found",
-      zip: z,
-      bedrooms: b,
+      error: "No HUD SAFMR data found",
+      zip
     });
   }
 
-  const rentRaw = record.rents[b];
-  const rent = parseRent(rentRaw);
-
+  const rent = hud.rents[bedrooms];
   if (!rent) {
     return res.status(404).json({
-      error: "No rent data for bedroom count",
-      zip: z,
-      bedrooms: b,
+      error: "No rent for bedroom count",
+      bedrooms
     });
   }
 
-  res.json({
-    zip: z,
-    bedrooms: b,
+  const deal = evaluateDeal({
     rent,
+    interestRate,
+    purchasePrice,
+    downPaymentPct
+  });
+
+  res.json({
+    address,
+    zip,
+    bedrooms,
+    rent,
+    section8: true,
+    metro: hud.metro,
     source: "HUD SAFMR 2024",
-    metro: record.metro,
+    deal
   });
 });
-
-/* =========================
-   FRONTEND FALLBACKS
-========================= */
-
-// Explicit routes (avoids “Cannot GET /system.html” confusion)
-app.get("/", (_, res) =>
-  res.sendFile(path.join(__dirname, "public/index.html"))
-);
-
-app.get("/system.html", (_, res) =>
-  res.sendFile(path.join(__dirname, "public/system.html"))
-);
-
-app.get("/contact.html", (_, res) =>
-  res.sendFile(path.join(__dirname, "public/contact.html"))
-);
 
 /* =========================
    START SERVER
