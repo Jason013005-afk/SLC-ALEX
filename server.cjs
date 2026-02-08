@@ -1,11 +1,8 @@
 require("dotenv").config();
-
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
-const { parse } = require("csv-parse/sync");
-
-const decisionEngine = require("./decisionEngine");
+const csv = require("csv-parser");
 
 const app = express();
 const PORT = 8080;
@@ -13,81 +10,123 @@ const PORT = 8080;
 app.use(express.json());
 app.use(express.static("public"));
 
-/* =========================
+/* ===============================
    LOAD SAFMR DATA
-========================= */
+================================ */
 
-const safmrPath = path.join(__dirname, "fy2024_safmrs.clean.csv");
-const safmrRows = parse(fs.readFileSync(safmrPath), {
-  columns: true,
-  skip_empty_lines: true,
-});
+const SAFMR = new Map();
 
-console.log("🏠 SAFMR loaded:", safmrRows.length);
-
-// Index by ZIP
-const safmrByZip = new Map();
-for (const row of safmrRows) {
-  safmrByZip.set(row["ZIP Code"], row);
+function cleanMoney(val) {
+  if (!val) return 0;
+  return Number(String(val).replace(/[^0-9.]/g, ""));
 }
 
-/* =========================
-   API: ANALYZE PROPERTY
-========================= */
+function normalizeZip(zip) {
+  return zip.toString().trim().padStart(5, "0");
+}
+
+function loadSAFMR() {
+  return new Promise((resolve) => {
+    fs.createReadStream("fy2024_safmrs.clean.csv")
+      .pipe(csv())
+      .on("data", (row) => {
+        const zip = normalizeZip(row["ZIP Code"]);
+        if (!zip) return;
+
+        const rent = cleanMoney(row["SAFMR 3BR"]);
+        if (!rent) return;
+
+        SAFMR.set(zip, {
+          rent,
+          metro: row["HUD Metro Fair Market Rent Area Name"],
+          source: "HUD SAFMR 2024"
+        });
+      })
+      .on("end", () => {
+        console.log(`🏠 SAFMR loaded: ${SAFMR.size}`);
+        resolve();
+      });
+  });
+}
+
+/* ===============================
+   DECISION ENGINE
+================================ */
+
+function mortgagePayment(price, rate, downPct) {
+  const loan = price * (1 - downPct / 100);
+  const r = rate / 100 / 12;
+  const n = 30 * 12;
+  return Math.round((loan * r) / (1 - Math.pow(1 + r, -n)));
+}
+
+function evaluateDeal({ rent, mortgage }) {
+  const cashFlow = rent - mortgage;
+
+  let verdict = "Bad deal.";
+  let strategy = "pass";
+
+  if (cashFlow > 500) {
+    verdict = "Strong rental. Buy and hold.";
+    strategy = "hold";
+  } else if (cashFlow > 200) {
+    verdict = "Decent rental.";
+    strategy = "hold";
+  }
+
+  return { cashFlow, verdict, strategy };
+}
+
+/* ===============================
+   API
+================================ */
 
 app.post("/api/analyze", (req, res) => {
   const {
     address,
     zip,
-    bedrooms,
     interestRate,
     purchasePrice,
-    downPaymentPct,
-    rehab = 0,
+    downPaymentPct
   } = req.body;
 
-  const row = safmrByZip.get(zip);
-  if (!row) {
-    return res.json({ error: "No HUD SAFMR data found", zip });
+  const z = normalizeZip(zip);
+  const safmr = SAFMR.get(z);
+
+  if (!safmr) {
+    return res.json({ error: "No HUD SAFMR data found", zip: z });
   }
 
-  const rentRaw = row[`SAFMR ${bedrooms}BR`];
-  const rent = Number(String(rentRaw).replace(/[^0-9]/g, ""));
-
-  const downPayment = purchasePrice * (downPaymentPct / 100);
-  const loanAmount = purchasePrice - downPayment;
-  const monthlyRate = interestRate / 100 / 12;
-  const mortgage =
-    loanAmount *
-    (monthlyRate / (1 - Math.pow(1 + monthlyRate, -360)));
-
-  const monthlyCashFlow = Math.round(rent - mortgage);
-
-  const decision = decisionEngine({
-    rent,
-    mortgage,
+  const mortgage = mortgagePayment(
     purchasePrice,
-    rehab,
+    interestRate,
+    downPaymentPct
+  );
+
+  const decision = evaluateDeal({
+    rent: safmr.rent,
+    mortgage
   });
 
   res.json({
     address,
-    zip,
-    bedrooms,
-    rent,
-    metro: row["HUD Metro Fair Market Rent Area Name"],
-    source: "HUD SAFMR 2024",
-    mortgage: Math.round(mortgage),
-    monthlyCashFlow,
+    zip: z,
+    rent: safmr.rent,
+    metro: safmr.metro,
+    source: safmr.source,
+    mortgage,
+    monthlyCashFlow: decision.cashFlow,
     strategy: decision.strategy,
-    verdict: decision.verdict,
+    verdict: decision.verdict
   });
 });
 
-/* =========================
-   START SERVER
-========================= */
+/* ===============================
+   START
+================================ */
 
-app.listen(PORT, () => {
-  console.log(`🚀 ALEX running at http://localhost:${PORT}`);
+loadSAFMR().then(() => {
+  app.listen(PORT, () =>
+    console.log(`🚀 ALEX running at http://localhost:${PORT}`)
+  );
 });
