@@ -1,38 +1,45 @@
 // decisionEngine.js
 
-export function decideDeal({
-  purchasePrice,
-  rehab = 0,
-  value,
-  monthlyCashFlow,
-  wholesaleFeeTarget = 15000,
-  flipProfitTarget = 30000
-}) {
-  const flipProfit = value - purchasePrice - rehab;
+module.exports = function decisionEngine(input) {
+  const {
+    rent,
+    monthlyCashFlow,
+    purchasePrice,
+    rehab = 0,
+  } = input;
 
-  if (flipProfit >= flipProfitTarget) {
-    return {
-      strategy: "flip",
-      reason: `Flip profit ${flipProfit.toLocaleString()} exceeds target`
-    };
-  }
+  // ---- thresholds (you can tune later) ----
+  const EXCELLENT_CASHFLOW = 500;
+  const GOOD_CASHFLOW = 200;
+  const WHOLESALE_SPREAD = 25000;
+  const FLIP_PROFIT = 40000;
 
-  if (purchasePrice + wholesaleFeeTarget < value) {
-    return {
-      strategy: "wholesale",
-      reason: "Enough spread for assignment"
-    };
-  }
+  // ---- simple derived values ----
+  const arvEstimate = purchasePrice * 1.25; // conservative placeholder
+  const flipProfit = arvEstimate - purchasePrice - rehab;
+  const wholesaleSpread = arvEstimate - purchasePrice;
 
-  if (monthlyCashFlow > 0) {
-    return {
-      strategy: "hold",
-      reason: "Positive cash flow"
-    };
+  let strategy = "pass";
+  let verdict = "Does not meet investment thresholds.";
+
+  if (monthlyCashFlow >= EXCELLENT_CASHFLOW) {
+    strategy = "hold";
+    verdict = "Excellent rental. Strong cash flow. Buy and hold.";
+  } else if (monthlyCashFlow >= GOOD_CASHFLOW) {
+    strategy = "hold";
+    verdict = "Solid rental. Cash flow positive. Buy and hold.";
+  } else if (flipProfit >= FLIP_PROFIT) {
+    strategy = "flip";
+    verdict = "Strong flip opportunity. Profit exceeds threshold.";
+  } else if (wholesaleSpread >= WHOLESALE_SPREAD) {
+    strategy = "wholesale";
+    verdict = "Wholesale deal. Assignment spread is viable.";
   }
 
   return {
-    strategy: "pass",
-    reason: "No viable exit"
+    strategy,
+    verdict,
+    flipProfit,
+    wholesaleSpread,
   };
-}
+};
