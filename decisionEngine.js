@@ -1,42 +1,28 @@
-// decisionEngine.js
+module.exports = function decisionEngine({
+  rent,
+  mortgage,
+  monthlyCashFlow,
+  purchasePrice,
+  rehab = 0,
+}) {
+  // Simple, deterministic rules (no guessing)
 
-module.exports = function decisionEngine(input) {
-  const {
-    rent,
-    mortgage,
-    monthlyCashFlow,
-    purchasePrice,
-    rehab = 0
-  } = input;
-
-  // Default
-  let strategy = "hold";
-  let verdict = "Neutral.";
-
-  // Rental logic
-  if (monthlyCashFlow != null) {
-    if (monthlyCashFlow > 300) {
-      strategy = "hold";
-      verdict = "Strong rental. Buy and hold.";
-    } else if (monthlyCashFlow > 0) {
-      strategy = "hold";
-      verdict = "Marginal rental. Proceed cautiously.";
-    } else {
-      strategy = "pass";
-      verdict = "Does not cash flow.";
-    }
+  if (monthlyCashFlow >= 300) {
+    return {
+      strategy: "hold",
+      verdict: "Strong rental. Buy and hold.",
+    };
   }
 
-  // Flip logic (simple ARV heuristic for now)
-  if (purchasePrice && rehab) {
-    const arvEstimate = purchasePrice * 1.25;
-    const profit = arvEstimate - purchasePrice - rehab;
-
-    if (profit > 50000) {
-      strategy = "flip";
-      verdict = "Strong flip spread.";
-    }
+  if (monthlyCashFlow >= 0) {
+    return {
+      strategy: "hold",
+      verdict: "Break-even rental. Proceed cautiously.",
+    };
   }
 
-  return { strategy, verdict };
+  return {
+    strategy: "pass",
+    verdict: "Negative cash flow. Bad deal.",
+  };
 };
