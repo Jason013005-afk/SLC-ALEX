@@ -1,8 +1,12 @@
+// server.cjs
 require("dotenv").config();
+
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
-const csv = require("csv-parser");
+const { parse } = require("csv-parse/sync");
+
+const decisionEngine = require("./decisionEngine");
 
 const app = express();
 const PORT = 8080;
@@ -10,123 +14,109 @@ const PORT = 8080;
 app.use(express.json());
 app.use(express.static("public"));
 
-/* ===============================
-   LOAD SAFMR DATA
-================================ */
+/* =========================
+   LOAD SAFMR DATA (ONCE)
+========================= */
 
-const SAFMR = new Map();
+console.log("🔄 Loading SAFMR data...");
 
-function cleanMoney(val) {
+const safmrPath = path.join(__dirname, "fy2024_safmrs.fixed.csv");
+const safmrCsv = fs.readFileSync(safmrPath, "utf8");
+
+const safmrRows = parse(safmrCsv, {
+  columns: true,
+  skip_empty_lines: true
+});
+
+const safmrByZip = {};
+for (const row of safmrRows) {
+  safmrByZip[row["ZIP Code"]] = row;
+}
+
+console.log(`🏠 SAFMR loaded: ${Object.keys(safmrByZip).length}`);
+
+/* =========================
+   HELPERS
+========================= */
+
+function dollars(val) {
   if (!val) return 0;
-  return Number(String(val).replace(/[^0-9.]/g, ""));
+  return Number(String(val).replace(/[$,]/g, ""));
 }
 
-function normalizeZip(zip) {
-  return zip.toString().trim().padStart(5, "0");
-}
-
-function loadSAFMR() {
-  return new Promise((resolve) => {
-    fs.createReadStream("fy2024_safmrs.clean.csv")
-      .pipe(csv())
-      .on("data", (row) => {
-        const zip = normalizeZip(row["ZIP Code"]);
-        if (!zip) return;
-
-        const rent = cleanMoney(row["SAFMR 3BR"]);
-        if (!rent) return;
-
-        SAFMR.set(zip, {
-          rent,
-          metro: row["HUD Metro Fair Market Rent Area Name"],
-          source: "HUD SAFMR 2024"
-        });
-      })
-      .on("end", () => {
-        console.log(`🏠 SAFMR loaded: ${SAFMR.size}`);
-        resolve();
-      });
-  });
-}
-
-/* ===============================
-   DECISION ENGINE
-================================ */
-
-function mortgagePayment(price, rate, downPct) {
-  const loan = price * (1 - downPct / 100);
-  const r = rate / 100 / 12;
+function mortgagePayment(loan, ratePct) {
+  const r = ratePct / 100 / 12;
   const n = 30 * 12;
   return Math.round((loan * r) / (1 - Math.pow(1 + r, -n)));
 }
 
-function evaluateDeal({ rent, mortgage }) {
-  const cashFlow = rent - mortgage;
-
-  let verdict = "Bad deal.";
-  let strategy = "pass";
-
-  if (cashFlow > 500) {
-    verdict = "Strong rental. Buy and hold.";
-    strategy = "hold";
-  } else if (cashFlow > 200) {
-    verdict = "Decent rental.";
-    strategy = "hold";
-  }
-
-  return { cashFlow, verdict, strategy };
-}
-
-/* ===============================
+/* =========================
    API
-================================ */
+========================= */
 
 app.post("/api/analyze", (req, res) => {
   const {
     address,
     zip,
+    bedrooms,
     interestRate,
     purchasePrice,
-    downPaymentPct
+    downPaymentPct = 20,
+    rehab = 0
   } = req.body;
 
-  const z = normalizeZip(zip);
-  const safmr = SAFMR.get(z);
-
-  if (!safmr) {
-    return res.json({ error: "No HUD SAFMR data found", zip: z });
+  if (!zip || bedrooms == null) {
+    return res.status(400).json({ error: "zip and bedrooms required" });
   }
 
-  const mortgage = mortgagePayment(
-    purchasePrice,
-    interestRate,
-    downPaymentPct
-  );
+  const row = safmrByZip[zip];
+  if (!row) {
+    return res.status(404).json({ error: "No HUD SAFMR data found", zip });
+  }
 
-  const decision = evaluateDeal({
-    rent: safmr.rent,
-    mortgage
+  const rentKey = `SAFMR ${bedrooms}BR`;
+  const rent = dollars(row[rentKey]);
+
+  if (!rent) {
+    return res.status(404).json({ error: "Rent not found", zip, bedrooms });
+  }
+
+  let mortgage = null;
+  let monthlyCashFlow = null;
+
+  if (purchasePrice && interestRate) {
+    const down = purchasePrice * (downPaymentPct / 100);
+    const loan = purchasePrice - down + rehab;
+    mortgage = mortgagePayment(loan, interestRate);
+    monthlyCashFlow = rent - mortgage;
+  }
+
+  const decision = decisionEngine({
+    rent,
+    mortgage,
+    monthlyCashFlow,
+    purchasePrice,
+    rehab
   });
 
   res.json({
     address,
-    zip: z,
-    rent: safmr.rent,
-    metro: safmr.metro,
-    source: safmr.source,
+    zip,
+    bedrooms,
+    rent,
+    metro: row["HUD Metro Fair Market Rent Area Name"],
+    source: "HUD SAFMR 2024",
     mortgage,
-    monthlyCashFlow: decision.cashFlow,
+    monthlyCashFlow,
     strategy: decision.strategy,
     verdict: decision.verdict
   });
 });
 
-/* ===============================
+/* =========================
    START
-================================ */
+========================= */
 
-loadSAFMR().then(() => {
-  app.listen(PORT, () =>
-    console.log(`🚀 ALEX running at http://localhost:${PORT}`)
-  );
+app.listen(PORT, () => {
+  console.log(`🚀 ALEX running at http://localhost:${PORT}`);
 });

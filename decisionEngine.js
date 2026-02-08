@@ -1,35 +1,42 @@
-module.exports = function decisionEngine({
-  rent,
-  mortgage,
-  purchasePrice,
-  rehab,
-}) {
-  const cashFlow = rent - mortgage;
-  const totalCost = purchasePrice + rehab;
+// decisionEngine.js
 
-  if (cashFlow >= 400) {
-    return {
-      strategy: "hold",
-      verdict: "Strong rental. Buy and hold.",
-    };
+module.exports = function decisionEngine(input) {
+  const {
+    rent,
+    mortgage,
+    monthlyCashFlow,
+    purchasePrice,
+    rehab = 0
+  } = input;
+
+  // Default
+  let strategy = "hold";
+  let verdict = "Neutral.";
+
+  // Rental logic
+  if (monthlyCashFlow != null) {
+    if (monthlyCashFlow > 300) {
+      strategy = "hold";
+      verdict = "Strong rental. Buy and hold.";
+    } else if (monthlyCashFlow > 0) {
+      strategy = "hold";
+      verdict = "Marginal rental. Proceed cautiously.";
+    } else {
+      strategy = "pass";
+      verdict = "Does not cash flow.";
+    }
   }
 
-  if (cashFlow >= 0) {
-    return {
-      strategy: "borderline",
-      verdict: "Break-even. Only proceed with appreciation upside.",
-    };
+  // Flip logic (simple ARV heuristic for now)
+  if (purchasePrice && rehab) {
+    const arvEstimate = purchasePrice * 1.25;
+    const profit = arvEstimate - purchasePrice - rehab;
+
+    if (profit > 50000) {
+      strategy = "flip";
+      verdict = "Strong flip spread.";
+    }
   }
 
-  if (totalCost < purchasePrice * 0.7) {
-    return {
-      strategy: "flip",
-      verdict: "Discounted enough to consider a flip.",
-    };
-  }
-
-  return {
-    strategy: "pass",
-    verdict: "Bad deal. Walk away.",
-  };
+  return { strategy, verdict };
 };
