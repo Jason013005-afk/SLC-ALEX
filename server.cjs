@@ -1,62 +1,106 @@
+/**
+ * ALEX – Single Source of Truth Server
+ * HUD SAFMR 2024 ONLY
+ */
+
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
-const { parse } = require("csv-parse/sync");
+const csv = require("csv-parser");
+const cors = require("cors");
 
-const app = express();
 const PORT = 8080;
+const app = express();
 
-// ---------- Middleware ----------
+/* -------------------- Middleware -------------------- */
+app.use(cors());
 app.use(express.json());
-
-// 🔥 THIS IS THE KEY LINE YOU WERE MISSING
 app.use(express.static(path.join(__dirname, "public")));
 
-// ---------- Load SAFMR ----------
-const safmrCsv = fs.readFileSync("fy2024_safmrs.clean.csv");
-const safmrRows = parse(safmrCsv, { columns: true, skip_empty_lines: true });
-
+/* -------------------- HUD DATA -------------------- */
+const SAFMR_FILE = path.join(__dirname, "fy2024_safmrs.clean.csv");
 const safmrByZip = new Map();
 
-for (const r of safmrRows) {
-  const zip = r["ZIP Code"]?.padStart(5, "0");
-  if (!zip) continue;
-  safmrByZip.set(zip, r);
+/* -------------------- Load SAFMR CSV -------------------- */
+function loadSAFMR() {
+  return new Promise((resolve, reject) => {
+    let count = 0;
+
+    fs.createReadStream(SAFMR_FILE)
+      .pipe(csv())
+      .on("data", row => {
+        const zip = String(row["ZIP Code"]).trim();
+        if (!zip) return;
+
+        safmrByZip.set(zip, row);
+        count++;
+      })
+      .on("end", () => {
+        console.log(`🏠 SAFMR loaded: ${count}`);
+        resolve();
+      })
+      .on("error", reject);
+  });
 }
 
-console.log(`🏠 SAFMR loaded: ${safmrByZip.size}`);
-
-// ---------- API ----------
+/* -------------------- API -------------------- */
 app.post("/api/analyze", (req, res) => {
   const { zip, bedrooms } = req.body;
 
-  if (!zip || bedrooms == null) {
+  if (!zip || bedrooms === undefined) {
     return res.status(400).json({ error: "zip and bedrooms required" });
   }
 
-  const row = safmrByZip.get(zip.padStart(5, "0"));
+  const row = safmrByZip.get(String(zip));
   if (!row) {
-    return res.status(404).json({ error: "No SAFMR data found", zip });
+    return res.status(404).json({
+      error: "No HUD SAFMR data found",
+      zip,
+      bedrooms
+    });
   }
 
-  const rentKey = `SAFMR ${bedrooms}BR`;
-  const raw = row[rentKey];
+  const col = `SAFMR ${bedrooms}BR`;
+  const raw = row[col];
+
   if (!raw) {
-    return res.status(404).json({ error: "Bedroom not available" });
+    return res.status(404).json({
+      error: `No SAFMR for ${bedrooms}BR`,
+      zip
+    });
   }
 
   const rent = Number(raw.replace(/[$,]/g, ""));
 
   res.json({
-    zip,
-    bedrooms,
+    zip: String(zip),
+    bedrooms: Number(bedrooms),
     rent,
     source: "HUD SAFMR 2024",
-    metro: row["HUD Metro Fair Market Rent Area Name"],
+    metro: row["HUD Metro Fair Market Rent Area Name"]
   });
 });
 
-// ---------- Start ----------
-app.listen(PORT, () => {
-  console.log(`🚀 ALEX running at http://127.0.0.1:${PORT}`);
-});
+/* -------------------- Frontend Routes -------------------- */
+app.get("/", (req, res) =>
+  res.sendFile(path.join(__dirname, "public", "index.html"))
+);
+
+app.get("/system.html", (req, res) =>
+  res.sendFile(path.join(__dirname, "public", "system.html"))
+);
+
+app.get("/contact.html", (req, res) =>
+  res.sendFile(path.join(__dirname, "public", "contact.html"))
+);
+
+/* -------------------- Boot -------------------- */
+(async () => {
+  console.log("🔄 Loading HUD data...");
+  await loadSAFMR();
+  console.log("✅ HUD data loaded");
+
+  app.listen(PORT, () => {
+    console.log(`🚀 ALEX running at http://localhost:${PORT}`);
+  });
+})();
