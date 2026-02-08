@@ -1,106 +1,142 @@
 /**
- * ALEX – Single Source of Truth Server
- * HUD SAFMR 2024 ONLY
+ * ALEX – FINAL STABLE SERVER
+ * - CommonJS (.cjs)
+ * - SAFMR ONLY (HUD 2024)
+ * - Static frontend support
+ * - No over-engineering
  */
+
+require("dotenv").config();
 
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
-const csv = require("csv-parser");
-const cors = require("cors");
+const { parse } = require("csv-parse/sync");
 
-const PORT = 8080;
 const app = express();
+const PORT = process.env.PORT || 8080;
 
-/* -------------------- Middleware -------------------- */
-app.use(cors());
+/* =========================
+   MIDDLEWARE
+========================= */
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-/* -------------------- HUD DATA -------------------- */
+/* =========================
+   LOAD SAFMR DATA (ONCE)
+========================= */
+
+console.log("🔄 Loading SAFMR data...");
+
 const SAFMR_FILE = path.join(__dirname, "fy2024_safmrs.clean.csv");
-const safmrByZip = new Map();
 
-/* -------------------- Load SAFMR CSV -------------------- */
-function loadSAFMR() {
-  return new Promise((resolve, reject) => {
-    let count = 0;
+let safmrByZip = {};
 
-    fs.createReadStream(SAFMR_FILE)
-      .pipe(csv())
-      .on("data", row => {
-        const zip = String(row["ZIP Code"]).trim();
-        if (!zip) return;
+try {
+  const csv = fs.readFileSync(SAFMR_FILE, "utf8");
 
-        safmrByZip.set(zip, row);
-        count++;
-      })
-      .on("end", () => {
-        console.log(`🏠 SAFMR loaded: ${count}`);
-        resolve();
-      })
-      .on("error", reject);
+  const rows = parse(csv, {
+    columns: true,
+    skip_empty_lines: true,
   });
+
+  rows.forEach((row) => {
+    const zip = String(row["ZIP Code"]).padStart(5, "0");
+
+    safmrByZip[zip] = {
+      metro: row["HUD Metro Fair Market Rent Area Name"],
+      rents: {
+        0: row["SAFMR 0BR"],
+        1: row["SAFMR 1BR"],
+        2: row["SAFMR 2BR"],
+        3: row["SAFMR 3BR"],
+        4: row["SAFMR 4BR"],
+      },
+    };
+  });
+
+  console.log(`🏠 SAFMR loaded: ${Object.keys(safmrByZip).length}`);
+} catch (err) {
+  console.error("❌ Failed to load SAFMR CSV:", err.message);
+  process.exit(1);
 }
 
-/* -------------------- API -------------------- */
+/* =========================
+   HELPERS
+========================= */
+
+function parseRent(value) {
+  if (!value) return null;
+  return Number(String(value).replace(/[^0-9]/g, ""));
+}
+
+/* =========================
+   API ROUTES
+========================= */
+
 app.post("/api/analyze", (req, res) => {
   const { zip, bedrooms } = req.body;
 
   if (!zip || bedrooms === undefined) {
-    return res.status(400).json({ error: "zip and bedrooms required" });
-  }
-
-  const row = safmrByZip.get(String(zip));
-  if (!row) {
-    return res.status(404).json({
-      error: "No HUD SAFMR data found",
-      zip,
-      bedrooms
+    return res.status(400).json({
+      error: "zip and bedrooms are required",
     });
   }
 
-  const col = `SAFMR ${bedrooms}BR`;
-  const raw = row[col];
+  const z = String(zip).padStart(5, "0");
+  const b = Number(bedrooms);
 
-  if (!raw) {
+  const record = safmrByZip[z];
+  if (!record) {
     return res.status(404).json({
-      error: `No SAFMR for ${bedrooms}BR`,
-      zip
+      error: "No SAFMR data found",
+      zip: z,
+      bedrooms: b,
     });
   }
 
-  const rent = Number(raw.replace(/[$,]/g, ""));
+  const rentRaw = record.rents[b];
+  const rent = parseRent(rentRaw);
+
+  if (!rent) {
+    return res.status(404).json({
+      error: "No rent data for bedroom count",
+      zip: z,
+      bedrooms: b,
+    });
+  }
 
   res.json({
-    zip: String(zip),
-    bedrooms: Number(bedrooms),
+    zip: z,
+    bedrooms: b,
     rent,
     source: "HUD SAFMR 2024",
-    metro: row["HUD Metro Fair Market Rent Area Name"]
+    metro: record.metro,
   });
 });
 
-/* -------------------- Frontend Routes -------------------- */
-app.get("/", (req, res) =>
-  res.sendFile(path.join(__dirname, "public", "index.html"))
+/* =========================
+   FRONTEND FALLBACKS
+========================= */
+
+// Explicit routes (avoids “Cannot GET /system.html” confusion)
+app.get("/", (_, res) =>
+  res.sendFile(path.join(__dirname, "public/index.html"))
 );
 
-app.get("/system.html", (req, res) =>
-  res.sendFile(path.join(__dirname, "public", "system.html"))
+app.get("/system.html", (_, res) =>
+  res.sendFile(path.join(__dirname, "public/system.html"))
 );
 
-app.get("/contact.html", (req, res) =>
-  res.sendFile(path.join(__dirname, "public", "contact.html"))
+app.get("/contact.html", (_, res) =>
+  res.sendFile(path.join(__dirname, "public/contact.html"))
 );
 
-/* -------------------- Boot -------------------- */
-(async () => {
-  console.log("🔄 Loading HUD data...");
-  await loadSAFMR();
-  console.log("✅ HUD data loaded");
+/* =========================
+   START SERVER
+========================= */
 
-  app.listen(PORT, () => {
-    console.log(`🚀 ALEX running at http://localhost:${PORT}`);
-  });
-})();
+app.listen(PORT, () => {
+  console.log(`🚀 ALEX running at http://localhost:${PORT}`);
+});
