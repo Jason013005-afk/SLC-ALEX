@@ -1,141 +1,216 @@
+/**
+ * ALEX – Core Server
+ * HUD SAFMR + FMR with ZIP → CBSA fallback
+ * Node 20 / Express 4
+ */
+
 import express from "express";
 import fs from "fs";
 import path from "path";
 import csv from "csv-parser";
+import dotenv from "dotenv";
+import { fileURLToPath } from "url";
+
+dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = 8080;
+const PORT = process.env.PORT || 8080;
 
-/* -------------------------
-   Middleware
-------------------------- */
+/* -------------------- Middleware -------------------- */
+
 app.use(express.json());
-app.use(express.static("public"));
+app.use(express.static(path.join(__dirname, "public")));
 
-/* -------------------------
-   In-memory data stores
-------------------------- */
-const SAFMR_BY_ZIP = {};
-const ZIP_TO_CBSA = {};
-const FMR_BY_CBSA = {};
+/* -------------------- In-Memory Stores -------------------- */
 
-/* -------------------------
-   Utility: Load CSV
-------------------------- */
-function loadCSV(filePath, onRow) {
-  return new Promise((resolve, reject) => {
-    fs.createReadStream(filePath)
+const SAFMR = new Map();          // key: ZIP-BR
+const FMR = new Map();            // key: CBSA-BR
+const ZIP_TO_CBSA = new Map();    // key: ZIP → best CBSA
+
+/* -------------------- Utilities -------------------- */
+
+const normalizeZip = z =>
+  z ? z.toString().trim().padStart(5, "0") : "";
+
+const cleanMoney = v =>
+  Number(String(v ?? "").replace(/[^0-9.]/g, "")) || 0;
+
+/* -------------------- Load ZIP → CBSA -------------------- */
+
+function loadZipToCBSA() {
+  return new Promise(resolve => {
+    fs.createReadStream("hud_zip_metro_crosswalk.csv")
       .pipe(csv())
-      .on("data", onRow)
-      .on("end", resolve)
-      .on("error", reject);
+      .on("data", row => {
+        const zip = normalizeZip(row.ZIP);
+        const cbsa = row.CBSA;
+        const ratio = Number(row.TOT_RATIO || 0);
+
+        if (!zip || !cbsa) return;
+
+        // Keep the CBSA with the strongest residential ratio
+        const existing = ZIP_TO_CBSA.get(zip);
+        if (!existing || ratio > existing.ratio) {
+          ZIP_TO_CBSA.set(zip, { cbsa, ratio });
+        }
+      })
+      .on("end", () => {
+        console.log(`🔗 ZIP→CBSA loaded: ${ZIP_TO_CBSA.size}`);
+        resolve();
+      });
   });
 }
 
-/* -------------------------
-   Load HUD Data at Startup
-------------------------- */
-async function loadData() {
-  console.log("🔄 Loading HUD data...");
+/* -------------------- Load SAFMR -------------------- */
 
-  // SAFMR (ZIP → Rent)
-  await loadCSV("fy2024_safmrs.clean.csv", (row) => {
-    const zip = row["ZIP Code"] || row["ZIP"];
-    if (!zip) return;
+function loadSAFMR() {
+  return new Promise(resolve => {
+    fs.createReadStream("fy2024_safmrs.clean.csv")
+      .pipe(csv())
+      .on("data", row => {
+        const zip = normalizeZip(row["ZIP Code"]);
+        if (!zip) return;
 
-    SAFMR_BY_ZIP[zip] = {
-      0: Number(row["SAFMR 0BR"]),
-      1: Number(row["SAFMR 1BR"]),
-      2: Number(row["SAFMR 2BR"]),
-      3: Number(row["SAFMR 3BR"]),
-      4: Number(row["SAFMR 4BR"]),
-    };
+        const beds = [
+          ["0", "SAFMR 0BR"],
+          ["1", "SAFMR 1BR"],
+          ["2", "SAFMR 2BR"],
+          ["3", "SAFMR 3BR"],
+          ["4", "SAFMR 4BR"]
+        ];
+
+        beds.forEach(([br, col]) => {
+          const rent = cleanMoney(row[col]);
+          if (!rent) return;
+
+          SAFMR.set(`${zip}-${br}`, {
+            rent,
+            source: "SAFMR"
+          });
+        });
+      })
+      .on("end", () => {
+        console.log(`🏠 SAFMR loaded: ${SAFMR.size}`);
+        resolve();
+      });
   });
-
-  // ZIP → CBSA Crosswalk
-  await loadCSV("hud_zip_metro_crosswalk.csv", (row) => {
-    const zip = row["ZIP"];
-    const cbsa = row["CBSA"];
-    if (!zip || !cbsa) return;
-
-    // Prefer residential ratio if duplicates exist
-    if (!ZIP_TO_CBSA[zip]) {
-      ZIP_TO_CBSA[zip] = cbsa;
-    }
-  });
-
-  // Metro FMR (CBSA → Rent)
-  await loadCSV("fy2024_fmr_metro.csv", (row) => {
-    const cbsa = row["CBSASub23"];
-    if (!cbsa) return;
-
-    FMR_BY_CBSA[cbsa] = {
-      0: Number(row["erap_fmr_br0"]),
-      1: Number(row["erap_fmr_br1"]),
-      2: Number(row["erap_fmr_br2"]),
-      3: Number(row["erap_fmr_br3"]),
-      4: Number(row["erap_fmr_br4"]),
-      name: row["HUD Metro Fair Market Rent Area Name"],
-    };
-  });
-
-  console.log("✅ HUD data loaded");
 }
 
-/* -------------------------
-   Routes
-------------------------- */
-app.get("/", (_, res) => res.sendFile(path.resolve("public/index.html")));
-app.get("/system", (_, res) => res.sendFile(path.resolve("public/system.html")));
-app.get("/pricing", (_, res) => res.sendFile(path.resolve("public/pricing.html")));
-app.get("/contact", (_, res) => res.sendFile(path.resolve("public/contact.html")));
+/* -------------------- Load FMR -------------------- */
 
-/* -------------------------
-   Core API: Analyze
-------------------------- */
+function loadFMR() {
+  return new Promise(resolve => {
+    fs.createReadStream("fy2024_fmr_metro.csv")
+      .pipe(csv())
+      .on("data", row => {
+        const cbsa = row["CBSA"];
+        if (!cbsa) return;
+
+        const beds = [
+          ["0", "erap_fmr_br0"],
+          ["1", "erap_fmr_br1"],
+          ["2", "erap_fmr_br2"],
+          ["3", "erap_fmr_br3"],
+          ["4", "erap_fmr_br4"]
+        ];
+
+        beds.forEach(([br, col]) => {
+          const rent = cleanMoney(row[col]);
+          if (!rent) return;
+
+          FMR.set(`${cbsa}-${br}`, {
+            rent,
+            source: "FMR"
+          });
+        });
+      })
+      .on("end", () => {
+        console.log(`🌆 FMR loaded: ${FMR.size}`);
+        resolve();
+      });
+  });
+}
+
+/* -------------------- API -------------------- */
+
 app.post("/api/analyze", (req, res) => {
-  const { zip, bedrooms } = req.body;
+  const { zip, bedrooms = 0 } = req.body;
 
-  if (!zip || bedrooms === undefined) {
-    return res.status(400).json({
-      error: "ZIP and bedrooms are required",
-    });
+  const z = normalizeZip(zip);
+  const b = String(bedrooms);
+
+  if (!z) {
+    return res.status(400).json({ error: "ZIP required" });
   }
 
-  // 1️⃣ SAFMR first
-  if (SAFMR_BY_ZIP[zip]?.[bedrooms]) {
+  /* 1️⃣ Try SAFMR */
+  const safmr = SAFMR.get(`${z}-${b}`);
+  if (safmr) {
     return res.json({
-      source: "SAFMR",
-      zip,
-      bedrooms,
-      rent: SAFMR_BY_ZIP[zip][bedrooms],
+      zip: z,
+      bedrooms: Number(b),
+      ...safmr
     });
   }
 
-  // 2️⃣ Fallback: ZIP → CBSA → FMR
-  const cbsa = ZIP_TO_CBSA[zip];
-  if (cbsa && FMR_BY_CBSA[cbsa]?.[bedrooms]) {
+  /* 2️⃣ Fallback → ZIP → CBSA → FMR */
+  const cbsaEntry = ZIP_TO_CBSA.get(z);
+  if (!cbsaEntry) {
     return res.json({
-      source: "FMR",
-      zip,
-      bedrooms,
-      cbsa,
-      metro: FMR_BY_CBSA[cbsa].name,
-      rent: FMR_BY_CBSA[cbsa][bedrooms],
+      error: "No HUD data found",
+      zip: z,
+      bedrooms: Number(b)
     });
   }
 
-  // 3️⃣ No data
-  return res.status(404).json({
-    error: "No HUD rent data found for this ZIP",
+  const fmr = FMR.get(`${cbsaEntry.cbsa}-${b}`);
+  if (!fmr) {
+    return res.json({
+      error: "No HUD data found",
+      zip: z,
+      bedrooms: Number(b)
+    });
+  }
+
+  return res.json({
+    zip: z,
+    bedrooms: Number(b),
+    cbsa: cbsaEntry.cbsa,
+    ...fmr
   });
 });
 
-/* -------------------------
-   Start Server
-------------------------- */
-loadData().then(() => {
+/* -------------------- Pages -------------------- */
+
+app.get("/", (_, res) =>
+  res.sendFile(path.join(__dirname, "public/index.html"))
+);
+
+app.get("/system", (_, res) =>
+  res.sendFile(path.join(__dirname, "public/system.html"))
+);
+
+app.get("/pricing", (_, res) =>
+  res.sendFile(path.join(__dirname, "public/pricing.html"))
+);
+
+app.get("/contact", (_, res) =>
+  res.sendFile(path.join(__dirname, "public/contact.html"))
+);
+
+/* -------------------- Boot -------------------- */
+
+(async () => {
+  console.log("🔄 Loading HUD data...");
+  await loadZipToCBSA();
+  await loadSAFMR();
+  await loadFMR();
+  console.log("✅ HUD data loaded");
+
   app.listen(PORT, () => {
     console.log(`🚀 ALEX running at http://localhost:${PORT}`);
   });
-});
+})();
