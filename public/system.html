@@ -1,170 +1,26 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
   <title>ALEX™ Stress Test</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <style>
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, Arial, sans-serif;
-      background: url("/kitchen-bg.jpg") center / cover no-repeat fixed;
-      color: #fff;
-    }
-
-    .nav {
-      display: flex;
-      justify-content: flex-end;
-      gap: 30px;
-      padding: 20px 40px;
-      font-size: 14px;
-      letter-spacing: 0.08em;
-    }
-
-    .nav a {
-      color: #c9b46a;
-      text-decoration: none;
-    }
-
-    .container {
-      min-height: calc(100vh - 80px);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .card {
-      width: 420px;
-      background: rgba(0,0,0,0.65);
-      backdrop-filter: blur(8px);
-      border-radius: 14px;
-      padding: 32px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-    }
-
-    h1 {
-      text-align: center;
-      margin-bottom: 24px;
-      font-weight: 600;
-      letter-spacing: 0.05em;
-    }
-
-    label {
-      font-size: 13px;
-      opacity: 0.85;
-    }
-
-    input {
-      width: 100%;
-      margin-top: 6px;
-      margin-bottom: 18px;
-      padding: 12px 14px;
-      border-radius: 8px;
-      border: none;
-      font-size: 14px;
-    }
-
-    button {
-      width: 100%;
-      padding: 14px;
-      border-radius: 10px;
-      border: none;
-      font-size: 15px;
-      font-weight: 600;
-      background: #d4b24c;
-      color: #000;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #e5c85e;
-    }
-
-    .results {
-      margin-top: 28px;
-      background: #0f5e22;
-      border-radius: 10px;
-      padding: 18px;
-      font-size: 14px;
-      line-height: 1.6;
-      display: none;
-    }
-
-    footer {
-      text-align: center;
-      font-size: 12px;
-      opacity: 0.6;
-      padding: 20px;
-    }
-  </style>
+  <link rel="stylesheet" href="/style.css">
 </head>
-
 <body>
+  <h1>ALEX™ Stress Test</h1>
 
-  <div class="nav">
-    <a href="/">Home</a>
-    <a href="/system.html">The System</a>
-    <a href="/pricing.html">Pricing</a>
-    <a href="/contact.html">Contact</a>
-  </div>
+  <button onclick="runTest()">Test HUD</button>
 
-  <div class="container">
-    <div class="card">
-      <h1>ALEX™ Stress Test</h1>
-
-      <label>Property Address</label>
-      <input id="address" placeholder="163 Moorland St Fall River MA 02724" />
-
-      <label>ZIP Code</label>
-      <input id="zip" placeholder="02724" />
-
-      <label>Bedrooms</label>
-      <input id="bedrooms" type="number" value="1" />
-
-      <button onclick="runTest()">Run Stress Test</button>
-
-      <div id="results" class="results"></div>
-    </div>
-  </div>
-
-  <footer>© 2026 Silver Lining Consulting LLC</footer>
+  <pre id="out"></pre>
 
   <script>
     async function runTest() {
-      const zip = document.getElementById("zip").value.trim();
-      const bedrooms = document.getElementById("bedrooms").value;
-
-      if (!zip || !bedrooms) {
-        alert("Please complete all fields.");
-        return;
-      }
-
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ zip, bedrooms: Number(bedrooms) })
+        body: JSON.stringify({ zip: "76437", bedrooms: 1 })
       });
-
-      const data = await res.json();
-
-      if (data.error) {
-        alert(data.error);
-        return;
-      }
-
-      document.getElementById("results").style.display = "block";
-      document.getElementById("results").innerHTML = `
-        <strong>ZIP:</strong> ${data.zip}<br/>
-        <strong>Bedrooms:</strong> ${data.bedrooms}<br/>
-        <strong>Rent:</strong> $${data.rent}<br/>
-        <strong>Metro:</strong> ${data.metro}<br/>
-        <strong>Source:</strong> ${data.source}
-      `;
+      document.getElementById("out").textContent =
+        JSON.stringify(await res.json(), null, 2);
     }
   </script>
-
 </body>
 </html>
