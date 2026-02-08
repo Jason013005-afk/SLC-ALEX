@@ -1,216 +1,124 @@
-/**
- * ALEX – Core Server
- * HUD SAFMR + FMR with ZIP → CBSA fallback
- * Node 20 / Express 4
- */
-
-import express from "express";
-import fs from "fs";
-import path from "path";
-import csv from "csv-parser";
-import dotenv from "dotenv";
-import { fileURLToPath } from "url";
-
-dotenv.config();
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const express = require("express");
+const fs = require("fs");
+const path = require("path");
+const { parse } = require("csv-parse/sync");
 
 const app = express();
-const PORT = process.env.PORT || 8080;
+const PORT = 8080;
 
-/* -------------------- Middleware -------------------- */
-
+/* ================================
+   Middleware
+================================ */
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static("public"));
 
-/* -------------------- In-Memory Stores -------------------- */
+/* ================================
+   Load HUD Data ONCE at startup
+================================ */
+console.log("🔄 Loading HUD data...");
 
-const SAFMR = new Map();          // key: ZIP-BR
-const FMR = new Map();            // key: CBSA-BR
-const ZIP_TO_CBSA = new Map();    // key: ZIP → best CBSA
-
-/* -------------------- Utilities -------------------- */
-
-const normalizeZip = z =>
-  z ? z.toString().trim().padStart(5, "0") : "";
-
-const cleanMoney = v =>
-  Number(String(v ?? "").replace(/[^0-9.]/g, "")) || 0;
-
-/* -------------------- Load ZIP → CBSA -------------------- */
-
-function loadZipToCBSA() {
-  return new Promise(resolve => {
-    fs.createReadStream("hud_zip_metro_crosswalk.csv")
-      .pipe(csv())
-      .on("data", row => {
-        const zip = normalizeZip(row.ZIP);
-        const cbsa = row.CBSA;
-        const ratio = Number(row.TOT_RATIO || 0);
-
-        if (!zip || !cbsa) return;
-
-        // Keep the CBSA with the strongest residential ratio
-        const existing = ZIP_TO_CBSA.get(zip);
-        if (!existing || ratio > existing.ratio) {
-          ZIP_TO_CBSA.set(zip, { cbsa, ratio });
-        }
-      })
-      .on("end", () => {
-        console.log(`🔗 ZIP→CBSA loaded: ${ZIP_TO_CBSA.size}`);
-        resolve();
-      });
+function loadCSV(filePath) {
+  const raw = fs.readFileSync(filePath);
+  return parse(raw, {
+    columns: true,
+    skip_empty_lines: true
   });
 }
 
-/* -------------------- Load SAFMR -------------------- */
+// SAFMR (ZIP-level, sparse)
+const safmrData = loadCSV("fy2024_safmrs.clean.csv");
 
-function loadSAFMR() {
-  return new Promise(resolve => {
-    fs.createReadStream("fy2024_safmrs.clean.csv")
-      .pipe(csv())
-      .on("data", row => {
-        const zip = normalizeZip(row["ZIP Code"]);
-        if (!zip) return;
+// FMR (Metro-level)
+const fmrData = loadCSV("fy2024_fmr_metro.csv");
 
-        const beds = [
-          ["0", "SAFMR 0BR"],
-          ["1", "SAFMR 1BR"],
-          ["2", "SAFMR 2BR"],
-          ["3", "SAFMR 3BR"],
-          ["4", "SAFMR 4BR"]
-        ];
+// ZIP → CBSA crosswalk
+const zipCbsaData = loadCSV("hud_zip_metro_crosswalk.csv");
 
-        beds.forEach(([br, col]) => {
-          const rent = cleanMoney(row[col]);
-          if (!rent) return;
+// Build fast lookup maps
+const safmrByZip = {};
+safmrData.forEach(r => {
+  safmrByZip[r["ZIP CODE"]] = r;
+});
 
-          SAFMR.set(`${zip}-${br}`, {
-            rent,
-            source: "SAFMR"
-          });
-        });
-      })
-      .on("end", () => {
-        console.log(`🏠 SAFMR loaded: ${SAFMR.size}`);
-        resolve();
-      });
-  });
-}
+const fmrByCbsa = {};
+fmrData.forEach(r => {
+  fmrByCbsa[r["CBSA"]] = r;
+});
 
-/* -------------------- Load FMR -------------------- */
+const cbsaByZip = {};
+zipCbsaData.forEach(r => {
+  // prefer residential-weighted rows
+  if (!cbsaByZip[r.ZIP] || Number(r.RES_RATIO) > Number(cbsaByZip[r.ZIP].RES_RATIO)) {
+    cbsaByZip[r.ZIP] = r;
+  }
+});
 
-function loadFMR() {
-  return new Promise(resolve => {
-    fs.createReadStream("fy2024_fmr_metro.csv")
-      .pipe(csv())
-      .on("data", row => {
-        const cbsa = row["CBSA"];
-        if (!cbsa) return;
+console.log("✅ HUD data loaded");
 
-        const beds = [
-          ["0", "erap_fmr_br0"],
-          ["1", "erap_fmr_br1"],
-          ["2", "erap_fmr_br2"],
-          ["3", "erap_fmr_br3"],
-          ["4", "erap_fmr_br4"]
-        ];
+/* ================================
+   Routes (Pages)
+================================ */
+app.get("/", (req, res) => res.sendFile(path.join(__dirname, "public/index.html")));
+app.get("/system", (req, res) => res.sendFile(path.join(__dirname, "public/system.html")));
+app.get("/pricing", (req, res) => res.sendFile(path.join(__dirname, "public/pricing.html")));
+app.get("/contact", (req, res) => res.sendFile(path.join(__dirname, "public/contact.html")));
 
-        beds.forEach(([br, col]) => {
-          const rent = cleanMoney(row[col]);
-          if (!rent) return;
-
-          FMR.set(`${cbsa}-${br}`, {
-            rent,
-            source: "FMR"
-          });
-        });
-      })
-      .on("end", () => {
-        console.log(`🌆 FMR loaded: ${FMR.size}`);
-        resolve();
-      });
-  });
-}
-
-/* -------------------- API -------------------- */
-
+/* ================================
+   Core API: Rent Analysis
+================================ */
 app.post("/api/analyze", (req, res) => {
-  const { zip, bedrooms = 0 } = req.body;
+  const { zip, bedrooms } = req.body;
 
-  const z = normalizeZip(zip);
-  const b = String(bedrooms);
-
-  if (!z) {
-    return res.status(400).json({ error: "ZIP required" });
+  if (!zip || bedrooms === undefined) {
+    return res.status(400).json({ error: "ZIP and bedrooms required" });
   }
 
-  /* 1️⃣ Try SAFMR */
-  const safmr = SAFMR.get(`${z}-${b}`);
-  if (safmr) {
+  const zipStr = zip.toString().padStart(5, "0");
+  const bedKey = `SAFMR ${bedrooms}BR`;
+
+  /* ---- 1️⃣ Try SAFMR ---- */
+  if (safmrByZip[zipStr] && safmrByZip[zipStr][bedKey]) {
     return res.json({
-      zip: z,
-      bedrooms: Number(b),
-      ...safmr
+      source: "SAFMR",
+      zip: zipStr,
+      bedrooms,
+      rent: Number(safmrByZip[zipStr][bedKey])
     });
   }
 
-  /* 2️⃣ Fallback → ZIP → CBSA → FMR */
-  const cbsaEntry = ZIP_TO_CBSA.get(z);
-  if (!cbsaEntry) {
-    return res.json({
-      error: "No HUD data found",
-      zip: z,
-      bedrooms: Number(b)
+  /* ---- 2️⃣ Fallback to FMR ---- */
+  const crosswalk = cbsaByZip[zipStr];
+  if (!crosswalk) {
+    return res.status(404).json({
+      error: "No HUD data for ZIP",
+      zip: zipStr
     });
   }
 
-  const fmr = FMR.get(`${cbsaEntry.cbsa}-${b}`);
-  if (!fmr) {
-    return res.json({
-      error: "No HUD data found",
-      zip: z,
-      bedrooms: Number(b)
+  const cbsa = crosswalk.CBSA;
+  const fmrRow = fmrByCbsa[cbsa];
+  const fmrKey = `${bedrooms}BR`;
+
+  if (!fmrRow || !fmrRow[fmrKey]) {
+    return res.status(404).json({
+      error: "No FMR data for CBSA",
+      zip: zipStr,
+      cbsa
     });
   }
 
   return res.json({
-    zip: z,
-    bedrooms: Number(b),
-    cbsa: cbsaEntry.cbsa,
-    ...fmr
+    source: "FMR",
+    zip: zipStr,
+    cbsa,
+    bedrooms,
+    rent: Number(fmrRow[fmrKey])
   });
 });
 
-/* -------------------- Pages -------------------- */
-
-app.get("/", (_, res) =>
-  res.sendFile(path.join(__dirname, "public/index.html"))
-);
-
-app.get("/system", (_, res) =>
-  res.sendFile(path.join(__dirname, "public/system.html"))
-);
-
-app.get("/pricing", (_, res) =>
-  res.sendFile(path.join(__dirname, "public/pricing.html"))
-);
-
-app.get("/contact", (_, res) =>
-  res.sendFile(path.join(__dirname, "public/contact.html"))
-);
-
-/* -------------------- Boot -------------------- */
-
-(async () => {
-  console.log("🔄 Loading HUD data...");
-  await loadZipToCBSA();
-  await loadSAFMR();
-  await loadFMR();
-  console.log("✅ HUD data loaded");
-
-  app.listen(PORT, () => {
-    console.log(`🚀 ALEX running at http://localhost:${PORT}`);
-  });
-})();
+/* ================================
+   Start Server
+================================ */
+app.listen(PORT, () => {
+  console.log(`🚀 ALEX running at http://localhost:${PORT}`);
+});
