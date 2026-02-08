@@ -1,168 +1,87 @@
-// ==============================
-// ALEX — SINGLE SOURCE OF TRUTH
-// Backend: Express + HUD SAFMR + HUD FMR (ZIP → CBSA fallback)
-// Runtime: Node 18+
-// Module system: CommonJS (.cjs)
-// ==============================
-
 require("dotenv").config();
+
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
-const csv = require("csv-parser");
+const { parse } = require("csv-parse/sync");
 
 const app = express();
-const PORT = process.env.PORT || 8080;
+const PORT = 8080;
 
 app.use(express.json());
-app.use(express.static("public"));
 
-// ==============================
-// IN-MEMORY STORES
-// ==============================
-const SAFMR = new Map();        // key: zip-bedrooms
-const FMR = new Map();          // key: cbsa-bedrooms
-const ZIP_TO_CBSA = new Map();  // key: zip → cbsa
+/* =========================
+   LOAD SAFMR DATA (ONCE)
+========================= */
 
-// ==============================
-// HELPERS
-// ==============================
-const normZip = z => z?.toString().trim().padStart(5, "0");
-const money = v =>
-  Number(String(v || "").replace(/[^0-9.]/g, "")) || 0;
+console.log("🔄 Loading SAFMR data...");
 
-// ==============================
-// LOAD ZIP → CBSA
-// ==============================
-function loadZipToCbsa() {
-  return new Promise(resolve => {
-    fs.createReadStream("hud_zip_metro_crosswalk.csv")
-      .pipe(csv())
-      .on("data", r => {
-        const zip = normZip(r.ZIP);
-        const cbsa = r.CBSA;
-        if (zip && cbsa && !ZIP_TO_CBSA.has(zip)) {
-          ZIP_TO_CBSA.set(zip, cbsa);
-        }
-      })
-      .on("end", () => {
-        console.log(`🔗 ZIP→CBSA loaded: ${ZIP_TO_CBSA.size}`);
-        resolve();
-      });
-  });
+const safmrPath = path.join(__dirname, "fy2024_safmrs.clean.csv");
+const csvData = fs.readFileSync(safmrPath);
+
+const rows = parse(csvData, {
+  columns: true,
+  skip_empty_lines: true,
+});
+
+console.log("📄 SAFMR Headers:", Object.keys(rows[0] || {}));
+
+const safmrByZip = new Map();
+
+for (const r of rows) {
+  const zip = r["ZIP Code"]?.padStart(5, "0");
+  if (!zip) continue;
+  safmrByZip.set(zip, r);
 }
 
-// ==============================
-// LOAD SAFMR (ZIP-LEVEL)
-// ==============================
-function loadSafmr() {
-  return new Promise(resolve => {
-    fs.createReadStream("fy2024_safmrs.clean.csv")
-      .pipe(csv())
-      .on("data", r => {
-        const zip = normZip(r["ZIP Code"]);
-        if (!zip) return;
+console.log(`🔥 SAFMR Loaded: ${safmrByZip.size}`);
 
-        for (let b = 0; b <= 4; b++) {
-          const rent = money(r[`SAFMR ${b}BR`]);
-          if (!rent) continue;
+/* =========================
+   API
+========================= */
 
-          SAFMR.set(`${zip}-${b}`, {
-            rent,
-            p90: Math.round(rent * 0.9),
-            p100: rent,
-            p110: Math.round(rent * 1.1),
-            source: "SAFMR"
-          });
-        }
-      })
-      .on("end", () => {
-        console.log(`🏠 SAFMR loaded: ${SAFMR.size}`);
-        resolve();
-      });
-  });
-}
-
-// ==============================
-// LOAD FMR (CBSA-LEVEL)
-// ==============================
-function loadFmr() {
-  return new Promise(resolve => {
-    fs.createReadStream("fy2024_fmr_metro.csv")
-      .pipe(csv())
-      .on("data", r => {
-        const cbsa = r.CBSASub23 || r.CBSA;
-        if (!cbsa) return;
-
-        for (let b = 0; b <= 4; b++) {
-          const rent = money(r[`erap_fmr_br${b}`]);
-          if (!rent) continue;
-
-          FMR.set(`${cbsa}-${b}`, {
-            rent,
-            p90: Math.round(rent * 0.9),
-            p100: rent,
-            p110: Math.round(rent * 1.1),
-            source: "FMR"
-          });
-        }
-      })
-      .on("end", () => {
-        console.log(`🌆 FMR loaded: ${FMR.size}`);
-        resolve();
-      });
-  });
-}
-
-// ==============================
-// API — ANALYZE
-// ==============================
 app.post("/api/analyze", (req, res) => {
-  const zip = normZip(req.body.zip);
-  const beds = Number(req.body.bedrooms ?? 0);
+  const { zip, bedrooms } = req.body;
 
-  if (!zip) {
-    return res.status(400).json({ error: "Invalid ZIP" });
+  if (!zip || bedrooms === undefined) {
+    return res.status(400).json({ error: "zip and bedrooms required" });
   }
 
-  // 1️⃣ SAFMR FIRST
-  const safmr = SAFMR.get(`${zip}-${beds}`);
-  if (safmr) {
-    return res.json({ zip, bedrooms: beds, ...safmr });
+  const row = safmrByZip.get(String(zip).padStart(5, "0"));
+
+  if (!row) {
+    return res.status(404).json({
+      error: "No SAFMR data found",
+      zip,
+    });
   }
 
-  // 2️⃣ FALLBACK → FMR
-  const cbsa = ZIP_TO_CBSA.get(zip);
-  if (cbsa) {
-    const fmr = FMR.get(`${cbsa}-${beds}`);
-    if (fmr) {
-      return res.json({
-        zip,
-        bedrooms: beds,
-        cbsa,
-        ...fmr
-      });
-    }
+  const col = `SAFMR ${bedrooms}BR`;
+  const raw = row[col];
+
+  if (!raw) {
+    return res.status(404).json({
+      error: "Bedroom size not found",
+      zip,
+      bedrooms,
+    });
   }
 
-  // 3️⃣ NOTHING FOUND
+  const rent = Number(raw.replace(/[$,]/g, ""));
+
   return res.json({
-    error: "No rent data found",
     zip,
-    bedrooms: beds
+    bedrooms,
+    rent,
+    source: "HUD SAFMR 2024",
+    metro: row["HUD Metro Fair Market Rent Area Name"],
   });
 });
 
-// ==============================
-// BOOT
-// ==============================
-(async () => {
-  console.log("🔄 Loading HUD data...");
-  await loadZipToCbsa();
-  await loadSafmr();
-  await loadFmr();
+/* =========================
+   START SERVER
+========================= */
 
-  app.listen(PORT, () => {
-    console.log(`🚀 ALEX running at http://localhost:${PORT}`);
-  });
-})();
+app.listen(PORT, () => {
+  console.log(`🚀 ALEX running at http://localhost:${PORT}`);
+});
