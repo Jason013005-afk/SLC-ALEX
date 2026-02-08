@@ -1,11 +1,12 @@
 require("dotenv").config();
+
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
 const { parse } = require("csv-parse/sync");
 
 const app = express();
-const PORT = 8080;
+const PORT = process.env.PORT || 8080;
 
 app.use(express.json());
 app.use(express.static("public"));
@@ -16,49 +17,56 @@ app.use(express.static("public"));
 
 console.log("🔄 Loading HUD data...");
 
-function loadCSV(file) {
-  const raw = fs.readFileSync(file);
-  return parse(raw, {
-    columns: true,
-    skip_empty_lines: true
-  });
-}
-
-// SAFMR (ZIP-level)
-const safmrRows = loadCSV("fy2024_safmrs.clean.csv");
+// --- SAFMR (ZIP-level, limited coverage) ---
 const SAFMR = new Map();
+
+const safmrCsv = fs.readFileSync("fy2024_safmrs.clean.csv");
+const safmrRows = parse(safmrCsv, {
+  columns: true,
+  skip_empty_lines: true,
+});
 
 for (const r of safmrRows) {
   const zip = r["ZIP Code"]?.padStart(5, "0");
   if (!zip) continue;
-  SAFMR.set(zip, r);
+
+  SAFMR.set(zip, {
+    br0: Number(r["SAFMR 0BR"]) || null,
+    br1: Number(r["SAFMR 1BR"]) || null,
+    br2: Number(r["SAFMR 2BR"]) || null,
+    br3: Number(r["SAFMR 3BR"]) || null,
+    br4: Number(r["SAFMR 4BR"]) || null,
+    source: "SAFMR",
+  });
 }
 
-// ZIP → CBSA
-const crosswalkRows = loadCSV("hud_zip_metro_crosswalk.csv");
-const ZIP_TO_CBSA = new Map();
+console.log(`🏠 SAFMR loaded: ${SAFMR.size}`);
 
-for (const r of crosswalkRows) {
-  const zip = r["ZIP"]?.padStart(5, "0");
-  const cbsa = r["CBSA"];
-  if (zip && cbsa && !ZIP_TO_CBSA.has(zip)) {
-    ZIP_TO_CBSA.set(zip, cbsa);
-  }
-}
-
-// FMR (Metro-level, already expanded by ZIP)
-const fmrRows = loadCSV("fy2024_fmr_metro.csv");
+// --- FMR (ZIP-level inside metro file) ---
 const FMR = new Map();
+
+const fmrCsv = fs.readFileSync("fy2024_fmr_metro.csv");
+const fmrRows = parse(fmrCsv, {
+  columns: true,
+  skip_empty_lines: true,
+});
 
 for (const r of fmrRows) {
   const zip = r["ZIP Code"]?.padStart(5, "0");
   if (!zip) continue;
-  FMR.set(zip, r);
+
+  FMR.set(zip, {
+    br0: Number(String(r["erap_fmr_br0"]).replace(/[$,]/g, "")) || null,
+    br1: Number(String(r["erap_fmr_br1"]).replace(/[$,]/g, "")) || null,
+    br2: Number(String(r["erap_fmr_br2"]).replace(/[$,]/g, "")) || null,
+    br3: Number(String(r["erap_fmr_br3"]).replace(/[$,]/g, "")) || null,
+    br4: Number(String(r["erap_fmr_br4"]).replace(/[$,]/g, "")) || null,
+    source: "FMR",
+  });
 }
 
-console.log(`🏠 SAFMR loaded: ${SAFMR.size}`);
-console.log(`🔗 ZIP→CBSA loaded: ${ZIP_TO_CBSA.size}`);
 console.log(`🌆 FMR loaded: ${FMR.size}`);
+
 console.log("✅ HUD data loaded");
 
 /* =========================
@@ -66,47 +74,40 @@ console.log("✅ HUD data loaded");
 ========================= */
 
 app.post("/api/analyze", (req, res) => {
-  const { zip, bedrooms } = req.body;
+  const zip = String(req.body.zip || "").padStart(5, "0");
+  const bedrooms = Number(req.body.bedrooms);
 
-  if (!zip || bedrooms == null) {
-    return res.status(400).json({ error: "Missing zip or bedrooms" });
+  if (!zip || bedrooms < 0 || bedrooms > 4) {
+    return res.status(400).json({ error: "Invalid input" });
   }
 
-  const ZIP = zip.padStart(5, "0");
-
-  // 1️⃣ SAFMR
-  if (SAFMR.has(ZIP)) {
-    const row = SAFMR.get(ZIP);
-    const rent = row[`SAFMR ${bedrooms}BR`];
-    if (rent) {
-      return res.json({
-        source: "SAFMR",
-        zip: ZIP,
-        bedrooms,
-        rent: Number(rent)
-      });
-    }
+  // 1️⃣ SAFMR first
+  if (SAFMR.has(zip)) {
+    const data = SAFMR.get(zip);
+    return res.json({
+      zip,
+      bedrooms,
+      rent: data[`br${bedrooms}`],
+      source: data.source,
+    });
   }
 
-  // 2️⃣ FMR (ZIP-expanded file)
-  if (FMR.has(ZIP)) {
-    const row = FMR.get(ZIP);
-    const rent = row[`erap_fmr_br${bedrooms}`];
-    if (rent) {
-      return res.json({
-        source: "FMR",
-        zip: ZIP,
-        bedrooms,
-        rent: Number(String(rent).replace(/[^0-9]/g, ""))
-      });
-    }
+  // 2️⃣ FMR fallback
+  if (FMR.has(zip)) {
+    const data = FMR.get(zip);
+    return res.json({
+      zip,
+      bedrooms,
+      rent: data[`br${bedrooms}`],
+      source: data.source,
+    });
   }
 
-  // 3️⃣ Fail loudly
-  return res.status(404).json({
-    error: "No rent data found",
-    zip: ZIP,
-    bedrooms
+  // 3️⃣ No HUD coverage
+  return res.json({
+    zip,
+    bedrooms,
+    error: "No HUD rent coverage for this ZIP",
   });
 });
 
