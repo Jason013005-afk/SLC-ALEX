@@ -1,4 +1,3 @@
-// server.cjs
 require("dotenv").config();
 
 const express = require("express");
@@ -13,86 +12,84 @@ app.use(express.json());
 app.use(express.static("public"));
 
 /* =========================
+   HELPERS
+========================= */
+
+function normalizeZip(z) {
+  if (!z) return null;
+  return String(z).trim().padStart(5, "0");
+}
+
+function parseDollar(v) {
+  if (!v) return 0;
+  return Number(String(v).replace(/[$,",]/g, "")) || 0;
+}
+
+/* =========================
    LOAD HUD DATA (ONCE)
 ========================= */
 
 console.log("🔄 Loading HUD data...");
 
-// ---------- SAFMR (ZIP-level) ----------
-const safmrRaw = fs.readFileSync(
-  path.join(__dirname, "fy2024_safmrs.clean.csv"),
-  "utf8"
+const SAFMR = new Map();      // key: ZIP-bedrooms
+const ZIP_TO_CBSA = new Map(); // key: ZIP → CBSA
+const FMR = new Map();        // key: CBSA-bedrooms
+
+// ---- SAFMR (ZIP LEVEL)
+const safmrCsv = fs.readFileSync(
+  path.join(__dirname, "fy2024_safmrs.clean.csv")
 );
+const safmrRows = parse(safmrCsv, { columns: true, skip_empty_lines: true });
 
-const safmrRows = parse(safmrRaw, {
-  columns: true,
-  skip_empty_lines: true,
-});
-
-const SAFMR_BY_ZIP = {};
 for (const r of safmrRows) {
-  const zip = r["ZIP Code"]?.padStart(5, "0");
+  const zip = normalizeZip(r["ZIP Code"]);
   if (!zip) continue;
 
-  SAFMR_BY_ZIP[zip] = {
-    0: Number(r["SAFMR 0BR"]),
-    1: Number(r["SAFMR 1BR"]),
-    2: Number(r["SAFMR 2BR"]),
-    3: Number(r["SAFMR 3BR"]),
-    4: Number(r["SAFMR 4BR"]),
-  };
-}
-
-console.log(`🏠 SAFMR loaded: ${Object.keys(SAFMR_BY_ZIP).length}`);
-
-// ---------- ZIP → CBSA ----------
-const crosswalkRaw = fs.readFileSync(
-  path.join(__dirname, "hud_zip_metro_crosswalk.csv"),
-  "utf8"
-);
-
-const crosswalkRows = parse(crosswalkRaw, {
-  columns: true,
-  skip_empty_lines: true,
-});
-
-const ZIP_TO_CBSA = {};
-for (const r of crosswalkRows) {
-  const zip = r["ZIP"]?.padStart(5, "0");
-  const cbsa = r["CBSA"];
-  if (zip && cbsa && !ZIP_TO_CBSA[zip]) {
-    ZIP_TO_CBSA[zip] = cbsa;
+  for (let br = 0; br <= 4; br++) {
+    const val = parseDollar(r[`SAFMR ${br}BR`]);
+    if (val > 0) {
+      SAFMR.set(`${zip}-${br}`, val);
+    }
   }
 }
 
-console.log(`🔗 ZIP→CBSA loaded: ${Object.keys(ZIP_TO_CBSA).length}`);
+console.log(`🏠 SAFMR loaded: ${SAFMR.size}`);
 
-// ---------- FMR (CBSA-level) ----------
-const fmrRaw = fs.readFileSync(
-  path.join(__dirname, "fy2024_fmr_metro.csv"),
-  "utf8"
+// ---- ZIP → CBSA CROSSWALK
+const crosswalkCsv = fs.readFileSync(
+  path.join(__dirname, "hud_zip_metro_crosswalk.csv")
 );
+const crosswalkRows = parse(crosswalkCsv, { columns: true, skip_empty_lines: true });
 
-const fmrRows = parse(fmrRaw, {
-  columns: true,
-  skip_empty_lines: true,
-});
-
-const FMR_BY_CBSA = {};
-for (const r of fmrRows) {
-  const cbsa = r["CBSASub23"];
-  if (!cbsa) continue;
-
-  FMR_BY_CBSA[cbsa] = {
-    0: Number(String(r["erap_fmr_br0"]).replace(/[$,]/g, "")),
-    1: Number(String(r["erap_fmr_br1"]).replace(/[$,]/g, "")),
-    2: Number(String(r["erap_fmr_br2"]).replace(/[$,]/g, "")),
-    3: Number(String(r["erap_fmr_br3"]).replace(/[$,]/g, "")),
-    4: Number(String(r["erap_fmr_br4"]).replace(/[$,]/g, "")),
-  };
+for (const r of crosswalkRows) {
+  const zip = normalizeZip(r["ZIP"]);
+  const cbsa = r["CBSA"];
+  if (zip && cbsa && cbsa !== "99999") {
+    ZIP_TO_CBSA.set(zip, cbsa);
+  }
 }
 
-console.log(`🌆 FMR loaded: ${Object.keys(FMR_BY_CBSA).length}`);
+console.log(`🔗 ZIP→CBSA loaded: ${ZIP_TO_CBSA.size}`);
+
+// ---- FMR (METRO LEVEL)
+const fmrCsv = fs.readFileSync(
+  path.join(__dirname, "fy2024_fmr_metro.csv")
+);
+const fmrRows = parse(fmrCsv, { columns: true, skip_empty_lines: true });
+
+for (const r of fmrRows) {
+  const cbsa = r["CBSASub23"]?.replace("METRO", "").replace("M", "");
+  if (!cbsa) continue;
+
+  for (let br = 0; br <= 4; br++) {
+    const val = parseDollar(r[`erap_fmr_br${br}`]);
+    if (val > 0) {
+      FMR.set(`${cbsa}-${br}`, val);
+    }
+  }
+}
+
+console.log(`🌆 FMR loaded: ${FMR.size}`);
 console.log("✅ HUD data loaded");
 
 /* =========================
@@ -100,40 +97,44 @@ console.log("✅ HUD data loaded");
 ========================= */
 
 app.post("/api/analyze", (req, res) => {
-  const zip = String(req.body.zip || "").padStart(5, "0");
+  const zip = normalizeZip(req.body.zip);
   const bedrooms = Number(req.body.bedrooms);
 
   if (!zip || isNaN(bedrooms)) {
     return res.status(400).json({ error: "Invalid input" });
   }
 
-  // 1️⃣ SAFMR FIRST
-  if (SAFMR_BY_ZIP[zip]?.[bedrooms]) {
+  // 1️⃣ SAFMR first
+  const safmrKey = `${zip}-${bedrooms}`;
+  if (SAFMR.has(safmrKey)) {
     return res.json({
       source: "SAFMR",
       zip,
       bedrooms,
-      rent: SAFMR_BY_ZIP[zip][bedrooms],
+      rent: SAFMR.get(safmrKey)
     });
   }
 
-  // 2️⃣ FMR FALLBACK
-  const cbsa = ZIP_TO_CBSA[zip];
-  if (cbsa && FMR_BY_CBSA[cbsa]?.[bedrooms]) {
-    return res.json({
-      source: "FMR",
-      zip,
-      cbsa,
-      bedrooms,
-      rent: FMR_BY_CBSA[cbsa][bedrooms],
-    });
+  // 2️⃣ Fallback to FMR
+  const cbsa = ZIP_TO_CBSA.get(zip);
+  if (cbsa) {
+    const fmrKey = `${cbsa}-${bedrooms}`;
+    if (FMR.has(fmrKey)) {
+      return res.json({
+        source: "FMR",
+        zip,
+        cbsa,
+        bedrooms,
+        rent: FMR.get(fmrKey)
+      });
+    }
   }
 
-  // 3️⃣ NOTHING FOUND
-  return res.status(404).json({
+  // 3️⃣ Honest failure
+  return res.json({
     error: "No rent data found",
     zip,
-    bedrooms,
+    bedrooms
   });
 });
 
