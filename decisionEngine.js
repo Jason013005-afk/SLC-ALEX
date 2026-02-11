@@ -1,61 +1,52 @@
-function estimateValueFromRent(monthlyRent, capRate = 0.07) {
-  if (!monthlyRent) return null;
-  return Math.round((monthlyRent * 12) / capRate);
-}
-
 function analyzeDeal({
   rent,
   purchasePrice,
   rehab = 0,
+  downPaymentPct = 20,
   interestRate,
-  downPaymentPct
+  estimatedValue
 }) {
+  const downPayment = purchasePrice * (downPaymentPct / 100);
+  const loanAmount = purchasePrice - downPayment;
 
-  const estimatedValue = estimateValueFromRent(rent);
+  const monthlyRate = interestRate / 100 / 12;
+  const payments = 30 * 12;
 
-  let mortgage = null;
-  let monthlyCashFlow = null;
+  const mortgage =
+    loanAmount *
+    (monthlyRate * Math.pow(1 + monthlyRate, payments)) /
+    (Math.pow(1 + monthlyRate, payments) - 1);
 
-  if (purchasePrice && interestRate && downPaymentPct !== undefined) {
-    const loanAmount = purchasePrice * (1 - downPaymentPct / 100);
-    const monthlyRate = interestRate / 100 / 12;
-    const termMonths = 30 * 12;
+  const monthlyCashFlow = rent - mortgage;
 
-    mortgage = Math.round(
-      loanAmount *
-        (monthlyRate * Math.pow(1 + monthlyRate, termMonths)) /
-        (Math.pow(1 + monthlyRate, termMonths) - 1)
-    );
+  // ===== FLIP MATH =====
+  const arv = estimatedValue;
+  const flipProfit = arv - purchasePrice - rehab - (arv * 0.08); // 8% costs
+  const wholesaleSpread = arv * 0.7 - rehab - purchasePrice;
 
-    monthlyCashFlow = Math.round(rent - mortgage);
-  }
-
-  // Strategy logic
   let strategy = "pass";
-  let verdict = "Deal unclear.";
+  let verdict = "Bad deal.";
 
-  if (estimatedValue && purchasePrice) {
-    const discount = estimatedValue - (purchasePrice + rehab);
-
-    if (discount > 50000) {
-      strategy = "flip";
-      verdict = "Excellent flip opportunity.";
-    } else if (monthlyCashFlow && monthlyCashFlow > 300) {
-      strategy = "hold";
-      verdict = "Strong rental. Buy and hold.";
-    } else if (monthlyCashFlow && monthlyCashFlow > 0) {
-      strategy = "hold";
-      verdict = "Rental works. Thin margin.";
-    } else {
-      strategy = "pass";
-      verdict = "Negative cash flow. Bad deal.";
-    }
+  if (flipProfit > 40000) {
+    strategy = "flip";
+    verdict = "Excellent flip opportunity.";
+  } else if (wholesaleSpread > 20000) {
+    strategy = "wholesale";
+    verdict = "Strong wholesale spread.";
+  } else if (monthlyCashFlow > 300) {
+    strategy = "hold";
+    verdict = "Strong rental. Buy and hold.";
+  } else if (monthlyCashFlow > 0) {
+    strategy = "hold";
+    verdict = "Marginal rental. Proceed carefully.";
   }
 
   return {
-    estimatedValue,
-    mortgage,
-    monthlyCashFlow,
+    mortgage: Math.round(mortgage),
+    monthlyCashFlow: Math.round(monthlyCashFlow),
+    estimatedValue: Math.round(arv),
+    flipProfit: Math.round(flipProfit),
+    wholesaleSpread: Math.round(wholesaleSpread),
     strategy,
     verdict
   };
