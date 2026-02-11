@@ -1,8 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const fs = require("fs");
-const csv = require("csv-parser");
 const path = require("path");
+const csv = require("csv-parser");
 
 const app = express();
 app.use(cors());
@@ -11,176 +11,229 @@ app.use(express.static("public"));
 
 const PORT = 8080;
 
-// ===============================
-// DATA STORES
-// ===============================
-
 let safmrData = {};
 let fmrMetroData = {};
 
-// ===============================
-// HELPERS
-// ===============================
+/* -------------------------
+   LOAD SAFMR
+-------------------------- */
+
+function loadSAFMR() {
+  return new Promise((resolve) => {
+    const filePath = path.join(__dirname, "fy2024_safmrs.clean.csv");
+
+    if (!fs.existsSync(filePath)) {
+      console.log("⚠️ SAFMR file missing");
+      return resolve();
+    }
+
+    fs.createReadStream(filePath)
+      .pipe(csv())
+      .on("data", (row) => {
+        const zip = String(row["ZIP Code"]).padStart(5, "0");
+        safmrData[zip] = row;
+      })
+      .on("end", () => {
+        console.log("🏠 SAFMR loaded:", Object.keys(safmrData).length);
+        resolve();
+      })
+      .on("error", () => resolve());
+  });
+}
+
+/* -------------------------
+   LOAD FMR METRO
+-------------------------- */
+
+function loadFMRMetro() {
+  return new Promise((resolve) => {
+    const filePath = path.join(__dirname, "fy2024_fmr_metro.csv");
+
+    if (!fs.existsSync(filePath)) {
+      console.log("⚠️ FMR Metro file missing");
+      return resolve();
+    }
+
+    fs.createReadStream(filePath)
+      .pipe(csv({ headers: false }))
+      .on("data", (row) => {
+        const zip = String(row[2]).padStart(5, "0");
+
+        fmrMetroData[zip] = {
+          metro: row[0],
+          rents: [
+            row[3],
+            row[4],
+            row[5],
+            row[6],
+            row[7],
+          ],
+        };
+      })
+      .on("end", () => {
+        console.log("🌆 FMR Metro loaded:", Object.keys(fmrMetroData).length);
+        resolve();
+      })
+      .on("error", () => resolve());
+  });
+}
+
+/* -------------------------
+   RENT LOOKUP
+-------------------------- */
 
 function cleanMoney(value) {
-  if (!value) return 0;
-  return Number(value.replace(/[$,]/g, ""));
+  if (!value) return null;
+  return parseInt(String(value).replace(/[^0-9]/g, ""));
 }
 
-function calculateMortgage(price, downPct, rate) {
-  const loan = price * (1 - downPct / 100);
+function getRent(zip, bedrooms) {
+  zip = String(zip).padStart(5, "0");
+
+  // SAFMR first
+  if (safmrData[zip]) {
+    const key = `SAFMR ${bedrooms}BR`;
+    const rent = cleanMoney(safmrData[zip][key]);
+
+    if (rent) {
+      return {
+        rent,
+        source: "HUD SAFMR 2024",
+        metro: safmrData[zip]["HUD Metro Fair Market Rent Area Name"],
+      };
+    }
+  }
+
+  // FMR fallback
+  if (fmrMetroData[zip]) {
+    const index = bedrooms;
+    const rent = cleanMoney(fmrMetroData[zip].rents[index]);
+
+    if (rent) {
+      return {
+        rent,
+        source: "HUD FMR 2024",
+        metro: fmrMetroData[zip].metro,
+      };
+    }
+  }
+
+  return null;
+}
+
+/* -------------------------
+   MORTGAGE
+-------------------------- */
+
+function calculateMortgage(price, rate, downPct) {
+  const downPayment = price * (downPct / 100);
+  const loan = price - downPayment;
   const monthlyRate = rate / 100 / 12;
-  const term = 30 * 12;
+  const payments = 30 * 12;
 
-  return Math.round(
+  const mortgage =
     loan *
-      (monthlyRate * Math.pow(1 + monthlyRate, term)) /
-      (Math.pow(1 + monthlyRate, term) - 1)
-  );
+    (monthlyRate * Math.pow(1 + monthlyRate, payments)) /
+    (Math.pow(1 + monthlyRate, payments) - 1);
+
+  return Math.round(mortgage);
 }
 
-// ===============================
-// LOAD SAFMR
-// ===============================
+/* -------------------------
+   VALUE ESTIMATION
+-------------------------- */
 
-fs.createReadStream(path.join(__dirname, "fy2024_safmrs.clean.csv"))
-  .pipe(csv())
-  .on("data", (row) => {
-    const zip = row["ZIP Code"]?.trim();
-    if (!zip) return;
-    safmrData[zip] = row;
-  })
-  .on("end", () => {
-    console.log("🏠 SAFMR loaded:", Object.keys(safmrData).length);
-  });
+function estimateValue(rent) {
+  const expenseRatio = 0.35;
+  const capRate = 0.08;
 
-// ===============================
-// LOAD FMR METRO
-// ===============================
+  const annualRent = rent * 12;
+  const noi = annualRent * (1 - expenseRatio);
 
-fs.createReadStream(path.join(__dirname, "fy2024_fmr_metro.csv"))
-  .pipe(csv())
-  .on("data", (row) => {
-    const zip = row["ZIP Code"]?.trim();
-    if (!zip) return;
-    fmrMetroData[zip] = row;
-  })
-  .on("end", () => {
-    console.log("🌆 FMR Metro loaded:", Object.keys(fmrMetroData).length);
-  });
+  return Math.round(noi / capRate);
+}
 
-// ===============================
-// API
-// ===============================
+/* -------------------------
+   STRATEGY ENGINE
+-------------------------- */
+
+function decideStrategy(cashFlow) {
+  if (cashFlow >= 500) {
+    return { strategy: "hold", verdict: "Excellent rental. Strong cash flow." };
+  }
+
+  if (cashFlow > 0) {
+    return { strategy: "hold", verdict: "Good rental. Positive cash flow." };
+  }
+
+  return { strategy: "pass", verdict: "Negative cash flow. Bad deal." };
+}
+
+/* -------------------------
+   API
+-------------------------- */
 
 app.post("/api/analyze", (req, res) => {
   const {
     address,
     zip,
     bedrooms,
-    purchasePrice = 0,
-    interestRate = 0,
-    downPaymentPct = 20,
+    interestRate,
+    purchasePrice,
+    downPaymentPct,
     rehab = 0,
   } = req.body;
 
-  if (!zip || bedrooms === undefined) {
-    return res.json({ error: "ZIP and bedrooms required" });
+  if (!zip || bedrooms == null) {
+    return res.status(400).json({ error: "Missing zip or bedrooms" });
   }
 
-  let rent = 0;
-  let metro = "";
-  let source = "";
+  const rentData = getRent(zip, bedrooms);
 
-  // SAFMR FIRST
-  if (safmrData[zip]) {
-    const row = safmrData[zip];
-    const key = `SAFMR ${bedrooms}BR`;
-    rent = cleanMoney(row[key]);
-    metro = row["HUD Metro Fair Market Rent Area Name"];
-    source = "HUD SAFMR 2024";
+  if (!rentData) {
+    return res.status(404).json({
+      error: "No HUD rent data found",
+      zip,
+    });
   }
 
-  // FALLBACK TO FMR
-  if (!rent && fmrMetroData[zip]) {
-    const row = fmrMetroData[zip];
-    const index = bedrooms + 1; // FMR format offset
-    const rentValues = Object.values(row).slice(3);
-    rent = cleanMoney(rentValues[index]);
-    metro = row["HUD Metro Fair Market Rent Area Name"];
-    source = "HUD FMR 2024";
+  let mortgage = 0;
+  let cashFlow = 0;
+  let estimatedValue = estimateValue(rentData.rent);
+
+  if (purchasePrice && interestRate && downPaymentPct != null) {
+    mortgage = calculateMortgage(purchasePrice, interestRate, downPaymentPct);
+    cashFlow = rentData.rent - mortgage;
   }
 
-  if (!rent) {
-    return res.json({ error: "No HUD rent data found", zip });
-  }
-
-  const mortgage = calculateMortgage(purchasePrice, downPaymentPct, interestRate);
-
-  // ===============================
-  // VALUE ESTIMATION (CAP RATE)
-  // ===============================
-
-  const expenseRatio = 0.35;
-  const capRate = 0.08;
-
-  const annualRent = rent * 12;
-  const noi = annualRent * (1 - expenseRatio);
-  const estimatedValue = Math.round(noi / capRate);
-
-  const monthlyCashFlow = rent - mortgage;
-
-  // ===============================
-  // FLIP MATH (70% RULE)
-  // ===============================
-
-  const arv = estimatedValue;
-  const maxAllowableOffer = Math.round(arv * 0.7 - rehab);
-  const flipProfit = Math.round(arv - purchasePrice - rehab);
-
-  // ===============================
-  // STRATEGY ENGINE
-  // ===============================
-
-  let strategy = "pass";
-  let verdict = "Bad deal.";
-
-  if (flipProfit > 40000) {
-    strategy = "flip";
-    verdict = "Strong flip candidate.";
-  } else if (monthlyCashFlow > 500) {
-    strategy = "hold";
-    verdict = "Excellent rental. Strong cash flow.";
-  } else if (monthlyCashFlow > 0) {
-    strategy = "hold";
-    verdict = "Positive cash flow rental.";
-  } else {
-    strategy = "pass";
-    verdict = "Negative cash flow.";
-  }
+  const decision = decideStrategy(cashFlow);
 
   res.json({
     address,
     zip,
     bedrooms,
-    rent,
-    metro,
-    source,
+    rent: rentData.rent,
+    metro: rentData.metro,
+    source: rentData.source,
     estimatedValue,
     mortgage,
-    monthlyCashFlow,
-    arv,
-    maxAllowableOffer,
-    flipProfit,
-    strategy,
-    verdict,
+    monthlyCashFlow: cashFlow,
+    strategy: decision.strategy,
+    verdict: decision.verdict,
   });
 });
 
-// ===============================
-// START SERVER
-// ===============================
+/* -------------------------
+   START SERVER
+-------------------------- */
 
-app.listen(PORT, () => {
-  console.log(`🚀 ALEX running at http://localhost:${PORT}`);
-});
+async function start() {
+  await loadSAFMR();
+  await loadFMRMetro();
+
+  app.listen(PORT, () => {
+    console.log(`🚀 ALEX running at http://localhost:${PORT}`);
+  });
+}
+
+start();
