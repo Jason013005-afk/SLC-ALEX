@@ -11,106 +11,103 @@ app.use(express.static("public"));
 
 const PORT = 8080;
 
-/* ============================
-   LOAD HUD DATA (SAFMR + FMR)
-============================ */
+// ===============================
+// DATA STORES
+// ===============================
 
-let safmrData = [];
-let fmrMetroData = [];
+let safmrData = {};
+let fmrMetroData = {};
 
-function loadCSV(filePath, targetArray, label) {
-  return new Promise((resolve, reject) => {
-    fs.createReadStream(filePath)
-      .pipe(csv())
-      .on("data", (row) => targetArray.push(row))
-      .on("end", () => {
-        console.log(`🏠 ${label} loaded: ${targetArray.length}`);
-        resolve();
-      })
-      .on("error", reject);
-  });
-}
-
-async function loadHUD() {
-  await loadCSV(
-    path.join(__dirname, "fy2024_safmrs.clean.csv"),
-    safmrData,
-    "SAFMR"
-  );
-
-  await loadCSV(
-    path.join(__dirname, "fy2024_fmr_metro.csv"),
-    fmrMetroData,
-    "FMR Metro"
-  );
-}
-
-/* ============================
-   RENT LOOKUP
-============================ */
+// ===============================
+// HELPERS
+// ===============================
 
 function cleanMoney(value) {
   if (!value) return 0;
-  return parseInt(value.replace(/[$,]/g, ""));
+  return Number(value.replace(/[$,]/g, ""));
 }
 
-function getSAFMR(zip, bedrooms) {
-  const row = safmrData.find(r => r["ZIP Code"] === zip);
-  if (!row) return null;
-  return cleanMoney(row[`SAFMR ${bedrooms}BR`]);
-}
-
-function getFMR(zip, bedrooms) {
-  const row = fmrMetroData.find(r => r[Object.keys(r)[2]] === zip);
-  if (!row) return null;
-
-  const keys = Object.keys(row);
-  return cleanMoney(row[keys[3 + bedrooms]]);
-}
-
-/* ============================
-   MORTGAGE CALC
-============================ */
-
-function calculateMortgage(purchasePrice, downPct, rate) {
-  const downPayment = purchasePrice * (downPct / 100);
-  const loan = purchasePrice - downPayment;
-
+function calculateMortgage(price, downPct, rate) {
+  const loan = price * (1 - downPct / 100);
   const monthlyRate = rate / 100 / 12;
   const term = 30 * 12;
 
-  const mortgage =
-    (loan * monthlyRate) /
-    (1 - Math.pow(1 + monthlyRate, -term));
-
-  return Math.round(mortgage);
+  return Math.round(
+    loan *
+      (monthlyRate * Math.pow(1 + monthlyRate, term)) /
+      (Math.pow(1 + monthlyRate, term) - 1)
+  );
 }
 
-/* ============================
-   MAIN ANALYZE ROUTE
-============================ */
+// ===============================
+// LOAD SAFMR
+// ===============================
+
+fs.createReadStream(path.join(__dirname, "fy2024_safmrs.clean.csv"))
+  .pipe(csv())
+  .on("data", (row) => {
+    const zip = row["ZIP Code"]?.trim();
+    if (!zip) return;
+    safmrData[zip] = row;
+  })
+  .on("end", () => {
+    console.log("🏠 SAFMR loaded:", Object.keys(safmrData).length);
+  });
+
+// ===============================
+// LOAD FMR METRO
+// ===============================
+
+fs.createReadStream(path.join(__dirname, "fy2024_fmr_metro.csv"))
+  .pipe(csv())
+  .on("data", (row) => {
+    const zip = row["ZIP Code"]?.trim();
+    if (!zip) return;
+    fmrMetroData[zip] = row;
+  })
+  .on("end", () => {
+    console.log("🌆 FMR Metro loaded:", Object.keys(fmrMetroData).length);
+  });
+
+// ===============================
+// API
+// ===============================
 
 app.post("/api/analyze", (req, res) => {
   const {
     address,
     zip,
-    bedrooms = 3,
-    interestRate = 6.5,
+    bedrooms,
     purchasePrice = 0,
+    interestRate = 0,
     downPaymentPct = 20,
-    rehab = 0
+    rehab = 0,
   } = req.body;
 
-  if (!zip) {
-    return res.json({ error: "ZIP required" });
+  if (!zip || bedrooms === undefined) {
+    return res.json({ error: "ZIP and bedrooms required" });
   }
 
-  /* --- RENT LOOKUP --- */
-  let rent = getSAFMR(zip, bedrooms);
-  let source = "HUD SAFMR 2024";
+  let rent = 0;
+  let metro = "";
+  let source = "";
 
-  if (!rent) {
-    rent = getFMR(zip, bedrooms);
+  // SAFMR FIRST
+  if (safmrData[zip]) {
+    const row = safmrData[zip];
+    const key = `SAFMR ${bedrooms}BR`;
+    rent = cleanMoney(row[key]);
+    metro = row["HUD Metro Fair Market Rent Area Name"];
+    source = "HUD SAFMR 2024";
+  }
+
+  // FALLBACK TO FMR
+  if (!rent && fmrMetroData[zip]) {
+    const row = fmrMetroData[zip];
+    const index = bedrooms + 1; // FMR format offset
+    const rentValues = Object.values(row).slice(3);
+    rent = cleanMoney(rentValues[index]);
+    metro = row["HUD Metro Fair Market Rent Area Name"];
     source = "HUD FMR 2024";
   }
 
@@ -118,47 +115,72 @@ app.post("/api/analyze", (req, res) => {
     return res.json({ error: "No HUD rent data found", zip });
   }
 
-  /* --- MORTGAGE --- */
-  const mortgage = purchasePrice
-    ? calculateMortgage(purchasePrice, downPaymentPct, interestRate)
-    : 0;
+  const mortgage = calculateMortgage(purchasePrice, downPaymentPct, interestRate);
 
-  /* --- OPERATING MODEL --- */
-  const expenseRatio = 0.35;   // 35% expenses
-  const capRate = 0.08;        // 8% cap assumption
+  // ===============================
+  // VALUE ESTIMATION (CAP RATE)
+  // ===============================
+
+  const expenseRatio = 0.35;
+  const capRate = 0.08;
 
   const annualRent = rent * 12;
-  const annualNOI = annualRent * (1 - expenseRatio);
-  const estimatedValue = Math.round(annualNOI / capRate);
+  const noi = annualRent * (1 - expenseRatio);
+  const estimatedValue = Math.round(noi / capRate);
 
-  const monthlyCashFlow = mortgage
-    ? Math.round(rent - mortgage - (rent * expenseRatio))
-    : 0;
+  const monthlyCashFlow = rent - mortgage;
 
-  /* --- FLIP LOGIC (70% RULE) --- */
+  // ===============================
+  // FLIP MATH (70% RULE)
+  // ===============================
+
   const arv = estimatedValue;
-  const maxFlipPrice = Math.round(arv * 0.7 - rehab);
+  const maxAllowableOffer = Math.round(arv * 0.7 - rehab);
   const flipProfit = Math.round(arv - purchasePrice - rehab);
 
-  /* --- WHOLESALE SPREAD --- */
-  const wholesaleSpread = Math.round(maxFlipPrice - purchasePrice);
+  // ===============================
+  // STRATEGY ENGINE
+  // ===============================
 
-  /* --- STRATEGY ENGINE --- */
   let strategy = "pass";
-  let verdict = "Not enough margin.";
+  let verdict = "Bad deal.";
 
-  if (monthlyCashFlow > 500) {
+  if (flipProfit > 40000) {
+    strategy = "flip";
+    verdict = "Strong flip candidate.";
+  } else if (monthlyCashFlow > 500) {
     strategy = "hold";
     verdict = "Excellent rental. Strong cash flow.";
-  } else if (monthlyCashFlow > 150) {
+  } else if (monthlyCashFlow > 0) {
     strategy = "hold";
-    verdict = "Good rental. Positive cash flow.";
-  } else if (flipProfit > 40000) {
-    strategy = "flip";
-    verdict = "Strong flip potential.";
-  } else if (wholesaleSpread > 20000) {
-    strategy = "wholesale";
-    verdict = "Good wholesale spread.";
-  } else if (monthlyCashFlow < 0) {
+    verdict = "Positive cash flow rental.";
+  } else {
     strategy = "pass";
-    verdict = "Negative cash flow.
+    verdict = "Negative cash flow.";
+  }
+
+  res.json({
+    address,
+    zip,
+    bedrooms,
+    rent,
+    metro,
+    source,
+    estimatedValue,
+    mortgage,
+    monthlyCashFlow,
+    arv,
+    maxAllowableOffer,
+    flipProfit,
+    strategy,
+    verdict,
+  });
+});
+
+// ===============================
+// START SERVER
+// ===============================
+
+app.listen(PORT, () => {
+  console.log(`🚀 ALEX running at http://localhost:${PORT}`);
+});
