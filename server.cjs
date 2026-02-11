@@ -1,5 +1,4 @@
 require("dotenv").config();
-
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
@@ -8,74 +7,79 @@ const { parse } = require("csv-parse/sync");
 const decisionEngine = require("./decisionEngine");
 
 const app = express();
-const PORT = process.env.PORT || 8080;
+const PORT = 8080;
 
 app.use(express.json());
 app.use(express.static("public"));
 
-/* =========================
-   LOAD SAFMR DATA (ONCE)
-========================= */
+/* ================================
+   LOAD SAFMR DATA (ZIP BASED)
+================================ */
 
-console.log("🔄 Loading SAFMR data...");
+let safmrData = {};
 
-const safmrCsv = fs.readFileSync(
-  path.join(__dirname, "fy2024_safmrs.fixed.csv"),
-  "utf8"
-);
+function loadSAFMR() {
+  console.log("🔄 Loading SAFMR data...");
 
-const safmrRows = parse(safmrCsv, {
-  columns: true,
-  skip_empty_lines: true,
-});
+  const filePath = path.join(__dirname, "fy2024_safmrs.clean.csv");
 
-const SAFMR_BY_ZIP = new Map();
+  if (!fs.existsSync(filePath)) {
+    console.error("❌ SAFMR file not found.");
+    return;
+  }
 
-for (const row of safmrRows) {
-  const zip = row["ZIP Code"]?.trim();
-  if (!zip) continue;
-  SAFMR_BY_ZIP.set(zip, row);
+  const file = fs.readFileSync(filePath);
+
+  const records = parse(file, {
+    columns: true,
+    skip_empty_lines: true,
+  });
+
+  records.forEach(row => {
+    const zip = String(row["ZIP Code"]).trim().padStart(5, "0");
+
+    safmrData[zip] = {
+      metro: row["HUD Metro Fair Market Rent Area Name"],
+      rents: {
+        0: parseMoney(row["SAFMR 0BR"]),
+        1: parseMoney(row["SAFMR 1BR"]),
+        2: parseMoney(row["SAFMR 2BR"]),
+        3: parseMoney(row["SAFMR 3BR"]),
+        4: parseMoney(row["SAFMR 4BR"])
+      }
+    };
+  });
+
+  console.log(`🏠 SAFMR loaded: ${Object.keys(safmrData).length}`);
 }
 
-console.log(`🏠 SAFMR loaded: ${SAFMR_BY_ZIP.size}`);
-
-/* =========================
-   HELPERS
-========================= */
-
-function money(val) {
-  if (!val) return null;
-  return Number(val.replace(/[$,]/g, ""));
+function parseMoney(value) {
+  if (!value) return 0;
+  return Number(value.replace(/[$,]/g, ""));
 }
 
-function getSafmr(zip, bedrooms) {
-  const row = SAFMR_BY_ZIP.get(zip);
-  if (!row) return null;
+loadSAFMR();
 
-  const key = `SAFMR ${bedrooms}BR`;
-  const rent = money(row[key]);
+/* ================================
+   MORTGAGE CALC
+================================ */
 
-  if (!rent) return null;
+function calculateMortgage(principal, annualRate, years = 30) {
+  const monthlyRate = annualRate / 100 / 12;
+  const payments = years * 12;
 
-  return {
-    rent,
-    metro: row["HUD Metro Fair Market Rent Area Name"],
-    source: "HUD SAFMR 2024",
-  };
-}
+  if (monthlyRate === 0) return principal / payments;
 
-function mortgagePayment(loan, ratePct, years = 30) {
-  const r = ratePct / 100 / 12;
-  const n = years * 12;
-  return Math.round(
-    (loan * r * Math.pow(1 + r, n)) /
-      (Math.pow(1 + r, n) - 1)
+  return (
+    principal *
+    (monthlyRate * Math.pow(1 + monthlyRate, payments)) /
+    (Math.pow(1 + monthlyRate, payments) - 1)
   );
 }
 
-/* =========================
+/* ================================
    API
-========================= */
+================================ */
 
 app.post("/api/analyze", (req, res) => {
   const {
@@ -85,61 +89,66 @@ app.post("/api/analyze", (req, res) => {
     interestRate,
     purchasePrice,
     downPaymentPct,
-    rehab = 0,
+    rehab = 0
   } = req.body;
 
-  if (
-    !zip ||
-    bedrooms === undefined ||
-    interestRate === undefined ||
-    purchasePrice === undefined ||
-    downPaymentPct === undefined
-  ) {
-    return res.status(400).json({
-      error: "Missing required fields",
-    });
+  if (!zip || bedrooms === undefined) {
+    return res.status(400).json({ error: "Missing required fields" });
   }
 
-  const safmr = getSafmr(zip, bedrooms);
+  const cleanZip = String(zip).trim().padStart(5, "0");
 
-  if (!safmr) {
+  const row = safmrData[cleanZip];
+
+  if (!row) {
     return res.status(404).json({
       error: "No HUD SAFMR data found",
-      zip,
+      zip: cleanZip
     });
   }
+
+  const rent = row.rents[bedrooms];
+
+  if (!rent) {
+    return res.status(404).json({
+      error: "No rent for that bedroom count",
+      bedrooms
+    });
+  }
+
+  /* ===== DEAL MATH ===== */
 
   const downPayment = purchasePrice * (downPaymentPct / 100);
   const loanAmount = purchasePrice - downPayment;
-  const mortgage = mortgagePayment(loanAmount, interestRate);
+  const mortgage = Math.round(calculateMortgage(loanAmount, interestRate));
+  const monthlyCashFlow = Math.round(rent - mortgage);
 
-  const monthlyCashFlow = safmr.rent - mortgage;
+  /* ===== DECISION ENGINE ===== */
 
   const decision = decisionEngine({
-    rent: safmr.rent,
-    mortgage,
+    rent,
     monthlyCashFlow,
     purchasePrice,
-    rehab,
+    rehab
   });
 
-  res.json({
+  return res.json({
     address,
-    zip,
+    zip: cleanZip,
     bedrooms,
-    rent: safmr.rent,
-    metro: safmr.metro,
-    source: safmr.source,
+    rent,
+    metro: row.metro,
+    source: "HUD SAFMR 2024",
     mortgage,
     monthlyCashFlow,
     strategy: decision.strategy,
-    verdict: decision.verdict,
+    verdict: decision.verdict
   });
 });
 
-/* =========================
-   START
-========================= */
+/* ================================
+   START SERVER
+================================ */
 
 app.listen(PORT, () => {
   console.log(`🚀 ALEX running at http://localhost:${PORT}`);
