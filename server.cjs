@@ -1,46 +1,51 @@
 const express = require("express");
 const fs = require("fs");
-const csv = require("csv-parser");
 const path = require("path");
+const csv = require("csv-parser");
 
 const app = express();
 app.use(express.json());
 
-const safmrData = {};
-const fmrMetroData = {};
+let safmrData = {};
+let fmrMetroData = {};
 
-/* ---------------- ZIP HELPERS ---------------- */
-
+/* ===========================
+   DEFENSIVE ZIP NORMALIZER
+=========================== */
 function padZip(zip) {
   if (!zip) return null;
-  return String(zip).trim().padStart(5, "0");
+  const str = String(zip).trim();
+  if (!str) return null;
+  return str.padStart(5, "0");
 }
 
-function parseDollar(val) {
-  if (!val) return 0;
-  return Number(String(val).replace(/[^0-9.-]+/g, ""));
-}
-
-/* ---------------- LOAD SAFMR ---------------- */
-
+/* ===========================
+   LOAD SAFMR
+=========================== */
 function loadSAFMR() {
   console.log("🔄 Loading SAFMR data...");
+  safmrData = {};
 
   return new Promise((resolve, reject) => {
     fs.createReadStream(path.join(__dirname, "fy2024_safmrs.clean.csv"))
       .pipe(csv())
       .on("data", (row) => {
-        const zip = padZip(row.ZIP || row.zip || row.Zip);
-        if (!zip) return;
+        try {
+          const rawZip = row.ZIP || row.zip || row.Zip;
+          const zip = padZip(rawZip);
+          if (!zip) return;
 
-        safmrData[zip] = {
-          studio: parseDollar(row["0BR"]),
-          one: parseDollar(row["1BR"]),
-          two: parseDollar(row["2BR"]),
-          three: parseDollar(row["3BR"]),
-          four: parseDollar(row["4BR"]),
-          metro: row["HUD Metro Area Name"] || row.metro || null,
-        };
+          safmrData[zip] = {
+            studio: parseFloat(row["0BR"]?.replace(/[^\d.]/g, "")) || 0,
+            one: parseFloat(row["1BR"]?.replace(/[^\d.]/g, "")) || 0,
+            two: parseFloat(row["2BR"]?.replace(/[^\d.]/g, "")) || 0,
+            three: parseFloat(row["3BR"]?.replace(/[^\d.]/g, "")) || 0,
+            four: parseFloat(row["4BR"]?.replace(/[^\d.]/g, "")) || 0,
+            metro: row["HUD Metro Area Name"] || "Unknown"
+          };
+        } catch (err) {
+          // skip bad row
+        }
       })
       .on("end", () => {
         console.log("🏠 SAFMR loaded:", Object.keys(safmrData).length);
@@ -50,25 +55,33 @@ function loadSAFMR() {
   });
 }
 
-/* ---------------- LOAD FMR METRO ---------------- */
-
+/* ===========================
+   LOAD FMR METRO
+=========================== */
 function loadFMRMetro() {
   console.log("🔄 Loading FMR Metro data...");
+  fmrMetroData = {};
 
   return new Promise((resolve, reject) => {
     fs.createReadStream(path.join(__dirname, "fy2024_fmr_metro.csv"))
       .pipe(csv())
       .on("data", (row) => {
-        const metro = row["HUD Metro Area Name"];
-        if (!metro) return;
+        try {
+          const rawZip = row.ZIP || row.zip || row.Zip;
+          const zip = padZip(rawZip);
+          if (!zip) return;
 
-        fmrMetroData[metro] = {
-          studio: parseDollar(row["0BR"]),
-          one: parseDollar(row["1BR"]),
-          two: parseDollar(row["2BR"]),
-          three: parseDollar(row["3BR"]),
-          four: parseDollar(row["4BR"]),
-        };
+          fmrMetroData[zip] = {
+            studio: parseFloat(row["$0BR"]?.replace(/[^\d.]/g, "")) || 0,
+            one: parseFloat(row["$1BR"]?.replace(/[^\d.]/g, "")) || 0,
+            two: parseFloat(row["$2BR"]?.replace(/[^\d.]/g, "")) || 0,
+            three: parseFloat(row["$3BR"]?.replace(/[^\d.]/g, "")) || 0,
+            four: parseFloat(row["$4BR"]?.replace(/[^\d.]/g, "")) || 0,
+            metro: row["HUD Metro FMR Area Name"] || "Metro"
+          };
+        } catch (err) {
+          // skip bad row
+        }
       })
       .on("end", () => {
         console.log("🌆 FMR Metro loaded:", Object.keys(fmrMetroData).length);
@@ -78,112 +91,102 @@ function loadFMRMetro() {
   });
 }
 
-/* ---------------- ANALYZE ROUTE ---------------- */
-
+/* ===========================
+   ANALYZE ROUTE
+=========================== */
 app.post("/api/analyze", (req, res) => {
   const {
     zip,
     bedrooms = 3,
-    purchasePrice = 250000,
-    downPaymentPct = 20,
     interestRate = 6.5,
-    rehab = 0,
+    purchasePrice = 0,
+    downPaymentPct = 20,
+    rehab = 0
   } = req.body;
 
-  const paddedZip = padZip(zip);
-
-  if (!paddedZip || !safmrData[paddedZip]) {
-    return res.status(400).json({
-      error: "No HUD rent data found",
-      zip,
-    });
+  const normalizedZip = padZip(zip);
+  if (!normalizedZip) {
+    return res.json({ error: "Invalid ZIP" });
   }
 
-  const zipData = safmrData[paddedZip];
+  let rentData = safmrData[normalizedZip];
+  let source = "HUD SAFMR 2024";
 
-  let rent;
-  if (bedrooms <= 0) rent = zipData.studio;
-  else if (bedrooms === 1) rent = zipData.one;
-  else if (bedrooms === 2) rent = zipData.two;
-  else if (bedrooms === 3) rent = zipData.three;
-  else rent = zipData.four;
+  if (!rentData) {
+    rentData = fmrMetroData[normalizedZip];
+    source = "HUD FMR 2024";
+  }
 
-  /* ----- Rental Math ----- */
+  if (!rentData) {
+    return res.json({ error: "No HUD rent data found", zip: normalizedZip });
+  }
 
-  const annualRent = rent * 12;
-  const expenseRatio = 0.35;
-  const annualExpenses = annualRent * expenseRatio;
-  const annualNOI = annualRent - annualExpenses;
+  const rent =
+    bedrooms === 0 ? rentData.studio :
+    bedrooms === 1 ? rentData.one :
+    bedrooms === 2 ? rentData.two :
+    bedrooms === 3 ? rentData.three :
+    rentData.four;
 
-  const capRateAssumption = 0.08;
-  const arv = Math.round(annualNOI / capRateAssumption);
-
+  /* ===== Mortgage ===== */
   const loanAmount = purchasePrice * (1 - downPaymentPct / 100);
   const monthlyRate = interestRate / 100 / 12;
-  const months = 30 * 12;
-
   const mortgage =
-    (loanAmount *
-      monthlyRate *
-      Math.pow(1 + monthlyRate, months)) /
-    (Math.pow(1 + monthlyRate, months) - 1);
+    loanAmount > 0
+      ? Math.round(
+          (loanAmount *
+            (monthlyRate * Math.pow(1 + monthlyRate, 360))) /
+            (Math.pow(1 + monthlyRate, 360) - 1)
+        )
+      : 0;
 
   const monthlyCashFlow = rent - mortgage;
-  const annualCashFlow = monthlyCashFlow * 12;
 
-  const totalCashIn =
-    purchasePrice * (downPaymentPct / 100) + rehab;
+  /* ===== NOI ===== */
+  const annualRent = rent * 12;
+  const annualExpenses = annualRent * 0.35;
+  const annualNOI = annualRent - annualExpenses;
 
-  const cashOnCash =
-    totalCashIn > 0
-      ? ((annualCashFlow / totalCashIn) * 100).toFixed(2)
-      : 0;
+  const arv = Math.round(annualNOI / 0.08);
 
-  const capRate = ((annualNOI / purchasePrice) * 100).toFixed(2);
-
-  /* ----- Flip Math ----- */
-
+  /* ===== Flip ===== */
   const maxFlipOffer = Math.round(arv * 0.7 - rehab);
   const flipProfit = arv - purchasePrice - rehab;
-  const flipROI =
-    maxFlipOffer > 0
-      ? ((flipProfit / maxFlipOffer) * 100).toFixed(2)
-      : 0;
 
-  /* ----- BRRRR ----- */
-
+  /* ===== BRRRR ===== */
   const refinanceValue = Math.round(arv * 0.75);
-  const cashOut =
-    refinanceValue - purchasePrice - rehab;
+  const totalCashIn = purchasePrice * (downPaymentPct / 100) + rehab;
+  const cashOut = refinanceValue - totalCashIn;
 
-  /* ----- RESPONSE ----- */
+  /* ===== ROI Metrics ===== */
+  const capRate = arv > 0 ? ((annualNOI / arv) * 100).toFixed(2) : 0;
+  const annualCashFlow = monthlyCashFlow * 12;
+  const cashOnCashROI =
+    totalCashIn > 0 ? ((annualCashFlow / totalCashIn) * 100).toFixed(2) : 0;
 
   res.json({
-    zip: paddedZip,
-    bedrooms,
+    zip: normalizedZip,
     rent,
+    source,
+    mortgage,
+    monthlyCashFlow,
     arv,
-    mortgage: Math.round(mortgage),
-    monthlyCashFlow: Math.round(monthlyCashFlow),
-
     capRate,
-    cashOnCash,
-    flipROI,
-
+    cashOnCashROI,
+    maxFlipOffer,
+    flipProfit,
     refinanceValue,
-    cashOut,
+    cashOut
   });
 });
 
-/* ---------------- START SERVER ---------------- */
-
-async function start() {
-  await loadSAFMR();
-  await loadFMRMetro();
-
-  app.listen(8080, () => {
-    console.log("🚀 ALEX running at http://localhost:8080");
-  });
-}
-
-start();
+/* ===========================
+   START SERVER
+=========================== */
+Promise.all([loadSAFMR(), loadFMRMetro()])
+  .then(() => {
+    app.listen(8080, () => {
+      console.log("🚀 ALEX running at http://localhost:8080");
+    });
+  })
+  .catch(console.error);
