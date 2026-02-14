@@ -1,197 +1,237 @@
+require("dotenv").config();
+
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
 const csv = require("csv-parser");
 const axios = require("axios");
-require("dotenv").config();
 
 const app = express();
 app.use(express.json());
 
 const PORT = process.env.PORT || 8080;
-const RENTCAST_API_KEY = process.env.RENTCAST_API_KEY;
-const SAFMR_FILE = process.env.SAFMR_FILE;
 
 let safmrData = {};
 
-/* -------------------------
-   LOAD HUD SAFMR CSV
--------------------------- */
+/* =========================
+   LOAD SAFMR CSV
+========================= */
+
 function loadSafmr() {
-  return new Promise((resolve) => {
-    const filePath = path.join(__dirname, SAFMR_FILE);
+  return new Promise((resolve, reject) => {
+    const filePath = path.join(__dirname, process.env.SAFMR_FILE);
 
     fs.createReadStream(filePath)
       .pipe(csv())
       .on("data", (row) => {
-        const zip = String(row["ZIP Code"]).padStart(5, "0");
-
-        const rent = parseInt(
-          String(row["SAFMR 3BR"]).replace(/\$|,/g, "")
-        );
-
-        safmrData[zip] = rent;
+        const zip = row["ZIP Code"];
+        safmrData[zip] = row;
       })
       .on("end", () => {
         console.log("🏠 SAFMR loaded:", Object.keys(safmrData).length);
         resolve();
-      });
+      })
+      .on("error", reject);
   });
 }
 
-/* -------------------------
-   RENTCAST PROPERTY DETAILS
--------------------------- */
-async function getPropertyDetails(address) {
-  if (!RENTCAST_API_KEY || !address) return null;
+/* =========================
+   RENT LOOKUP
+========================= */
 
+function getRent(zip, bedrooms) {
+  const row = safmrData[zip];
+  if (!row) return null;
+
+  const col = `SAFMR ${bedrooms}BR`;
+  if (!row[col]) return null;
+
+  return parseFloat(
+    row[col].replace(/\$/g, "").replace(/,/g, "")
+  );
+}
+
+/* =========================
+   MORTGAGE CALC
+========================= */
+
+function calculateMortgage(purchasePrice, downPct, rate, termYears) {
+  const loan = purchasePrice * (1 - downPct / 100);
+  const monthlyRate = rate / 100 / 12;
+  const n = termYears * 12;
+
+  return (
+    (loan * monthlyRate) /
+    (1 - Math.pow(1 + monthlyRate, -n))
+  );
+}
+
+/* =========================
+   RENTCAST: PROPERTY DETAILS
+========================= */
+
+async function getPropertyDetails(address) {
   try {
     const res = await axios.get(
       "https://api.rentcast.io/v1/properties",
       {
+        params: { address },
         headers: {
-          "X-Api-Key": RENTCAST_API_KEY
+          "X-Api-Key": process.env.RENTCAST_API_KEY,
         },
-        params: { address }
       }
     );
 
-    return res.data?.[0] || null;
+    return res.data[0] || null;
   } catch (err) {
     console.log("RentCast property error");
     return null;
   }
 }
 
-/* -------------------------
-   RENTCAST ARV (AVM VALUE)
--------------------------- */
-async function getARV(address) {
-  if (!RENTCAST_API_KEY || !address) return null;
+/* =========================
+   RENTCAST: AVM (ARV)
+========================= */
 
+async function getARV(address) {
   try {
     const res = await axios.get(
-      "https://api.rentcast.io/v1/avm/value",
+      "https://api.rentcast.io/v1/avm",
       {
+        params: { address },
         headers: {
-          "X-Api-Key": RENTCAST_API_KEY
+          "X-Api-Key": process.env.RENTCAST_API_KEY,
         },
-        params: { address }
       }
     );
 
     return res.data || null;
   } catch (err) {
-    console.log("RentCast ARV error");
+    console.log("RentCast AVM error");
     return null;
   }
 }
 
-/* -------------------------
-   ENDPOINT: PROPERTY ONLY
--------------------------- */
-app.post("/api/property", async (req, res) => {
-  const { address } = req.body;
+/* =========================
+   MAIN ANALYZE ENDPOINT
+========================= */
 
-  const property = await getPropertyDetails(address);
-
-  res.json(property);
-});
-
-/* -------------------------
-   ENDPOINT: ARV ONLY
--------------------------- */
-app.post("/api/arv", async (req, res) => {
-  const { address } = req.body;
-
-  const arv = await getARV(address);
-
-  res.json(arv);
-});
-
-/* -------------------------
-   FULL DEAL ANALYSIS
--------------------------- */
 app.post("/api/analyze", async (req, res) => {
   const {
     address,
     zip,
     bedrooms,
     purchasePrice,
-    downPaymentPct = 20,
-    interestRate = 6.5,
-    rehab = 0
+    downPaymentPct,
+    interestRate,
   } = req.body;
 
-  const rent = safmrData[zip];
+  const rent = getRent(zip, bedrooms);
+  if (!rent)
+    return res.status(404).json({
+      error: "No HUD rent data found",
+    });
 
-  if (!rent) {
-    return res.status(400).json({ error: "No HUD rent data found" });
-  }
+  const vacancyPct =
+    parseFloat(process.env.DEFAULT_VACANCY_RATE) || 8;
 
-  const vacancyRate = Number(process.env.DEFAULT_VACANCY_RATE || 8);
-  const expenseRate = Number(process.env.DEFAULT_EXPENSE_RATE || 35);
-  const loanTerm = Number(process.env.DEFAULT_LOAN_TERM_YEARS || 30);
+  const expensePct =
+    parseFloat(process.env.DEFAULT_EXPENSE_RATE) || 35;
 
-  const effectiveRent = rent * (1 - vacancyRate / 100);
+  const effectiveRent = rent * (1 - vacancyPct / 100);
   const annualRent = effectiveRent * 12;
-  const annualExpenses = annualRent * (expenseRate / 100);
+  const annualExpenses = annualRent * (expensePct / 100);
   const annualNOI = annualRent - annualExpenses;
 
   let mortgage = 0;
   let annualDebt = 0;
+  let dscr = null;
 
-  if (purchasePrice) {
-    const loanAmount =
-      (purchasePrice + rehab) *
-      (1 - downPaymentPct / 100);
-
-    const monthlyRate = interestRate / 100 / 12;
-    const totalPayments = loanTerm * 12;
-
-    mortgage =
-      loanAmount *
-      (monthlyRate *
-        Math.pow(1 + monthlyRate, totalPayments)) /
-      (Math.pow(1 + monthlyRate, totalPayments) - 1);
-
+  if (purchasePrice && downPaymentPct && interestRate) {
+    mortgage = calculateMortgage(
+      purchasePrice,
+      downPaymentPct,
+      interestRate,
+      parseInt(process.env.DEFAULT_LOAN_TERM_YEARS) || 30
+    );
     annualDebt = mortgage * 12;
+    dscr = annualNOI / annualDebt;
   }
 
-  const cashFlow = annualNOI - annualDebt;
-  const capRatePct = purchasePrice
-    ? (annualNOI / purchasePrice) * 100
-    : 0;
-  const dscr = annualDebt
-    ? annualNOI / annualDebt
-    : null;
+  let propertyDetails = null;
+  let arv = null;
 
-  const propertyDetails = await getPropertyDetails(address);
-  const arv = await getARV(address);
+  if (address && process.env.RENTCAST_API_KEY) {
+    propertyDetails = await getPropertyDetails(address);
+    arv = await getARV(address);
+  }
 
   res.json({
     zip,
     rent,
+    vacancyRatePct: vacancyPct,
+    expenseRatePct: expensePct,
     effectiveRent,
+    annualRent,
+    annualExpenses,
     annualNOI,
     mortgage: Math.round(mortgage),
     annualDebt: Math.round(annualDebt),
-    cashFlow: Math.round(cashFlow),
-    capRatePct: Number(capRatePct.toFixed(2)),
-    dscr: dscr ? Number(dscr.toFixed(2)) : null,
+    cashFlow: Math.round(annualNOI - annualDebt),
+    capRatePct: purchasePrice
+      ? ((annualNOI / purchasePrice) * 100).toFixed(2)
+      : 0,
+    dscr: dscr ? dscr.toFixed(2) : null,
     propertyDetails,
-    arv
+    arv,
   });
 });
 
-/* -------------------------
+/* =========================
+   PROPERTY ENDPOINT
+========================= */
+
+app.post("/api/property", async (req, res) => {
+  const { address } = req.body;
+
+  if (!address)
+    return res
+      .status(400)
+      .json({ error: "Address required" });
+
+  const property = await getPropertyDetails(address);
+
+  res.json(property);
+});
+
+/* =========================
+   ARV ENDPOINT
+========================= */
+
+app.post("/api/arv", async (req, res) => {
+  const { address } = req.body;
+
+  if (!address)
+    return res
+      .status(400)
+      .json({ error: "Address required" });
+
+  const arv = await getARV(address);
+
+  res.json(arv);
+});
+
+/* =========================
    START SERVER
--------------------------- */
+========================= */
+
 async function start() {
   await loadSafmr();
 
   app.listen(PORT, () => {
-    console.log(`🚀 ALEX running at http://localhost:${PORT}`);
+    console.log(
+      `🚀 ALEX running at http://localhost:${PORT}`
+    );
   });
 }
 
