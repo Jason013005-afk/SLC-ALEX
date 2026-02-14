@@ -37,7 +37,7 @@ const RENTCAST_API_KEY = process.env.RENTCAST_API_KEY;
 
 if (!RENTCAST_API_KEY) {
   console.warn(
-    "⚠️ RENTCAST_API_KEY not found in .env — property & ARV endpoints will not work!"
+    "⚠️ RENTCAST_API_KEY not found in .env — property & ARV endpoints may not work!"
   );
 }
 
@@ -50,7 +50,7 @@ function normalizeZipForLookup(zip) {
   if (!zip) return null;
   const zipNum = parseInt(zip, 10);
   if (isNaN(zipNum)) return null;
-  return zipNum.toString(); // drop leading zeros
+  return zipNum.toString();
 }
 
 function cleanMoney(value) {
@@ -106,7 +106,7 @@ function getRentFromHUD(zip, bedrooms) {
 }
 
 /************************************************************
- * RENTCAST PROPERTY + ARV HELPERS
+ * RENTCAST HELPERS
  ************************************************************/
 async function getPropertyDetails(address) {
   if (!RENTCAST_API_KEY) return null;
@@ -121,13 +121,9 @@ async function getPropertyDetails(address) {
         }
       }
     );
-
     return res.data?.[0] || null;
   } catch (err) {
-    console.error(
-      "RentCast property lookup failed:",
-      err.message
-    );
+    console.error("🔍 Property lookup failed:", err.message);
     return null;
   }
 }
@@ -145,10 +141,9 @@ async function getARV(address) {
         }
       }
     );
-
     return res.data?.price || null;
   } catch (err) {
-    console.error("RentCast ARV lookup failed:", err.message);
+    console.error("💰 ARV lookup failed:", err.message);
     return null;
   }
 }
@@ -301,12 +296,11 @@ app.post("/api/deal-grade", async (req, res) => {
         .json({ error: "No HUD rent data found" });
     }
 
-    const propertyDetails = await getPropertyDetails(
-      address
-    );
-
+    // Fetch property + ARV
+    const propertyDetails = await getPropertyDetails(address);
     const arv = await getARV(address);
 
+    // Fetch comps
     let comps = null;
     if (RENTCAST_API_KEY) {
       try {
@@ -321,10 +315,7 @@ app.post("/api/deal-grade", async (req, res) => {
         );
         comps = compsRes.data || null;
       } catch (err) {
-        console.warn(
-          "Comps fetch error:",
-          err.message
-        );
+        console.warn("Comps fetch error:", err.message);
       }
     }
 
@@ -405,9 +396,11 @@ app.post("/api/deal-grade", async (req, res) => {
       dealScore
     });
   } catch (err) {
-    console.error("Deal-grade error:", err);
+    console.error("💥 DEAL-GRADE ERROR:", err);
     res.status(500).json({
-      error: "Deal-grade failed"
+      error: true,
+      message: err.message,
+      stack: err.stack
     });
   }
 });
