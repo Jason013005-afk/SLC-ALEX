@@ -1,5 +1,4 @@
 require("dotenv").config();
-
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
@@ -10,22 +9,29 @@ const app = express();
 app.use(express.json());
 
 const PORT = process.env.PORT || 8080;
+const SAFMR_FILE = process.env.SAFMR_FILE || "fy2024_safmrs_clean.csv";
 
 let safmrData = {};
 
-/* =========================
-   LOAD SAFMR CSV
-========================= */
-
+// ---------------------------
+// LOAD HUD SAFMR CSV
+// ---------------------------
 function loadSafmr() {
   return new Promise((resolve, reject) => {
-    const filePath = path.join(__dirname, process.env.SAFMR_FILE);
+    const filePath = path.join(__dirname, SAFMR_FILE);
+
+    if (!fs.existsSync(filePath)) {
+      console.error("❌ SAFMR file not found:", filePath);
+      process.exit(1);
+    }
 
     fs.createReadStream(filePath)
       .pipe(csv())
       .on("data", (row) => {
         const zip = row["ZIP Code"];
-        safmrData[zip] = row;
+        if (zip) {
+          safmrData[zip.padStart(5, "0")] = row;
+        }
       })
       .on("end", () => {
         console.log("🏠 SAFMR loaded:", Object.keys(safmrData).length);
@@ -35,129 +41,125 @@ function loadSafmr() {
   });
 }
 
-/* =========================
-   RENT LOOKUP
-========================= */
-
-function getRent(zip, bedrooms) {
-  const row = safmrData[zip];
-  if (!row) return null;
-
-  const col = `SAFMR ${bedrooms}BR`;
-  if (!row[col]) return null;
-
-  return parseFloat(
-    row[col].replace(/\$/g, "").replace(/,/g, "")
-  );
+// ---------------------------
+// CLEAN MONEY STRINGS
+// ---------------------------
+function cleanMoney(val) {
+  if (!val) return 0;
+  return parseFloat(val.replace(/[$,]/g, ""));
 }
 
-/* =========================
-   MORTGAGE CALC
-========================= */
-
-function calculateMortgage(purchasePrice, downPct, rate, termYears) {
-  const loan = purchasePrice * (1 - downPct / 100);
-  const monthlyRate = rate / 100 / 12;
-  const n = termYears * 12;
-
+// ---------------------------
+// MORTGAGE CALC
+// ---------------------------
+function calcMortgage(principal, rate, years) {
+  const r = rate / 100 / 12;
+  const n = years * 12;
   return (
-    (loan * monthlyRate) /
-    (1 - Math.pow(1 + monthlyRate, -n))
+    (principal * r * Math.pow(1 + r, n)) /
+    (Math.pow(1 + r, n) - 1)
   );
 }
 
-/* =========================
-   RENTCAST: PROPERTY DETAILS
-========================= */
-
+// ---------------------------
+// RENTCAST PROPERTY
+// ---------------------------
 async function getPropertyDetails(address) {
   try {
     const res = await axios.get(
       "https://api.rentcast.io/v1/properties",
       {
-        params: { address },
         headers: {
-          "X-Api-Key": process.env.RENTCAST_API_KEY,
+          "X-Api-Key": process.env.RENTCAST_API_KEY
         },
+        params: { address }
       }
     );
 
     return res.data[0] || null;
   } catch (err) {
-    console.log("RentCast property error");
+    console.log("⚠️ Property lookup failed");
     return null;
   }
 }
 
-/* =========================
-   RENTCAST: AVM (ARV)
-========================= */
-
+// ---------------------------
+// RENTCAST ARV
+// ---------------------------
 async function getARV(address) {
   try {
     const res = await axios.get(
-      "https://api.rentcast.io/v1/avm",
+      "https://api.rentcast.io/v1/avm/value",
       {
-        params: { address },
         headers: {
-          "X-Api-Key": process.env.RENTCAST_API_KEY,
+          "X-Api-Key": process.env.RENTCAST_API_KEY
         },
+        params: { address }
       }
     );
 
-    return res.data || null;
+    return res.data?.price || null;
   } catch (err) {
-    console.log("RentCast AVM error");
+    console.log("⚠️ ARV lookup failed");
     return null;
   }
 }
 
-/* =========================
-   MAIN ANALYZE ENDPOINT
-========================= */
-
+// ---------------------------
+// MAIN ANALYZE ENDPOINT
+// ---------------------------
 app.post("/api/analyze", async (req, res) => {
   const {
-    address,
     zip,
     bedrooms,
     purchasePrice,
     downPaymentPct,
     interestRate,
+    rehab,
+    address
   } = req.body;
 
-  const rent = getRent(zip, bedrooms);
-  if (!rent)
-    return res.status(404).json({
-      error: "No HUD rent data found",
-    });
+  if (!zip || !bedrooms) {
+    return res.status(400).json({ error: "zip and bedrooms required" });
+  }
 
-  const vacancyPct =
-    parseFloat(process.env.DEFAULT_VACANCY_RATE) || 8;
+  const row = safmrData[zip];
+  if (!row) {
+    return res.status(404).json({ error: "No HUD rent data found" });
+  }
 
-  const expensePct =
-    parseFloat(process.env.DEFAULT_EXPENSE_RATE) || 35;
+  const rent = cleanMoney(row[`SAFMR ${bedrooms}BR`]);
+  const vacancyRate = parseFloat(process.env.DEFAULT_VACANCY_RATE) || 8;
+  const expenseRate = parseFloat(process.env.DEFAULT_EXPENSE_RATE) || 35;
 
-  const effectiveRent = rent * (1 - vacancyPct / 100);
+  const effectiveRent = rent * (1 - vacancyRate / 100);
   const annualRent = effectiveRent * 12;
-  const annualExpenses = annualRent * (expensePct / 100);
+  const annualExpenses = annualRent * (expenseRate / 100);
   const annualNOI = annualRent - annualExpenses;
 
   let mortgage = 0;
   let annualDebt = 0;
+  let capRate = 0;
   let dscr = null;
+  let cashFlow = annualNOI;
 
   if (purchasePrice && downPaymentPct && interestRate) {
-    mortgage = calculateMortgage(
-      purchasePrice,
-      downPaymentPct,
+    const downPayment = purchasePrice * (downPaymentPct / 100);
+    const loanAmount = purchasePrice - downPayment;
+
+    mortgage = calcMortgage(
+      loanAmount,
       interestRate,
       parseInt(process.env.DEFAULT_LOAN_TERM_YEARS) || 30
     );
+
     annualDebt = mortgage * 12;
-    dscr = annualNOI / annualDebt;
+    cashFlow = annualNOI - annualDebt;
+    capRate = (annualNOI / purchasePrice) * 100;
+    dscr = annualDebt > 0 ? annualNOI / annualDebt : null;
   }
 
+  // Optional property + ARV pull
   let propertyDetails = null;
   let arv = null;
 
@@ -168,71 +170,27 @@ app.post("/api/analyze", async (req, res) => {
 
   res.json({
     zip,
+    bedrooms,
     rent,
-    vacancyRatePct: vacancyPct,
-    expenseRatePct: expensePct,
-    effectiveRent,
-    annualRent,
-    annualExpenses,
-    annualNOI,
+    vacancyRatePct: vacancyRate,
+    expenseRatePct: expenseRate,
+    effectiveRent: Math.round(effectiveRent),
+    annualRent: Math.round(annualRent),
+    annualExpenses: Math.round(annualExpenses),
+    annualNOI: Math.round(annualNOI),
     mortgage: Math.round(mortgage),
     annualDebt: Math.round(annualDebt),
-    cashFlow: Math.round(annualNOI - annualDebt),
-    capRatePct: purchasePrice
-      ? ((annualNOI / purchasePrice) * 100).toFixed(2)
-      : 0,
-    dscr: dscr ? dscr.toFixed(2) : null,
-    propertyDetails,
+    cashFlow: Math.round(cashFlow),
+    capRatePct: parseFloat(capRate.toFixed(2)),
+    dscr: dscr ? parseFloat(dscr.toFixed(2)) : null,
     arv,
+    propertyDetails
   });
 });
 
-/* =========================
-   PROPERTY ENDPOINT
-========================= */
-
-app.post("/api/property", async (req, res) => {
-  const { address } = req.body;
-
-  if (!address)
-    return res
-      .status(400)
-      .json({ error: "Address required" });
-
-  const property = await getPropertyDetails(address);
-
-  res.json(property);
-});
-
-/* =========================
-   ARV ENDPOINT
-========================= */
-
-app.post("/api/arv", async (req, res) => {
-  const { address } = req.body;
-
-  if (!address)
-    return res
-      .status(400)
-      .json({ error: "Address required" });
-
-  const arv = await getARV(address);
-
-  res.json(arv);
-});
-
-/* =========================
-   START SERVER
-========================= */
-
-async function start() {
-  await loadSafmr();
-
+// ---------------------------
+loadSafmr().then(() => {
   app.listen(PORT, () => {
-    console.log(
-      `🚀 ALEX running at http://localhost:${PORT}`
-    );
+    console.log(`🚀 ALEX running at http://localhost:${PORT}`);
   });
-}
-
-start();
+});
