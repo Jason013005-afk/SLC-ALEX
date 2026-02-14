@@ -1,28 +1,48 @@
-document.querySelector("button").addEventListener("click", async () => {
-  const address = document.querySelectorAll("input")[0].value;
-  const interestRate = parseFloat(document.querySelectorAll("input")[1].value);
+document.getElementById("dealForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
 
-  const response = await fetch("/api/deal-grade", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      address,
-      interestRate,
-      downPaymentPct: 20,
-      purchasePrice: 250000,
-      rehab: 20000
-    })
-  });
+  const address = document.getElementById("address").value;
+  const interestRate = parseFloat(document.getElementById("rate").value);
 
-  const data = await response.json();
+  const resultsDiv = document.getElementById("results");
+  resultsDiv.innerHTML = "Analyzing deal...";
 
-  document.querySelector("#results").innerHTML = `
-    <h3>Deal Score: ${data.dealScore}</h3>
-    <p>ARV: $${data.arv}</p>
-    <p>Monthly Rent: $${data.hudRent}</p>
-    <p>Annual NOI: $${data.dealMetrics.annualNOI}</p>
-    <p>Cash Flow: $${data.dealMetrics.annualCashFlow}</p>
-    <p>Cap Rate: ${data.dealMetrics.capRatePct}%</p>
-    <p>DSCR: ${data.dealMetrics.dscr}</p>
-  `;
+  try {
+    const response = await fetch("/api/deal-grade", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        address: address,
+        zip: "02724",            // temporary hardcode (we can auto-detect later)
+        bedrooms: 3,             // temporary default
+        purchasePrice: 250000,   // default test value
+        downPaymentPct: 20,
+        interestRate: interestRate,
+        rehab: 20000
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.error) {
+      resultsDiv.innerHTML = "Error: " + data.error;
+      return;
+    }
+
+    resultsDiv.innerHTML = `
+      <h3>Deal Results</h3>
+      <p><strong>Rent:</strong> $${data.hudRent}</p>
+      <p><strong>Annual NOI:</strong> $${data.dealMetrics.annualNOI}</p>
+      <p><strong>Cash Flow:</strong> $${data.dealMetrics.annualCashFlow}</p>
+      <p><strong>Cap Rate:</strong> ${data.dealMetrics.capRatePct}%</p>
+      <p><strong>DSCR:</strong> ${data.dealMetrics.dscr}</p>
+      <p><strong>Deal Score:</strong> ${data.dealScore}</p>
+    `;
+
+  } catch (err) {
+    console.error(err);
+    resultsDiv.innerHTML = "System Error";
+  }
 });
