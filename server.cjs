@@ -10,6 +10,8 @@ const fs = require("fs");
 const path = require("path");
 const axios = require("axios");
 const csv = require("csv-parser");
+const swaggerUi = require("swagger-ui-express");
+const YAML = require("js-yaml");
 
 const app = express();
 app.use(express.json());
@@ -60,7 +62,6 @@ function cleanMoney(value) {
   );
 }
 
-// Load HUD SAFMR file into memory
 function loadSafmr() {
   return new Promise((resolve, reject) => {
     const filePath = path.join(__dirname, SAFMR_FILE);
@@ -163,34 +164,42 @@ function calcMortgage(loanAmount, annualRate, years) {
 }
 
 /************************************************************
+ * SWAGGER / OPENAPI DOCS
+ ************************************************************/
+const openapiSpec = YAML.load(
+  fs.readFileSync(path.join(__dirname, "openapi.yaml"), "utf8")
+);
+
+app.use(
+  "/docs",
+  swaggerUi.serve,
+  swaggerUi.setup(openapiSpec, { explorer: true })
+);
+
+/************************************************************
  * API ENDPOINTS
  ************************************************************/
 
 /* --- RENT ONLY --- */
 app.post("/api/rent", (req, res) => {
   const { zip, bedrooms } = req.body;
-
   const rent = getRentFromHUD(zip, bedrooms);
-
   if (!rent) {
     return res
       .status(404)
       .json({ error: "No HUD rent data found" });
   }
-
   res.json({ zip, bedrooms, rent });
 });
 
 /* --- PROPERTY ONLY --- */
 app.post("/api/property", async (req, res) => {
   const { address } = req.body;
-
   if (!address) {
     return res
       .status(400)
       .json({ error: "Address required" });
   }
-
   const property = await getPropertyDetails(address);
   res.json({ property });
 });
@@ -198,13 +207,11 @@ app.post("/api/property", async (req, res) => {
 /* --- ARV ONLY --- */
 app.post("/api/arv", async (req, res) => {
   const { address } = req.body;
-
   if (!address) {
     return res
       .status(400)
       .json({ error: "Address required" });
   }
-
   const arv = await getARV(address);
   res.json({ address, arv });
 });
@@ -222,7 +229,6 @@ app.post("/api/analyze", async (req, res) => {
   } = req.body;
 
   const rent = getRentFromHUD(zip, bedrooms);
-
   if (!rent) {
     return res
       .status(404)
@@ -243,7 +249,6 @@ app.post("/api/analyze", async (req, res) => {
 
   let monthlyMortgage = 0;
   let annualDebt = 0;
-
   if (loanAmount > 0 && interestRate > 0) {
     monthlyMortgage = calcMortgage(
       loanAmount,
@@ -284,7 +289,7 @@ app.post("/api/analyze", async (req, res) => {
   });
 });
 
-/* --- DEAL GRADE (WITH COMPS + SCORING) --- */
+/* --- DEAL GRADE --- */
 app.post("/api/deal-grade", async (req, res) => {
   try {
     const {
@@ -310,11 +315,9 @@ app.post("/api/deal-grade", async (req, res) => {
         .json({ error: "No HUD rent data found" });
     }
 
-    // Fetch property + ARV
     const propertyDetails = await getPropertyDetails(address);
     const arv = await getARV(address);
 
-    // Fetch comps
     let comps = null;
     if (RENTCAST_API_KEY) {
       try {
@@ -416,6 +419,63 @@ app.post("/api/deal-grade", async (req, res) => {
       message: err.message,
       stack: err.stack
     });
+  }
+});
+
+/* --- BRRRR / REFINANCE --- */
+app.post("/api/brrrr", async (req, res) => {
+  try {
+    const {
+      address,
+      purchasePrice,
+      downPaymentPct,
+      rehab,
+      holdYears,
+      refinancePct,
+      refinanceRate,
+      refinanceTermYears
+    } = req.body;
+
+    const arv = await getARV(address);
+    if (!arv) {
+      return res.status(400).json({ error: "ARV not found" });
+    }
+
+    const totalCost = purchasePrice + (rehab || 0);
+    const downPayment = totalCost * (downPaymentPct / 100);
+
+    const refiLoanAmount = arv * (refinancePct / 100);
+
+    const cashOut =
+      Math.max(0, refiLoanAmount - (totalCost - downPayment));
+
+    const newMonthly = calcMortgage(
+      refiLoanAmount,
+      refinanceRate,
+      refinanceTermYears
+    );
+
+    const annualNewDebt = newMonthly * 12;
+
+    const totalCashIn = cashOut + downPayment;
+    const totalCashOut = totalCost;
+    const irr = totalCashOut > 0
+      ? ((totalCashIn - totalCashOut) / totalCashOut) * 100
+      : null;
+
+    res.json({
+      address,
+      arv,
+      totalCost,
+      refiLoanAmount,
+      cashOut,
+      newMonthly: Math.round(newMonthly),
+      annualNewDebt: Math.round(annualNewDebt),
+      irrPct: irr ? Number(irr.toFixed(2)) : null
+    });
+  } catch (err) {
+    console.error("BRRRR error:", err);
+    res.status(500).json({ error: err.message });
   }
 });
 
