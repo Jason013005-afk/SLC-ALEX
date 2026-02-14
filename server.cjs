@@ -37,7 +37,7 @@ const RENTCAST_API_KEY = process.env.RENTCAST_API_KEY;
 
 if (!RENTCAST_API_KEY) {
   console.warn(
-    "⚠️ RENTCAST_API_KEY not found in .env — property & ARV endpoints may not work!"
+    "⚠️ RENTCAST_API_KEY not found in .env — property & AVM endpoints may not work!"
   );
 }
 
@@ -50,7 +50,7 @@ function normalizeZipForLookup(zip) {
   if (!zip) return null;
   const zipNum = parseInt(zip, 10);
   if (isNaN(zipNum)) return null;
-  return zipNum.toString();
+  return zipNum.toString(); // no leading zeros for lookup
 }
 
 function cleanMoney(value) {
@@ -60,6 +60,7 @@ function cleanMoney(value) {
   );
 }
 
+// Load HUD SAFMR file into memory
 function loadSafmr() {
   return new Promise((resolve, reject) => {
     const filePath = path.join(__dirname, SAFMR_FILE);
@@ -72,9 +73,7 @@ function loadSafmr() {
     fs.createReadStream(filePath)
       .pipe(csv())
       .on("data", (row) => {
-        const key = normalizeZipForLookup(
-          row["ZIP Code"]
-        );
+        const key = normalizeZipForLookup(row["ZIP Code"]);
         if (!key) return;
 
         safmrData[key] = {
@@ -146,6 +145,21 @@ async function getARV(address) {
     console.error("💰 ARV lookup failed:", err.message);
     return null;
   }
+}
+
+/************************************************************
+ * MORTGAGE FUNCTION
+ ************************************************************/
+function calcMortgage(loanAmount, annualRate, years) {
+  if (!loanAmount || !annualRate) return 0;
+
+  const monthlyRate = (annualRate / 100) / 12;
+  const n = years * 12;
+
+  return (
+    (loanAmount * monthlyRate * Math.pow(1 + monthlyRate, n)) /
+    (Math.pow(1 + monthlyRate, n) - 1)
+  );
 }
 
 /************************************************************
