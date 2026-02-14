@@ -1,0 +1,99 @@
+openapi: 3.0.3
+info:
+  title: ALEX Real Estate API
+  version: 1.0.0
+  description: API for real estate property analysis, HUD rent lookup, AVM/ARV, and deal grading.
+
+servers:
+  - url: http://localhost:8080
+    description: Local server
+
+paths:
+  /api/rent:
+    post:
+      summary: Get HUD rent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                zip:
+                  type: string
+                bedrooms:
+                  type: integer
+      responses:
+        "200":
+          description: Rent result
+
+  /api/property:
+    post:
+      summary: Get property details
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                address:
+                  type: string
+      responses:
+        "200":
+          description: Property details
+
+  /api/arv:
+    post:
+      summary: Get ARV estimate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                address:
+                  type: string
+      responses:
+        "200":
+          description: AVM result
+
+  /api/analyze:
+    post:
+      summary: Full property analysis
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Analysis result
+
+  /api/deal-grade:
+    post:
+      summary: Deal grade + metrics
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Deal grade result
+
+  /api/brrrr:
+    post:
+      summary: BRRRR refinance analysis
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: BRRRR result
