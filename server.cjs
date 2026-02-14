@@ -1,240 +1,221 @@
 const express = require("express");
 const fs = require("fs");
-const path = require("path");
 const csv = require("csv-parser");
 
 const app = express();
 app.use(express.json());
 
-const PORT = 8080;
-
 let safmrData = {};
 
-/* ===========================
-   Utility Functions
-=========================== */
-
-function padZip(zip) {
-  if (!zip) return null;
-  return String(zip).trim().padStart(5, "0");
-}
-
-function parseDollar(value) {
-  if (!value) return 0;
-  return parseFloat(String(value).replace(/[$,]/g, "")) || 0;
-}
-
-function monthlyMortgage(loanAmount, ratePct, years = 30) {
-  if (!loanAmount || !ratePct) return 0;
-  const r = ratePct / 100 / 12;
-  const n = years * 12;
-  return Math.round(
-    (loanAmount * r) / (1 - Math.pow(1 + r, -n))
-  );
-}
-
-function calculateIRR(cashFlows, guess = 0.1) {
-  let rate = guess;
-  for (let i = 0; i < 1000; i++) {
-    let npv = 0;
-    let derivative = 0;
-
-    for (let t = 0; t < cashFlows.length; t++) {
-      npv += cashFlows[t] / Math.pow(1 + rate, t);
-      derivative -= t * cashFlows[t] / Math.pow(1 + rate, t + 1);
-    }
-
-    const newRate = rate - npv / derivative;
-    if (Math.abs(newRate - rate) < 1e-7) return newRate;
-    rate = newRate;
-  }
-  return null;
-}
-
-/* ===========================
-   Load SAFMR CSV
-=========================== */
-
+// -----------------------------
+// LOAD SAFMR DATA
+// -----------------------------
 function loadSAFMR() {
-  console.log("🔄 Loading SAFMR data...");
-
-  return new Promise((resolve, reject) => {
-    const filePath = path.join(__dirname, "fy2024_safmrs.clean.csv");
-
-    if (!fs.existsSync(filePath)) {
-      console.log("❌ SAFMR CSV not found");
-      return resolve();
-    }
-
-    fs.createReadStream(filePath)
+  return new Promise((resolve) => {
+    fs.createReadStream("fy2024_safmrs_clean.csv")
       .pipe(csv())
       .on("data", (row) => {
-        const zip = padZip(row["ZIP Code"]);
-        if (!zip) return;
-
-        safmrData[zip] = {
-          studio: parseDollar(row["SAFMR 0BR"]),
-          one: parseDollar(row["SAFMR 1BR"]),
-          two: parseDollar(row["SAFMR 2BR"]),
-          three: parseDollar(row["SAFMR 3BR"]),
-          four: parseDollar(row["SAFMR 4BR"]),
-          metro: row["HUD Metro Fair Market Rent Area Name"] || ""
-        };
+        safmrData[row.zip] = row;
       })
       .on("end", () => {
         console.log("🏠 SAFMR loaded:", Object.keys(safmrData).length);
         resolve();
-      })
-      .on("error", reject);
+      });
   });
 }
 
-/* ===========================
-   Main API
-=========================== */
+// -----------------------------
+// IRR CALCULATION (Newton)
+// -----------------------------
+function calculateIRR(cashFlows, guess = 0.1) {
+  const maxIterations = 1000;
+  const tolerance = 1e-6;
 
+  for (let i = 0; i < maxIterations; i++) {
+    let npv = 0;
+    let derivative = 0;
+
+    for (let t = 0; t < cashFlows.length; t++) {
+      npv += cashFlows[t] / Math.pow(1 + guess, t);
+      derivative -= t * cashFlows[t] / Math.pow(1 + guess, t + 1);
+    }
+
+    const newGuess = guess - npv / derivative;
+    if (Math.abs(newGuess - guess) < tolerance) {
+      return newGuess;
+    }
+    guess = newGuess;
+  }
+
+  return null;
+}
+
+// -----------------------------
+// ANALYZE ROUTE
+// -----------------------------
 app.post("/api/analyze", (req, res) => {
   const {
     zip,
     bedrooms,
-    purchasePrice = 0,
+    purchasePrice,
     downPaymentPct = 20,
     interestRate = 6.5,
     rehab = 0
   } = req.body;
 
-  const cleanZip = padZip(zip);
-
-  if (!cleanZip || !bedrooms) {
+  if (!zip || !bedrooms) {
     return res.status(400).json({ error: "Missing zip or bedrooms" });
   }
 
-  const rentData = safmrData[cleanZip];
-  if (!rentData) {
-    return res.status(404).json({ error: "No HUD rent data found" });
+  const data = safmrData[zip];
+  if (!data) {
+    return res.status(404).json({ error: "No SAFMR data found", zip });
   }
 
-  const bedroomKey =
-    bedrooms == 0 ? "studio" :
-    bedrooms == 1 ? "one" :
-    bedrooms == 2 ? "two" :
-    bedrooms == 3 ? "three" :
-    "four";
+  const rent = parseInt(data[`rent_${bedrooms}`]);
+  const metro = data.metro;
 
-  const rent = rentData[bedroomKey] || 0;
+  if (!rent) {
+    return res.status(400).json({ error: "Invalid bedroom count" });
+  }
 
-  /* ===========================
-     Phase B Enhancements
-  =========================== */
-
+  // -----------------------------
+  // RENTAL MODEL
+  // -----------------------------
   const vacancyRatePct = 8;
   const expenseRatePct = 35;
 
-  const effectiveRent = Math.round(rent * (1 - vacancyRatePct / 100));
+  const effectiveRent = rent * (1 - vacancyRatePct / 100);
   const annualRent = effectiveRent * 12;
-  const annualExpenses = Math.round(annualRent * expenseRatePct / 100);
+  const annualExpenses = annualRent * (expenseRatePct / 100);
   const annualNOI = annualRent - annualExpenses;
 
-  const loanAmount =
-    purchasePrice * (1 - downPaymentPct / 100);
+  // -----------------------------
+  // LOAN + AMORTIZATION
+  // -----------------------------
+  const totalCost = purchasePrice + rehab;
+  const downPayment = totalCost * (downPaymentPct / 100);
+  const loanAmount = totalCost - downPayment;
 
-  const mortgage = monthlyMortgage(loanAmount, interestRate);
-  const annualDebt = mortgage * 12;
+  const monthlyRate = interestRate / 100 / 12;
+  const termMonths = 360;
 
-  const cashFlow = annualNOI - annualDebt;
+  const mortgage =
+    (loanAmount * monthlyRate) /
+    (1 - Math.pow(1 + monthlyRate, -termMonths));
 
-  const capRatePct =
-    purchasePrice ? (annualNOI / purchasePrice) * 100 : 0;
+  const annualDebtService = mortgage * 12;
 
-  const dscr =
-    annualDebt ? (annualNOI / annualDebt).toFixed(2) : null;
+  const dscr = annualNOI / annualDebtService;
 
-  /* ===========================
-     Exit Cap Sensitivity
-  =========================== */
+  const annualCashFlow = annualNOI - annualDebtService;
 
-  const exitCaps = [5.5, 6.0, 6.5];
-  const exitValues = exitCaps.map(
-    cap => Math.round(annualNOI / (cap / 100))
-  );
+  const capRatePct = ((annualNOI / totalCost) * 100).toFixed(2);
 
-  /* ===========================
-     5-Year IRR Model
-  =========================== */
-
-  let irr5YearPct = null;
-
-  if (purchasePrice) {
-    const equity = purchasePrice * (downPaymentPct / 100);
-    const salePrice = annualNOI / 0.06;
-    const saleProceeds = salePrice * 0.93 - loanAmount;
-
-    const cashFlows = [
-      -equity,
-      cashFlow,
-      cashFlow,
-      cashFlow,
-      cashFlow,
-      cashFlow + saleProceeds
-    ];
-
-    const irr = calculateIRR(cashFlows);
-    if (irr !== null) {
-      irr5YearPct = (irr * 100).toFixed(2);
-    }
+  // -----------------------------
+  // 5 YEAR AMORTIZATION
+  // -----------------------------
+  let remainingBalance = loanAmount;
+  for (let i = 0; i < 60; i++) {
+    const interest = remainingBalance * monthlyRate;
+    const principal = mortgage - interest;
+    remainingBalance -= principal;
   }
 
-  /* ===========================
-     Deal Score
-  =========================== */
+  const debtPaidDown = loanAmount - remainingBalance;
 
+  // -----------------------------
+  // 5 YEAR SALE
+  // -----------------------------
+  const exitCap = 6;
+  const exitValue = annualNOI / (exitCap / 100);
+  const sellingCosts = exitValue * 0.06;
+  const saleProceeds = exitValue - sellingCosts - remainingBalance;
+
+  // -----------------------------
+  // IRR
+  // -----------------------------
+  const initialEquity = downPayment;
+
+  const cashFlows = [
+    -initialEquity,
+    annualCashFlow,
+    annualCashFlow,
+    annualCashFlow,
+    annualCashFlow,
+    annualCashFlow + saleProceeds
+  ];
+
+  const irr = calculateIRR(cashFlows);
+  const irr5YearPct = irr ? (irr * 100).toFixed(2) : null;
+
+  // -----------------------------
+  // EQUITY MULTIPLE
+  // -----------------------------
+  const totalCashReceived =
+    annualCashFlow * 5 + saleProceeds;
+
+  const equityMultiple = (
+    totalCashReceived / initialEquity
+  ).toFixed(2);
+
+  // -----------------------------
+  // DEAL SCORE
+  // -----------------------------
   let dealScore = 50;
 
-  if (dscr && dscr >= 1.25) dealScore += 20;
-  if (capRatePct >= 7) dealScore += 15;
-  if (cashFlow > 0) dealScore += 15;
+  if (dscr > 1.25) dealScore += 20;
+  if (irr5YearPct && irr5YearPct > 15) dealScore += 15;
+  if (parseFloat(capRatePct) > 7) dealScore += 10;
+  if (annualCashFlow > 0) dealScore += 10;
 
-  dealScore = Math.max(0, Math.min(100, dealScore));
+  if (dealScore > 100) dealScore = 100;
+  if (dealScore < 0) dealScore = 0;
 
   const rentalVerdict =
-    dscr && dscr < 1
+    dscr < 1
       ? "High risk (DSCR < 1)."
-      : cashFlow < 0
-      ? "Negative cash flow."
-      : "Healthy rental profile.";
+      : irr5YearPct > 15
+      ? "Strong long-term hold."
+      : "Moderate deal.";
 
-  return res.json({
-    zip: cleanZip,
+  res.json({
+    zip,
     bedrooms,
     rent,
-    metro: rentData.metro,
+    metro,
+
     vacancyRatePct,
     expenseRatePct,
+
     effectiveRent,
     annualRent,
     annualExpenses,
     annualNOI,
-    mortgage,
-    cashFlow,
-    capRatePct: Number(capRatePct.toFixed(2)),
-    dscr,
-    exitCaps,
-    exitValues,
+
+    mortgage: Math.round(mortgage),
+    annualCashFlow: Math.round(annualCashFlow),
+
+    capRatePct,
+    dscr: dscr.toFixed(2),
+
+    remainingBalance: Math.round(remainingBalance),
+    debtPaidDown: Math.round(debtPaidDown),
+
+    exitValue: Math.round(exitValue),
+    saleProceeds: Math.round(saleProceeds),
+
     irr5YearPct,
+    equityMultiple,
+
     dealScore,
     rentalVerdict
   });
 });
 
-/* ===========================
-   Start Server
-=========================== */
-
-async function start() {
-  await loadSAFMR();
-  app.listen(PORT, () => {
-    console.log(`🚀 ALEX running at http://localhost:${PORT}`);
+// -----------------------------
+loadSAFMR().then(() => {
+  app.listen(8080, () => {
+    console.log("🚀 ALEX running at http://localhost:8080");
   });
-}
-
-start();
+});
