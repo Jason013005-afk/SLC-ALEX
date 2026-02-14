@@ -1,178 +1,196 @@
+// ===============================
+// ALEX - Clean Production Server
+// ===============================
+
 require("dotenv").config();
+
 const express = require("express");
 const fs = require("fs");
-const csv = require("csv-parser");
-const axios = require("axios");
 const path = require("path");
+const csv = require("csv-parser");
 
 const app = express();
 app.use(express.json());
-app.use(express.static("public"));
+
+// ===============================
+// CONFIG (with safe fallbacks)
+// ===============================
 
 const PORT = process.env.PORT || 8080;
 
-const SAFMR_FILE = process.env.SAFMR_FILE;
-const RENTCAST_API_KEY = process.env.RENTCAST_API_KEY;
+const SAFMR_FILE =
+  process.env.SAFMR_FILE || "fy2024_safmrs_clean.csv";
+
+const DEFAULT_VACANCY =
+  parseFloat(process.env.DEFAULT_VACANCY_RATE) || 8;
+
+const DEFAULT_EXPENSE =
+  parseFloat(process.env.DEFAULT_EXPENSE_RATE) || 35;
+
+const LOAN_TERM_YEARS =
+  parseInt(process.env.DEFAULT_LOAN_TERM_YEARS) || 30;
+
+// ===============================
+// DATA STORE
+// ===============================
 
 let safmrData = {};
 
-// -----------------------------
-// LOAD SAFMR CSV
-// -----------------------------
+// ===============================
+// HELPERS
+// ===============================
+
+function padZip(zip) {
+  return zip.toString().padStart(5, "0");
+}
+
+function cleanMoney(val) {
+  if (!val) return 0;
+  return parseInt(val.replace(/[^0-9]/g, ""));
+}
+
+function calcMortgage(principal, rate, years) {
+  const monthlyRate = rate / 100 / 12;
+  const payments = years * 12;
+
+  if (!principal || !rate) return 0;
+
+  return (
+    (principal *
+      monthlyRate *
+      Math.pow(1 + monthlyRate, payments)) /
+    (Math.pow(1 + monthlyRate, payments) - 1)
+  );
+}
+
+// ===============================
+// LOAD SAFMR
+// ===============================
+
 function loadSafmr() {
   return new Promise((resolve, reject) => {
-    console.log("🔄 Loading SAFMR data...");
+    const filePath = path.join(__dirname, SAFMR_FILE);
 
-    fs.createReadStream(path.join(__dirname, SAFMR_FILE))
+    if (!fs.existsSync(filePath)) {
+      console.error("❌ SAFMR FILE NOT FOUND:", filePath);
+      return reject("SAFMR file missing");
+    }
+
+    fs.createReadStream(filePath)
       .pipe(csv())
       .on("data", (row) => {
-        const zip = row["ZIP Code"]?.toString().padStart(5, "0");
-        if (!zip) return;
-
+        const zip = padZip(row["ZIP Code"]);
         safmrData[zip] = {
           metro: row["HUD Metro Fair Market Rent Area Name"],
-          rent1: parseMoney(row["SAFMR 1BR"]),
-          rent2: parseMoney(row["SAFMR 2BR"]),
-          rent3: parseMoney(row["SAFMR 3BR"]),
-          rent4: parseMoney(row["SAFMR 4BR"])
+          rent0: cleanMoney(row["SAFMR 0BR"]),
+          rent1: cleanMoney(row["SAFMR 1BR"]),
+          rent2: cleanMoney(row["SAFMR 2BR"]),
+          rent3: cleanMoney(row["SAFMR 3BR"]),
+          rent4: cleanMoney(row["SAFMR 4BR"])
         };
       })
       .on("end", () => {
-        console.log(`🏠 SAFMR loaded: ${Object.keys(safmrData).length}`);
+        console.log("🏠 SAFMR loaded:", Object.keys(safmrData).length);
         resolve();
       })
       .on("error", reject);
   });
 }
 
-function parseMoney(value) {
-  if (!value) return 0;
-  return parseFloat(value.replace(/[$,]/g, ""));
-}
+// ===============================
+// API ROUTE
+// ===============================
 
-// -----------------------------
-// RENTCAST CALL
-// -----------------------------
-async function getRentcastValue(address) {
-  if (!RENTCAST_API_KEY || !address) return null;
-
-  try {
-    const response = await axios.get(
-      `https://api.rentcast.io/v1/properties`,
-      {
-        headers: {
-          "X-Api-Key": RENTCAST_API_KEY
-        },
-        params: {
-          address: address
-        }
-      }
-    );
-
-    if (response.data && response.data.length > 0) {
-      return response.data[0].price || null;
-    }
-
-    return null;
-  } catch (err) {
-    console.log("⚠️ RentCast error:", err.response?.data || err.message);
-    return null;
-  }
-}
-
-// -----------------------------
-// ANALYZE ROUTE
-// -----------------------------
-app.post("/api/analyze", async (req, res) => {
+app.post("/api/analyze", (req, res) => {
   const {
     zip,
     bedrooms,
     purchasePrice,
     downPaymentPct,
     interestRate,
-    rehab,
-    address
+    rehab
   } = req.body;
 
   if (!zip || !bedrooms) {
-    return res.status(400).json({ error: "zip and bedrooms required" });
+    return res.status(400).json({
+      error: "zip and bedrooms required"
+    });
   }
 
-  const zipStr = zip.toString().padStart(5, "0");
-  const data = safmrData[zipStr];
+  const formattedZip = padZip(zip);
 
-  if (!data) {
-    return res.json({ error: "No HUD rent data found" });
+  if (!safmrData[formattedZip]) {
+    return res.status(404).json({
+      error: "No HUD rent data found"
+    });
   }
 
   const rent =
-    bedrooms == 1
-      ? data.rent1
-      : bedrooms == 2
-      ? data.rent2
-      : bedrooms == 3
-      ? data.rent3
-      : data.rent4;
+    safmrData[formattedZip][`rent${bedrooms}`];
 
-  const vacancyRate = parseFloat(process.env.DEFAULT_VACANCY_RATE) / 100;
-  const expenseRate = parseFloat(process.env.DEFAULT_EXPENSE_RATE) / 100;
+  // ===============================
+  // RENTAL CALCULATIONS
+  // ===============================
 
-  const effectiveRent = rent * (1 - vacancyRate);
+  const vacancyRate = DEFAULT_VACANCY / 100;
+  const expenseRate = DEFAULT_EXPENSE / 100;
+
+  const effectiveRent = Math.round(rent * (1 - vacancyRate));
   const annualRent = effectiveRent * 12;
-  const annualExpenses = annualRent * expenseRate;
+  const annualExpenses = Math.round(annualRent * expenseRate);
   const annualNOI = annualRent - annualExpenses;
 
   let mortgage = 0;
   let annualDebt = 0;
+  let dscr = null;
+  let cashFlow = annualNOI;
 
   if (purchasePrice && downPaymentPct && interestRate) {
-    const loanAmount = purchasePrice * (1 - downPaymentPct / 100);
-    const monthlyRate = interestRate / 100 / 12;
-    const numPayments = 30 * 12;
+    const downPayment = purchasePrice * (downPaymentPct / 100);
+    const loanAmount = purchasePrice - downPayment;
 
-    mortgage =
-      (loanAmount *
-        monthlyRate *
-        Math.pow(1 + monthlyRate, numPayments)) /
-      (Math.pow(1 + monthlyRate, numPayments) - 1);
+    mortgage = Math.round(
+      calcMortgage(loanAmount, interestRate, LOAN_TERM_YEARS)
+    );
 
     annualDebt = mortgage * 12;
+    dscr = parseFloat((annualNOI / annualDebt).toFixed(2));
+    cashFlow = annualNOI - annualDebt;
   }
 
-  const cashFlow = annualNOI - annualDebt;
-  const capRatePct = purchasePrice
-    ? (annualNOI / purchasePrice) * 100
-    : 0;
-
-  const dscr =
-    annualDebt > 0 ? parseFloat((annualNOI / annualDebt).toFixed(2)) : null;
-
-  const arv = await getRentcastValue(address);
-
-  res.json({
-    zip: zipStr,
+  return res.json({
+    zip: formattedZip,
     bedrooms,
     rent,
-    metro: data.metro,
-    arv,
-    vacancyRatePct: vacancyRate * 100,
-    expenseRatePct: expenseRate * 100,
-    annualNOI: Math.round(annualNOI),
-    mortgage: Math.round(mortgage),
-    annualDebt: Math.round(annualDebt),
-    cashFlow: Math.round(cashFlow),
-    capRatePct: parseFloat(capRatePct.toFixed(2)),
+    vacancyRatePct: DEFAULT_VACANCY,
+    expenseRatePct: DEFAULT_EXPENSE,
+    effectiveRent,
+    annualRent,
+    annualExpenses,
+    annualNOI,
+    mortgage,
+    annualDebt,
+    cashFlow,
+    capRatePct: purchasePrice
+      ? parseFloat(((annualNOI / purchasePrice) * 100).toFixed(2))
+      : 0,
     dscr
   });
 });
 
-// -----------------------------
+// ===============================
+// START SERVER
+// ===============================
+
 async function start() {
-  await loadSafmr();
-  console.log("✅ HUD data loaded.");
-  app.listen(PORT, () => {
-    console.log(`🚀 ALEX running at http://localhost:${PORT}`);
-  });
+  try {
+    await loadSafmr();
+    app.listen(PORT, () => {
+      console.log("🚀 ALEX running at http://localhost:" + PORT);
+    });
+  } catch (err) {
+    console.error("Startup failed:", err);
+  }
 }
 
 start();
