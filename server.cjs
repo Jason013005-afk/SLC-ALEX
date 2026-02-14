@@ -1,491 +1,250 @@
-/************************************************************
- * FORCE LOAD .env FROM SAME DIRECTORY
- ************************************************************/
-require("dotenv").config({
-  path: require("path").join(__dirname, ".env")
-});
-
+require("dotenv").config();
 const express = require("express");
+const axios = require("axios");
+const cors = require("cors");
 const fs = require("fs");
 const path = require("path");
-const axios = require("axios");
 const csv = require("csv-parser");
 const swaggerUi = require("swagger-ui-express");
-const YAML = require("js-yaml");
+const yaml = require("js-yaml");
 
 const app = express();
+app.use(cors());
 app.use(express.json());
+app.use(express.static("public")); // serve your 4 website pages
 
-/************************************************************
- * ENV CONFIGURATION
- ************************************************************/
-const PORT = process.env.PORT || 8080;
-const SAFMR_FILE =
-  process.env.SAFMR_FILE || "fy2024_safmrs_clean.csv";
+// ===============================
+// 🔧 CONFIG
+// ===============================
 
-const DEFAULT_VACANCY_RATE = Number(
-  process.env.DEFAULT_VACANCY_RATE || 8
-);
-
-const DEFAULT_EXPENSE_RATE = Number(
-  process.env.DEFAULT_EXPENSE_RATE || 35
-);
-
-const DEFAULT_LOAN_TERM_YEARS = Number(
-  process.env.DEFAULT_LOAN_TERM_YEARS || 30
-);
-
+const PORT = 8080;
 const RENTCAST_API_KEY = process.env.RENTCAST_API_KEY;
 
-if (!RENTCAST_API_KEY) {
-  console.warn(
-    "⚠️ RENTCAST_API_KEY not found in .env — property & AVM endpoints may not work!"
-  );
-}
+// ===============================
+// 🏠 LOAD SAFMR DATA
+// ===============================
 
-/************************************************************
- * HUD SAFMR DATA LOADING
- ************************************************************/
-const safmrData = {};
+let safmrData = {};
 
-function normalizeZipForLookup(zip) {
-  if (!zip) return null;
-  const zipNum = parseInt(zip, 10);
-  if (isNaN(zipNum)) return null;
-  return zipNum.toString(); // no leading zeros for lookup
-}
+console.log("🔄 Loading SAFMR data...");
 
-function cleanMoney(value) {
-  if (!value) return 0;
-  return Number(
-    String(value).replace(/[\$,"]/g, "").trim()
-  );
-}
-
-function loadSafmr() {
-  return new Promise((resolve, reject) => {
-    const filePath = path.join(__dirname, SAFMR_FILE);
-
-    if (!fs.existsSync(filePath)) {
-      console.error("❌ SAFMR file not found:", filePath);
-      return reject();
-    }
-
-    fs.createReadStream(filePath)
-      .pipe(csv())
-      .on("data", (row) => {
-        const key = normalizeZipForLookup(row["ZIP Code"]);
-        if (!key) return;
-
-        safmrData[key] = {
-          rent0: cleanMoney(row["SAFMR 0BR"]),
-          rent1: cleanMoney(row["SAFMR 1BR"]),
-          rent2: cleanMoney(row["SAFMR 2BR"]),
-          rent3: cleanMoney(row["SAFMR 3BR"]),
-          rent4: cleanMoney(row["SAFMR 4BR"])
-        };
-      })
-      .on("end", () => {
-        console.log(
-          "🏠 SAFMR loaded:",
-          Object.keys(safmrData).length,
-          "ZIPs"
-        );
-        resolve();
-      })
-      .on("error", reject);
+fs.createReadStream("fy2024_safmrs_fixed.csv")
+  .pipe(csv())
+  .on("data", (row) => {
+    safmrData[row.zip] = {
+      1: Number(row.one_bed),
+      2: Number(row.two_bed),
+      3: Number(row.three_bed),
+      4: Number(row.four_bed),
+    };
+  })
+  .on("end", () => {
+    console.log(`🏠 SAFMR loaded: ${Object.keys(safmrData).length} ZIPs`);
   });
-}
 
-function getRentFromHUD(zip, bedrooms) {
-  const key = normalizeZipForLookup(zip);
-  if (!key) return null;
-  const row = safmrData[key];
-  if (!row) return null;
-  return row[`rent${bedrooms}`] || null;
-}
+// ===============================
+// 💰 Mortgage Calculator
+// ===============================
 
-/************************************************************
- * RENTCAST HELPERS
- ************************************************************/
-async function getPropertyDetails(address) {
-  if (!RENTCAST_API_KEY) return null;
-
-  try {
-    const res = await axios.get(
-      "https://api.rentcast.io/v1/properties",
-      {
-        params: { address },
-        headers: {
-          "X-Api-Key": RENTCAST_API_KEY
-        }
-      }
-    );
-    return res.data?.[0] || null;
-  } catch (err) {
-    console.error("🔍 Property lookup failed:", err.message);
-    return null;
-  }
-}
-
-async function getARV(address) {
-  if (!RENTCAST_API_KEY) return null;
-
-  try {
-    const res = await axios.get(
-      "https://api.rentcast.io/v1/avm/value",
-      {
-        params: { address },
-        headers: {
-          "X-Api-Key": RENTCAST_API_KEY
-        }
-      }
-    );
-    return res.data?.price || null;
-  } catch (err) {
-    console.error("💰 ARV lookup failed:", err.message);
-    return null;
-  }
-}
-
-/************************************************************
- * MORTGAGE FUNCTION
- ************************************************************/
-function calcMortgage(loanAmount, annualRate, years) {
-  if (!loanAmount || !annualRate) return 0;
-
-  const monthlyRate = (annualRate / 100) / 12;
-  const n = years * 12;
+function calcMortgage(loanAmount, rate, years = 30) {
+  const monthlyRate = rate / 100 / 12;
+  const payments = years * 12;
 
   return (
-    (loanAmount * monthlyRate * Math.pow(1 + monthlyRate, n)) /
-    (Math.pow(1 + monthlyRate, n) - 1)
+    (loanAmount *
+      monthlyRate *
+      Math.pow(1 + monthlyRate, payments)) /
+    (Math.pow(1 + monthlyRate, payments) - 1)
   );
 }
 
-/************************************************************
- * SWAGGER / OPENAPI DOCS
- ************************************************************/
-const openapiSpec = YAML.load(
-  fs.readFileSync(path.join(__dirname, "openapi.yaml"), "utf8")
-);
+// ===============================
+// 🏘️ RENT ENDPOINT
+// ===============================
 
-app.use(
-  "/docs",
-  swaggerUi.serve,
-  swaggerUi.setup(openapiSpec, { explorer: true })
-);
-
-/************************************************************
- * API ENDPOINTS
- ************************************************************/
-
-/* --- RENT ONLY --- */
 app.post("/api/rent", (req, res) => {
   const { zip, bedrooms } = req.body;
-  const rent = getRentFromHUD(zip, bedrooms);
-  if (!rent) {
-    return res
-      .status(404)
-      .json({ error: "No HUD rent data found" });
+
+  if (!safmrData[zip]) {
+    return res.status(400).json({ error: "ZIP not found in SAFMR data" });
   }
+
+  const rent = safmrData[zip][bedrooms];
+
   res.json({ zip, bedrooms, rent });
 });
 
-/* --- PROPERTY ONLY --- */
+// ===============================
+// 🏠 PROPERTY DETAILS
+// ===============================
+
 app.post("/api/property", async (req, res) => {
-  const { address } = req.body;
-  if (!address) {
-    return res
-      .status(400)
-      .json({ error: "Address required" });
-  }
-  const property = await getPropertyDetails(address);
-  res.json({ property });
-});
+  try {
+    const { address } = req.body;
 
-/* --- ARV ONLY --- */
-app.post("/api/arv", async (req, res) => {
-  const { address } = req.body;
-  if (!address) {
-    return res
-      .status(400)
-      .json({ error: "Address required" });
-  }
-  const arv = await getARV(address);
-  res.json({ address, arv });
-});
-
-/* --- FULL ANALYZE --- */
-app.post("/api/analyze", async (req, res) => {
-  const {
-    address,
-    zip,
-    bedrooms,
-    purchasePrice = 0,
-    downPaymentPct = 0,
-    interestRate = 0,
-    rehab = 0
-  } = req.body;
-
-  const rent = getRentFromHUD(zip, bedrooms);
-  if (!rent) {
-    return res
-      .status(404)
-      .json({ error: "No HUD rent data found" });
-  }
-
-  const vacancyRate = DEFAULT_VACANCY_RATE / 100;
-  const expenseRate = DEFAULT_EXPENSE_RATE / 100;
-
-  const effectiveRent = rent * (1 - vacancyRate);
-  const annualRent = effectiveRent * 12;
-  const annualExpenses = annualRent * expenseRate;
-  const annualNOI = annualRent - annualExpenses;
-
-  const totalCost = purchasePrice + rehab;
-  const downPayment = totalCost * (downPaymentPct / 100);
-  const loanAmount = totalCost - downPayment;
-
-  let monthlyMortgage = 0;
-  let annualDebt = 0;
-  if (loanAmount > 0 && interestRate > 0) {
-    monthlyMortgage = calcMortgage(
-      loanAmount,
-      interestRate,
-      DEFAULT_LOAN_TERM_YEARS
+    const response = await axios.get(
+      `https://api.rentcast.io/v1/properties`,
+      {
+        params: { address },
+        headers: { "X-Api-Key": RENTCAST_API_KEY },
+      }
     );
-    annualDebt = monthlyMortgage * 12;
+
+    res.json({ property: response.data[0] || null });
+  } catch (err) {
+    console.error("Property fetch error:", err.message);
+    res.status(500).json({ error: "Property lookup failed" });
   }
-
-  const cashFlow = annualNOI - annualDebt;
-  const capRatePct = totalCost
-    ? (annualNOI / totalCost) * 100
-    : 0;
-  const dscr =
-    annualDebt > 0 ? annualNOI / annualDebt : null;
-
-  const propertyDetails = address
-    ? await getPropertyDetails(address)
-    : null;
-
-  const arv = address ? await getARV(address) : null;
-
-  res.json({
-    zip,
-    bedrooms,
-    rent,
-    effectiveRent: Math.round(effectiveRent),
-    annualRent: Math.round(annualRent),
-    annualExpenses: Math.round(annualExpenses),
-    annualNOI: Math.round(annualNOI),
-    mortgage: Math.round(monthlyMortgage),
-    annualDebt: Math.round(annualDebt),
-    cashFlow: Math.round(cashFlow),
-    capRatePct: Number(capRatePct.toFixed(2)),
-    dscr: dscr ? Number(dscr.toFixed(2)) : null,
-    propertyDetails,
-    arv
-  });
 });
 
-/* --- DEAL GRADE --- */
-app.post("/api/deal-grade", async (req, res) => {
+// ===============================
+// 📈 ARV
+// ===============================
+
+app.post("/api/arv", async (req, res) => {
+  try {
+    const { address } = req.body;
+
+    const response = await axios.get(
+      `https://api.rentcast.io/v1/avm/value`,
+      {
+        params: { address },
+        headers: { "X-Api-Key": RENTCAST_API_KEY },
+      }
+    );
+
+    res.json({ address, arv: response.data.value || null });
+  } catch (err) {
+    console.error("ARV error:", err.message);
+    res.status(500).json({ error: "ARV lookup failed" });
+  }
+});
+
+// ===============================
+// 🧮 ANALYZE
+// ===============================
+
+app.post("/api/analyze", async (req, res) => {
   try {
     const {
       address,
       zip,
       bedrooms,
       purchasePrice,
-      downPaymentPct = 0,
-      interestRate = 0,
-      rehab = 0
+      downPaymentPct,
+      interestRate,
     } = req.body;
 
-    if (!address || !zip || !bedrooms || !purchasePrice) {
-      return res
-        .status(400)
-        .json({ error: "Missing required fields" });
+    const rent = safmrData[zip]?.[bedrooms];
+
+    if (!rent) {
+      return res.status(400).json({ error: "Rent not found for ZIP" });
     }
 
-    const hudRent = getRentFromHUD(zip, bedrooms);
-    if (!hudRent) {
-      return res
-        .status(404)
-        .json({ error: "No HUD rent data found" });
-    }
+    const vacancyRate = 0.08;
+    const expenseRate = 0.35;
 
-    const propertyDetails = await getPropertyDetails(address);
-    const arv = await getARV(address);
-
-    let comps = null;
-    if (RENTCAST_API_KEY) {
-      try {
-        const compsRes = await axios.get(
-          "https://api.rentcast.io/v1/properties/comps",
-          {
-            headers: {
-              "X-Api-Key": RENTCAST_API_KEY
-            },
-            params: { address }
-          }
-        );
-        comps = compsRes.data || null;
-      } catch (err) {
-        console.warn("Comps fetch error:", err.message);
-      }
-    }
-
-    const vacancyRate = DEFAULT_VACANCY_RATE / 100;
-    const expenseRate = DEFAULT_EXPENSE_RATE / 100;
-    const effectiveRent = hudRent * (1 - vacancyRate);
+    const effectiveRent = rent * (1 - vacancyRate);
     const annualRent = effectiveRent * 12;
     const annualExpenses = annualRent * expenseRate;
     const annualNOI = annualRent - annualExpenses;
 
-    const totalCost = purchasePrice + rehab;
-    const downPayment = totalCost * (downPaymentPct / 100);
-    const loanAmount = totalCost - downPayment;
+    const loanAmount =
+      purchasePrice * (1 - downPaymentPct / 100);
 
-    let mortgage = 0;
-    let annualDebt = 0;
-    if (loanAmount > 0 && interestRate > 0) {
-      mortgage = calcMortgage(
-        loanAmount,
-        interestRate,
-        DEFAULT_LOAN_TERM_YEARS
-      );
-      annualDebt = mortgage * 12;
-    }
+    const monthlyMortgage = calcMortgage(
+      loanAmount,
+      interestRate
+    );
 
-    const annualCashFlow =
-      annualNOI - annualDebt;
+    const annualDebt = monthlyMortgage * 12;
+    const cashFlow = annualNOI - annualDebt;
 
-    const capRate = totalCost
-      ? (annualNOI / totalCost) * 100
-      : 0;
-
-    const dscrScore =
-      annualDebt > 0
-        ? annualNOI / annualDebt
-        : null;
-
-    let dealScore = "C";
-    if (arv && totalCost > 0) {
-      const spreadPct =
-        ((arv - totalCost) / totalCost) * 100;
-      if (
-        spreadPct > 35 &&
-        capRate > 8 &&
-        dscrScore > 1.2
-      )
-        dealScore = "A";
-      else if (
-        spreadPct > 20 &&
-        capRate > 6 &&
-        dscrScore > 1
-      )
-        dealScore = "B";
-    }
+    const capRate = (annualNOI / purchasePrice) * 100;
+    const dscr = annualNOI / annualDebt;
 
     res.json({
-      address,
-      zip,
-      bedrooms,
-      hudRent,
-      propertyDetails,
-      arv,
-      comps,
-      dealMetrics: {
-        annualNOI: Math.round(annualNOI),
-        annualRent: Math.round(annualRent),
-        annualExpenses: Math.round(annualExpenses),
-        mortgage: Math.round(mortgage),
-        annualDebt: Math.round(annualDebt),
-        annualCashFlow: Math.round(
-          annualCashFlow
-        ),
-        capRatePct: Number(capRate.toFixed(2)),
-        dscr: dscrScore
-          ? Number(dscrScore.toFixed(2))
-          : null
-      },
-      dealScore
+      rent,
+      annualRent,
+      annualNOI,
+      annualDebt,
+      cashFlow,
+      capRatePct: Number(capRate.toFixed(2)),
+      dscr: Number(dscr.toFixed(2)),
     });
   } catch (err) {
-    console.error("💥 DEAL-GRADE ERROR:", err);
-    res.status(500).json({
-      error: true,
-      message: err.message,
-      stack: err.stack
-    });
+    console.error("Analyze error:", err.message);
+    res.status(500).json({ error: "Analyze failed" });
   }
 });
 
-/* --- BRRRR / REFINANCE --- */
+// ===============================
+// 🏆 DEAL GRADE
+// ===============================
+
+app.post("/api/deal-grade", async (req, res) => {
+  try {
+    const analysis = await axios.post(
+      `http://localhost:${PORT}/api/analyze`,
+      req.body
+    );
+
+    const { capRatePct, dscr, cashFlow } = analysis.data;
+
+    let grade = "C";
+
+    if (capRatePct > 7 && dscr > 1.2 && cashFlow > 0) grade = "A";
+    else if (capRatePct > 6 && dscr > 1.1) grade = "B";
+
+    res.json({
+      ...analysis.data,
+      dealScore: grade,
+    });
+  } catch (err) {
+    console.error("Deal-grade error:", err.message);
+    res.status(500).json({ error: "Deal-grade failed" });
+  }
+});
+
+// ===============================
+// 🔁 BRRRR
+// ===============================
+
 app.post("/api/brrrr", async (req, res) => {
   try {
     const {
-      address,
-      purchasePrice,
-      downPaymentPct,
-      rehab,
-      holdYears,
-      refinancePct,
-      refinanceRate,
-      refinanceTermYears
+      arv,
+      refinanceLtv,
+      interestRate,
     } = req.body;
 
-    const arv = await getARV(address);
-    if (!arv) {
-      return res.status(400).json({ error: "ARV not found" });
-    }
-
-    const totalCost = purchasePrice + (rehab || 0);
-    const downPayment = totalCost * (downPaymentPct / 100);
-
-    const refiLoanAmount = arv * (refinancePct / 100);
-
-    const cashOut =
-      Math.max(0, refiLoanAmount - (totalCost - downPayment));
-
-    const newMonthly = calcMortgage(
-      refiLoanAmount,
-      refinanceRate,
-      refinanceTermYears
-    );
-
-    const annualNewDebt = newMonthly * 12;
-
-    const totalCashIn = cashOut + downPayment;
-    const totalCashOut = totalCost;
-    const irr = totalCashOut > 0
-      ? ((totalCashIn - totalCashOut) / totalCashOut) * 100
-      : null;
+    const newLoan = arv * (refinanceLtv / 100);
+    const newMortgage = calcMortgage(newLoan, interestRate);
 
     res.json({
-      address,
       arv,
-      totalCost,
-      refiLoanAmount,
-      cashOut,
-      newMonthly: Math.round(newMonthly),
-      annualNewDebt: Math.round(annualNewDebt),
-      irrPct: irr ? Number(irr.toFixed(2)) : null
+      newLoan,
+      newMonthlyMortgage: Number(newMortgage.toFixed(0)),
     });
   } catch (err) {
-    console.error("BRRRR error:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: "BRRRR failed" });
   }
 });
 
-/************************************************************
- * START SERVER
- ************************************************************/
-loadSafmr().then(() => {
-  app.listen(PORT, () => {
-    console.log(
-      `🚀 ALEX running at http://localhost:${PORT}`
-    );
-  });
+// ===============================
+// 📄 SWAGGER
+// ===============================
+
+const openapiSpec = yaml.load(
+  fs.readFileSync(path.join(__dirname, "openapi.yaml"), "utf8")
+);
+
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(openapiSpec));
+
+// ===============================
+// 🚀 START SERVER
+// ===============================
+
+app.listen(PORT, () => {
+  console.log(`🚀 ALEX running at http://localhost:${PORT}`);
 });
