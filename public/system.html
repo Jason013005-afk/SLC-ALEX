@@ -1,21 +1,103 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>ALEX System</title>
+  <title>ALEX™ Deal Analyzer</title>
   <link rel="stylesheet" href="styles.css">
+  <style>
+    .card {
+      background: rgba(0,0,0,0.75);
+      padding: 30px;
+      border-radius: 12px;
+      max-width: 800px;
+      margin: 80px auto;
+      color: white;
+    }
+
+    input, button {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 6px;
+      border: none;
+      font-size: 16px;
+    }
+
+    button {
+      background: #d4af37;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    pre {
+      white-space: pre-wrap;
+      margin-top: 20px;
+      font-size: 14px;
+    }
+  </style>
 </head>
-<body>
 
-<h1>ALEX Deal Analyzer</h1>
+<body style="background:url('images/hero-bg.png') no-repeat center center fixed; background-size:cover;">
 
-<input id="address" placeholder="Address">
-<input id="zip" placeholder="ZIP">
-<input id="price" placeholder="Purchase Price">
-<input id="rate" placeholder="Interest Rate">
-<button onclick="run()">Analyze</button>
+  <div class="card">
+    <h1>ALEX™ Deal Analyzer</h1>
 
-<pre id="output"></pre>
+    <input id="address" placeholder="Property Address">
+    <input id="rate" placeholder="Interest Rate (ex: 6.5)" type="number" step="0.1">
 
-<script src="system.js"></script>
+    <button onclick="analyze()">Analyze Deal</button>
+
+    <pre id="results"></pre>
+  </div>
+
+<script>
+async function analyze() {
+
+  const address = document.getElementById('address').value;
+  const interestRate = parseFloat(document.getElementById('rate').value);
+
+  document.getElementById('results').innerText = "Running full analysis...";
+
+  try {
+    const res = await fetch('/api/analyze-full', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        address,
+        interestRate
+      })
+    });
+
+    const data = await res.json();
+
+    if (data.error) {
+      document.getElementById('results').innerText = data.error;
+      return;
+    }
+
+    document.getElementById('results').innerText = 
+`
+PROPERTY: ${data.property.formattedAddress}
+
+Estimated Value: $${data.arv}
+HUD Rent: $${data.rent}
+
+Annual NOI: $${data.metrics.annualNOI}
+Annual Cash Flow: $${data.metrics.cashFlow}
+Cap Rate: ${data.metrics.capRatePct}%
+DSCR: ${data.metrics.dscr}
+
+Deal Grade: ${data.grade}
+`;
+
+  } catch (err) {
+    document.getElementById('results').innerText = "System Error";
+  }
+}
+</script>
+
 </body>
 </html>

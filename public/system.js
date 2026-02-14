@@ -1,18 +1,28 @@
-async function run() {
-  const res = await fetch("/api/analyze", {
+document.querySelector("button").addEventListener("click", async () => {
+  const address = document.querySelectorAll("input")[0].value;
+  const interestRate = parseFloat(document.querySelectorAll("input")[1].value);
+
+  const response = await fetch("/api/deal-grade", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      address: document.getElementById("address").value,
-      zip: document.getElementById("zip").value,
-      bedrooms: 3,
-      interestRate: Number(document.getElementById("rate").value),
-      purchasePrice: Number(document.getElementById("price").value),
-      downPaymentPct: 20
+      address,
+      interestRate,
+      downPaymentPct: 20,
+      purchasePrice: 250000,
+      rehab: 20000
     })
   });
 
-  const data = await res.json();
-  document.getElementById("output").textContent =
-    JSON.stringify(data, null, 2);
-}
+  const data = await response.json();
+
+  document.querySelector("#results").innerHTML = `
+    <h3>Deal Score: ${data.dealScore}</h3>
+    <p>ARV: $${data.arv}</p>
+    <p>Monthly Rent: $${data.hudRent}</p>
+    <p>Annual NOI: $${data.dealMetrics.annualNOI}</p>
+    <p>Cash Flow: $${data.dealMetrics.annualCashFlow}</p>
+    <p>Cap Rate: ${data.dealMetrics.capRatePct}%</p>
+    <p>DSCR: ${data.dealMetrics.dscr}</p>
+  `;
+});
