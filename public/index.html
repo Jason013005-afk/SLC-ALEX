@@ -1,35 +1,36 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>ALEX™ Real Estate Analysis</title>
-  <link rel="stylesheet" href="styles.css" />
+  <title>ALEX™ Real Estate AI</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="card">
-    <h1>Rent Analysis</h1>
 
-    <input id="zip" placeholder="ZIP Code" />
-    <input id="rate" placeholder="Interest Rate (%)" />
-    <button onclick="analyze()">Analyze</button>
+<nav>
+  <a href="/">Home</a>
+  <a href="/system.html">System</a>
+  <a href="/pricing.html">Pricing</a>
+  <a href="/contact.html">Contact</a>
+</nav>
 
-    <pre id="output"></pre>
+<div class="container">
+  <div class="hero">
+    <h1>ALEX™ Real Estate Deal Intelligence</h1>
+    <p>AI-powered rental & investment property analysis using real HUD + market data.</p>
+    <a class="button" href="/system.html">Analyze a Property</a>
   </div>
 
-<script>
-async function analyze() {
-  const zip = document.getElementById("zip").value;
-  const interestRate = Number(document.getElementById("rate").value);
+  <div class="card">
+    <h2>What ALEX Does</h2>
+    <ul>
+      <li>✔ Pulls real property data</li>
+      <li>✔ Extracts ZIP + bedrooms automatically</li>
+      <li>✔ Applies HUD SAFMR rent models</li>
+      <li>✔ Calculates NOI, DSCR, Cap Rate</li>
+      <li>✔ Generates Deal Grade</li>
+    </ul>
+  </div>
+</div>
 
-  const res = await fetch("/api/analyze", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ zip, interestRate })
-  });
-
-  const data = await res.json();
-  document.getElementById("output").textContent =
-    JSON.stringify(data, null, 2);
-}
-</script>
 </body>
 </html>
