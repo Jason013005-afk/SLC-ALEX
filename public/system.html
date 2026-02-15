@@ -4,18 +4,24 @@
   <title>ALEX™ Deal Analyzer</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
-
 <body>
-  <div class="card">
-    <h1>ALEX™ Deal Analyzer</h1>
 
-    <input id="address" placeholder="Property Address (ex: 6 Kempton St Fall River MA)" />
-    <input id="rate" placeholder="Interest Rate (%)" />
+<nav class="nav">
+  <a href="/">Home</a>
+  <a href="/system.html">System</a>
+  <a href="/pricing.html">Pricing</a>
+  <a href="/contact.html">Contact</a>
+</nav>
 
-    <button onclick="analyze()">Analyze Deal</button>
+<div class="container">
+  <h1>ALEX™ Deal Analyzer</h1>
 
-    <div id="results"></div>
-  </div>
+  <input id="address" placeholder="Property Address" />
+  <input id="rate" placeholder="Interest Rate (%)" />
+  <button onclick="analyze()">Analyze Deal</button>
+
+  <div id="results" class="results"></div>
+</div>
 
 <script>
 async function analyze() {
@@ -29,35 +35,19 @@ async function analyze() {
   });
 
   const data = await res.json();
+  const r = document.getElementById("results");
 
   if (data.error) {
-    document.getElementById("results").innerHTML =
-      `<p style="color:red;">Error: ${data.error}</p>`;
+    r.innerHTML = `<p class="error">${data.error}</p>`;
     return;
   }
 
-  document.getElementById("results").innerHTML = `
-    <hr/>
+  r.innerHTML = `
+    <h3>Results</h3>
     <p><strong>Address:</strong> ${data.address}</p>
     <p><strong>ZIP:</strong> ${data.zip}</p>
     <p><strong>Bedrooms:</strong> ${data.bedrooms}</p>
     <p><strong>HUD Rent:</strong> $${data.hudRent}</p>
     <p><strong>ARV:</strong> $${data.arv}</p>
-
-    <hr/>
-
+    <hr>
     <p><strong>Annual Rent:</strong> $${data.dealMetrics.annualRent}</p>
-    <p><strong>Annual Expenses:</strong> $${data.dealMetrics.annualExpenses}</p>
-    <p><strong>NOI:</strong> $${data.dealMetrics.annualNOI}</p>
-    <p><strong>Mortgage:</strong> $${data.dealMetrics.mortgage}</p>
-    <p><strong>Annual Cash Flow:</strong> $${data.dealMetrics.annualCashFlow}</p>
-    <p><strong>Cap Rate:</strong> ${data.dealMetrics.capRatePct}%</p>
-    <p><strong>DSCR:</strong> ${data.dealMetrics.dscr}</p>
-
-    <h2>Deal Grade: ${data.dealScore}</h2>
-  `;
-}
-</script>
-
-</body>
-</html>
