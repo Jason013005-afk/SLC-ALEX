@@ -1,144 +1,63 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>ALEX™ Deal Analyzer</title>
-<link rel="stylesheet" href="styles.css" />
-
-<style>
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: url("images/hero-bg.png") no-repeat center center fixed;
-  background-size: cover;
-  color: white;
-}
-
-.overlay {
-  background: rgba(0,0,0,0.75);
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.card {
-  background: rgba(0,0,0,0.85);
-  padding: 40px;
-  border-radius: 12px;
-  width: 600px;
-  max-width: 90%;
-  box-shadow: 0 0 30px rgba(0,0,0,0.5);
-}
-
-h1 {
-  text-align: center;
-  margin-bottom: 30px;
-}
-
-input {
-  width: 100%;
-  padding: 12px;
-  margin-bottom: 20px;
-  border-radius: 6px;
-  border: none;
-  font-size: 16px;
-}
-
-button {
-  width: 100%;
-  padding: 14px;
-  background: #d4af37;
-  border: none;
-  border-radius: 6px;
-  font-size: 16px;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-button:hover {
-  background: #b8962f;
-}
-
-.results {
-  margin-top: 30px;
-  font-size: 15px;
-  line-height: 1.6;
-}
-
-.metric {
-  margin-bottom: 8px;
-}
-
-.grade {
-  font-size: 22px;
-  font-weight: bold;
-  margin-top: 15px;
-}
-</style>
+  <title>ALEX™ Deal Analyzer</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 
 <body>
-<div class="overlay">
   <div class="card">
     <h1>ALEX™ Deal Analyzer</h1>
 
-    <input type="text" id="address" placeholder="Property Address (ex: 6 Kempton St Fall River MA)" />
-    <input type="number" id="interestRate" placeholder="Interest Rate (ex: 6.5)" step="0.01" />
+    <input id="address" placeholder="Property Address (ex: 6 Kempton St Fall River MA)" />
+    <input id="rate" placeholder="Interest Rate (%)" />
 
-    <button onclick="analyzeDeal()">Analyze Deal</button>
+    <button onclick="analyze()">Analyze Deal</button>
 
-    <div class="results" id="results"></div>
+    <div id="results"></div>
   </div>
-</div>
 
 <script>
-async function analyzeDeal() {
+async function analyze() {
   const address = document.getElementById("address").value;
-  const interestRate = parseFloat(document.getElementById("interestRate").value);
-  const resultsDiv = document.getElementById("results");
+  const interestRate = Number(document.getElementById("rate").value);
 
-  resultsDiv.innerHTML = "Analyzing deal...";
+  const res = await fetch("/api/deal-grade", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ address, interestRate })
+  });
 
-  try {
-    const response = await fetch("/api/deal-grade", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ address, interestRate })
-    });
+  const data = await res.json();
 
-    const data = await response.json();
-
-    if (data.error) {
-      resultsDiv.innerHTML = `<div style="color:red;">Error: ${data.error}</div>`;
-      return;
-    }
-
-    resultsDiv.innerHTML = `
-      <div class="metric"><strong>Address:</strong> ${data.propertyDetails.formattedAddress}</div>
-      <div class="metric"><strong>ZIP:</strong> ${data.zip}</div>
-      <div class="metric"><strong>Bedrooms:</strong> ${data.bedrooms}</div>
-      <div class="metric"><strong>HUD Rent:</strong> $${data.hudRent}</div>
-      <div class="metric"><strong>ARV:</strong> $${data.arv?.toLocaleString()}</div>
-
-      <hr>
-
-      <div class="metric"><strong>Annual Rent:</strong> $${data.dealMetrics.annualRent.toLocaleString()}</div>
-      <div class="metric"><strong>Annual Expenses:</strong> $${data.dealMetrics.annualExpenses.toLocaleString()}</div>
-      <div class="metric"><strong>NOI:</strong> $${data.dealMetrics.annualNOI.toLocaleString()}</div>
-      <div class="metric"><strong>Mortgage:</strong> $${data.dealMetrics.mortgage}</div>
-      <div class="metric"><strong>Annual Cash Flow:</strong> $${data.dealMetrics.annualCashFlow.toLocaleString()}</div>
-      <div class="metric"><strong>Cap Rate:</strong> ${data.dealMetrics.capRatePct}%</div>
-      <div class="metric"><strong>DSCR:</strong> ${data.dealMetrics.dscr}</div>
-
-      <div class="grade">Deal Grade: ${data.dealScore}</div>
-    `;
-
-  } catch (err) {
-    resultsDiv.innerHTML = `<div style="color:red;">System error</div>`;
+  if (data.error) {
+    document.getElementById("results").innerHTML =
+      `<p style="color:red;">Error: ${data.error}</p>`;
+    return;
   }
+
+  document.getElementById("results").innerHTML = `
+    <hr/>
+    <p><strong>Address:</strong> ${data.address}</p>
+    <p><strong>ZIP:</strong> ${data.zip}</p>
+    <p><strong>Bedrooms:</strong> ${data.bedrooms}</p>
+    <p><strong>HUD Rent:</strong> $${data.hudRent}</p>
+    <p><strong>ARV:</strong> $${data.arv}</p>
+
+    <hr/>
+
+    <p><strong>Annual Rent:</strong> $${data.dealMetrics.annualRent}</p>
+    <p><strong>Annual Expenses:</strong> $${data.dealMetrics.annualExpenses}</p>
+    <p><strong>NOI:</strong> $${data.dealMetrics.annualNOI}</p>
+    <p><strong>Mortgage:</strong> $${data.dealMetrics.mortgage}</p>
+    <p><strong>Annual Cash Flow:</strong> $${data.dealMetrics.annualCashFlow}</p>
+    <p><strong>Cap Rate:</strong> ${data.dealMetrics.capRatePct}%</p>
+    <p><strong>DSCR:</strong> ${data.dealMetrics.dscr}</p>
+
+    <h2>Deal Grade: ${data.dealScore}</h2>
+  `;
 }
 </script>
+
 </body>
 </html>
