@@ -1,110 +1,144 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>ALEX™ Deal Analyzer</title>
-  <link rel="stylesheet" href="styles.css">
-  <style>
-    body {
-      margin:0;
-      font-family: Arial;
-      background:url('images/hero-bg.png') no-repeat center center fixed;
-      background-size:cover;
-      color:white;
-    }
-    .card {
-      width:600px;
-      margin:100px auto;
-      background:rgba(0,0,0,0.75);
-      padding:40px;
-      border-radius:15px;
-      text-align:center;
-    }
-    input {
-      width:100%;
-      padding:15px;
-      margin:10px 0;
-      border-radius:8px;
-      border:none;
-      font-size:16px;
-    }
-    button {
-      width:100%;
-      padding:15px;
-      background:#d4af37;
-      border:none;
-      border-radius:8px;
-      font-size:18px;
-      font-weight:bold;
-      cursor:pointer;
-    }
-    button:hover {
-      opacity:0.9;
-    }
-    .results {
-      margin-top:25px;
-      text-align:left;
-      font-size:15px;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ALEX™ Deal Analyzer</title>
+<link rel="stylesheet" href="styles.css" />
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: url("images/hero-bg.png") no-repeat center center fixed;
+  background-size: cover;
+  color: white;
+}
+
+.overlay {
+  background: rgba(0,0,0,0.75);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card {
+  background: rgba(0,0,0,0.85);
+  padding: 40px;
+  border-radius: 12px;
+  width: 600px;
+  max-width: 90%;
+  box-shadow: 0 0 30px rgba(0,0,0,0.5);
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+input {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 20px;
+  border-radius: 6px;
+  border: none;
+  font-size: 16px;
+}
+
+button {
+  width: 100%;
+  padding: 14px;
+  background: #d4af37;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #b8962f;
+}
+
+.results {
+  margin-top: 30px;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.metric {
+  margin-bottom: 8px;
+}
+
+.grade {
+  font-size: 22px;
+  font-weight: bold;
+  margin-top: 15px;
+}
+</style>
 </head>
 
 <body>
+<div class="overlay">
+  <div class="card">
+    <h1>ALEX™ Deal Analyzer</h1>
 
-<div class="card">
-  <h1>ALEX™ Deal Analyzer</h1>
+    <input type="text" id="address" placeholder="Property Address (ex: 6 Kempton St Fall River MA)" />
+    <input type="number" id="interestRate" placeholder="Interest Rate (ex: 6.5)" step="0.01" />
 
-  <input id="address" placeholder="Enter Property Address">
-  <input id="rate" placeholder="Interest Rate (e.g. 6.5)">
+    <button onclick="analyzeDeal()">Analyze Deal</button>
 
-  <button onclick="analyze()">Analyze Deal</button>
-
-  <div class="results" id="results"></div>
+    <div class="results" id="results"></div>
+  </div>
 </div>
 
 <script>
-async function analyze() {
-
+async function analyzeDeal() {
   const address = document.getElementById("address").value;
-  const rate = parseFloat(document.getElementById("rate").value);
-
+  const interestRate = parseFloat(document.getElementById("interestRate").value);
   const resultsDiv = document.getElementById("results");
-  resultsDiv.innerHTML = "Analyzing...";
+
+  resultsDiv.innerHTML = "Analyzing deal...";
 
   try {
-
-    const response = await fetch("/api/analyze", {
+    const response = await fetch("/api/deal-grade", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        address: address,
-        interestRate: rate,
-        downPaymentPct: 20
-      })
+      body: JSON.stringify({ address, interestRate })
     });
 
     const data = await response.json();
 
-    if (!response.ok) {
-      resultsDiv.innerHTML = "Error: " + (data.error || "Unknown error");
+    if (data.error) {
+      resultsDiv.innerHTML = `<div style="color:red;">Error: ${data.error}</div>`;
       return;
     }
 
     resultsDiv.innerHTML = `
-      <h3>Results</h3>
-      Rent: $${data.rent}<br>
-      NOI: $${data.annualNOI}<br>
-      Mortgage: $${data.mortgage}<br>
-      Cash Flow: $${data.cashFlow}<br>
-      Cap Rate: ${data.capRatePct}%<br>
-      DSCR: ${data.dscr}<br>
-      ARV: $${data.arv || "N/A"}
+      <div class="metric"><strong>Address:</strong> ${data.propertyDetails.formattedAddress}</div>
+      <div class="metric"><strong>ZIP:</strong> ${data.zip}</div>
+      <div class="metric"><strong>Bedrooms:</strong> ${data.bedrooms}</div>
+      <div class="metric"><strong>HUD Rent:</strong> $${data.hudRent}</div>
+      <div class="metric"><strong>ARV:</strong> $${data.arv?.toLocaleString()}</div>
+
+      <hr>
+
+      <div class="metric"><strong>Annual Rent:</strong> $${data.dealMetrics.annualRent.toLocaleString()}</div>
+      <div class="metric"><strong>Annual Expenses:</strong> $${data.dealMetrics.annualExpenses.toLocaleString()}</div>
+      <div class="metric"><strong>NOI:</strong> $${data.dealMetrics.annualNOI.toLocaleString()}</div>
+      <div class="metric"><strong>Mortgage:</strong> $${data.dealMetrics.mortgage}</div>
+      <div class="metric"><strong>Annual Cash Flow:</strong> $${data.dealMetrics.annualCashFlow.toLocaleString()}</div>
+      <div class="metric"><strong>Cap Rate:</strong> ${data.dealMetrics.capRatePct}%</div>
+      <div class="metric"><strong>DSCR:</strong> ${data.dealMetrics.dscr}</div>
+
+      <div class="grade">Deal Grade: ${data.dealScore}</div>
     `;
 
   } catch (err) {
-    resultsDiv.innerHTML = "System Error";
+    resultsDiv.innerHTML = `<div style="color:red;">System error</div>`;
   }
 }
 </script>
-
 </body>
 </html>
