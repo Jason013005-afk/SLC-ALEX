@@ -1,57 +1,45 @@
-async function analyzeDeal() {
-  const address = document.getElementById("address").value.trim();
-  const interestRate = parseFloat(document.getElementById("rate").value);
+document.addEventListener("DOMContentLoaded", () => {
 
-  const resultsDiv = document.getElementById("results");
-  resultsDiv.innerHTML = "";
+  const button = document.querySelector(".gold-btn");
 
-  if (!address || isNaN(interestRate)) {
-    resultsDiv.innerHTML = "<p style='color:red;'>Please enter address and interest rate.</p>";
-    return;
-  }
+  button.addEventListener("click", async () => {
 
-  try {
-    const res = await fetch("/api/deal-grade", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ address, interestRate })
-    });
+    const zip = document.querySelectorAll("input")[0].value.trim();
 
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error || "Server error");
+    if (!zip) {
+      alert("Enter ZIP Code");
+      return;
     }
 
-    const data = await res.json();
+    try {
 
-    renderResults(data);
+      const response = await fetch(`/api/analyze?zip=${zip}`);
+      const data = await response.json();
 
-  } catch (err) {
-    resultsDiv.innerHTML = `<p style="color:red;">${err.message}</p>`;
-  }
-}
+      if (!response.ok) {
+        document.getElementById("results").innerHTML =
+          `<p style="color:red;">${data.error}</p>`;
+        return;
+      }
 
-function renderResults(data) {
-  const resultsDiv = document.getElementById("results");
+      document.getElementById("results").innerHTML = `
+        <div class="result-card">
+          <h2>HUD SAFMR Data</h2>
+          <p><strong>Area:</strong> ${data["HUD Metro Fair Market Rent Area Name"]}</p>
+          <p><strong>0BR:</strong> ${data["SAFMR 0BR"]}</p>
+          <p><strong>1BR:</strong> ${data["SAFMR 1BR"]}</p>
+          <p><strong>2BR:</strong> ${data["SAFMR 2BR"]}</p>
+          <p><strong>3BR:</strong> ${data["SAFMR 3BR"]}</p>
+          <p><strong>4BR:</strong> ${data["SAFMR 4BR"]}</p>
+        </div>
+      `;
 
-  resultsDiv.innerHTML = `
-    <hr>
-    <h3>Address:</h3> ${data.address}
-    <h3>ZIP:</h3> ${data.zip}
-    <h3>Bedrooms:</h3> ${data.bedrooms}
-    <h3>HUD Rent:</h3> $${data.hudRent.toLocaleString()}
-    <h3>ARV:</h3> $${data.arv.toLocaleString()}
+    } catch (err) {
+      console.error(err);
+      document.getElementById("results").innerHTML =
+        `<p style="color:red;">Server error</p>`;
+    }
 
-    <hr>
+  });
 
-    <h3>Annual Rent:</h3> $${data.dealMetrics.annualRent.toLocaleString()}
-    <h3>Annual Expenses:</h3> $${data.dealMetrics.annualExpenses.toLocaleString()}
-    <h3>NOI:</h3> $${data.dealMetrics.annualNOI.toLocaleString()}
-    <h3>Mortgage:</h3> $${data.dealMetrics.mortgage.toLocaleString()}
-    <h3>Annual Cash Flow:</h3> $${data.dealMetrics.annualCashFlow.toLocaleString()}
-    <h3>Cap Rate:</h3> ${data.dealMetrics.capRatePct}%
-    <h3>DSCR:</h3> ${data.dealMetrics.dscr}
-
-    <h2 style="margin-top:20px;">Deal Grade: ${data.dealScore}</h2>
-  `;
-}
+});
