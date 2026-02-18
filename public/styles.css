@@ -1,159 +1,85 @@
-/* =========================
-   GLOBAL RESET
-========================= */
+/* RESET */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: 'Segoe UI', sans-serif;
 }
 
 html, body {
   height: 100%;
+  font-family: Arial, Helvetica, sans-serif;
+  color: white;
 }
 
-/* =========================
-   BACKGROUND
-========================= */
+/* ===== FULL BRIGHT BACKGROUND ===== */
 body {
-  background: url("images/hero-bg.png") no-repeat center center fixed;
+  background: url("/images/hero-bg.png") no-repeat center center fixed;
   background-size: cover;
-  color: #ffffff;
-  position: relative;
 }
 
-/* Dark overlay for readability */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.65);
-  z-index: -1;
-}
-
-/* =========================
-   NAVIGATION
-========================= */
-nav {
+/* ===== HEADER ===== */
+header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 20px 40px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 60px;
 }
 
-nav img {
-  height: 60px;
+/* LOGO 4in wide (~380px) */
+.logo {
+  width: 380px;
+  height: auto;
 }
 
-nav ul {
-  list-style: none;
-  display: flex;
-  gap: 40px;
-}
-
+/* NAV MENU */
 nav a {
-  text-decoration: none;
   color: #d4af37;
-  font-weight: 600;
+  text-decoration: none;
+  margin-left: 30px;
   font-size: 18px;
+  font-weight: bold;
+  transition: 0.3s ease;
 }
 
 nav a:hover {
-  opacity: 0.8;
+  opacity: 0.7;
 }
 
-/* =========================
-   HERO TITLE
-========================= */
-.hero {
-  padding: 120px 80px 40px 80px;
+/* ===== HERO CONTENT ===== */
+.hero-content {
+  position: absolute;
+  bottom: 120px;
+  left: 60px;
+  max-width: 600px;
 }
 
-.hero h1 {
-  font-size: 64px;
-  color: #d4af37;
-  font-weight: 700;
+.hero-content h1 {
+  font-size: 60px;
+  margin-bottom: 20px;
 }
 
-/* =========================
-   FORM
-========================= */
-.form-container {
-  padding: 20px 80px 80px 80px;
-  max-width: 700px;
-}
-
-input {
-  width: 100%;
-  padding: 18px;
-  margin-bottom: 25px;
-  border-radius: 8px;
-  border: none;
-  font-size: 18px;
-  background: #e8eef7;
-  color: #000;
-}
-
-button {
-  background: #d4af37;
-  color: #000;
-  border: none;
-  padding: 15px 30px;
-  font-size: 18px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-button:hover {
-  opacity: 0.9;
-}
-
-/* =========================
-   RESULTS BOX
-========================= */
-.results {
-  margin-top: 40px;
-  background: rgba(0, 0, 0, 0.75);
-  padding: 30px;
-  border-radius: 12px;
-}
-
-.results h2 {
-  color: #d4af37;
-  margin-bottom: 15px;
-}
-
-.results p {
-  font-size: 18px;
-  margin-bottom: 6px;
-}
-
-/* =========================
-   PRICING PAGE
-========================= */
-.pricing-section {
-  padding: 140px 80px;
-  max-width: 900px;
-}
-
-.pricing-section h1 {
-  font-size: 48px;
+.hero-content p {
+  font-size: 20px;
   margin-bottom: 30px;
-  color: #d4af37;
 }
 
-.pricing-card {
-  background: rgba(0, 0, 0, 0.8);
-  padding: 30px;
-  margin-bottom: 25px;
-  border-radius: 12px;
+/* GOLD BUTTON */
+.gold-btn {
+  background-color: #d4af37;
+  color: black;
+  padding: 14px 30px;
+  font-size: 18px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.3s ease;
 }
 
-.pricing-card h2 {
-  margin-bottom: 10px;
-}
-
-.pricing-card p {
-  margin-bottom: 6px;
+.gold-btn:hover {
+  background-color: #b8952f;
 }
