@@ -5,24 +5,30 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+html, body {
+  height: 100%;
 }
 
 /* =========================
-   GLOBAL LIGHT THEME
+   BACKGROUND
 ========================= */
 body {
-  min-height: 100vh;
-  color: #111;
-  background-image: linear-gradient(
-      rgba(255,255,255,0.75),
-      rgba(255,255,255,0.75)
-    ),
-    url("images/hero-bg.png");
-
+  background: url("images/hero-bg.png") no-repeat center center fixed;
   background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
+  color: #ffffff;
+  position: relative;
+}
+
+/* Dark overlay for readability */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  z-index: -1;
 }
 
 /* =========================
@@ -39,11 +45,16 @@ nav img {
   height: 60px;
 }
 
+nav ul {
+  list-style: none;
+  display: flex;
+  gap: 40px;
+}
+
 nav a {
-  margin-left: 30px;
   text-decoration: none;
-  font-weight: bold;
-  color: #c8a028;
+  color: #d4af37;
+  font-weight: 600;
   font-size: 18px;
 }
 
@@ -52,76 +63,97 @@ nav a:hover {
 }
 
 /* =========================
-   MAIN CONTENT
+   HERO TITLE
 ========================= */
-.container {
-  padding: 80px 60px;
-  max-width: 900px;
+.hero {
+  padding: 120px 80px 40px 80px;
 }
 
-h1 {
+.hero h1 {
   font-size: 64px;
-  margin-bottom: 40px;
-  color: #c8a028;
+  color: #d4af37;
+  font-weight: 700;
 }
 
 /* =========================
-   INPUTS
+   FORM
 ========================= */
+.form-container {
+  padding: 20px 80px 80px 80px;
+  max-width: 700px;
+}
+
 input {
   width: 100%;
-  padding: 16px;
-  margin-bottom: 20px;
+  padding: 18px;
+  margin-bottom: 25px;
   border-radius: 8px;
-  border: 1px solid #ddd;
+  border: none;
   font-size: 18px;
+  background: #e8eef7;
+  color: #000;
 }
 
-/* =========================
-   BUTTON
-========================= */
 button {
-  background-color: #c8a028;
-  color: black;
-  padding: 14px 28px;
-  font-size: 18px;
-  font-weight: bold;
+  background: #d4af37;
+  color: #000;
   border: none;
-  border-radius: 6px;
+  padding: 15px 30px;
+  font-size: 18px;
+  border-radius: 8px;
   cursor: pointer;
+  font-weight: 600;
 }
 
 button:hover {
-  opacity: 0.85;
+  opacity: 0.9;
 }
 
 /* =========================
-   RESULT CARD
+   RESULTS BOX
 ========================= */
-.result-card {
+.results {
   margin-top: 40px;
+  background: rgba(0, 0, 0, 0.75);
   padding: 30px;
-  background: white;
   border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
 }
 
-.result-card h2 {
+.results h2 {
+  color: #d4af37;
   margin-bottom: 15px;
 }
 
-.result-card p {
+.results p {
   font-size: 18px;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 /* =========================
-   PRICING CARDS
+   PRICING PAGE
 ========================= */
+.pricing-section {
+  padding: 140px 80px;
+  max-width: 900px;
+}
+
+.pricing-section h1 {
+  font-size: 48px;
+  margin-bottom: 30px;
+  color: #d4af37;
+}
+
 .pricing-card {
-  background: white;
-  padding: 40px;
+  background: rgba(0, 0, 0, 0.8);
+  padding: 30px;
+  margin-bottom: 25px;
   border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-  max-width: 400px;
+}
+
+.pricing-card h2 {
+  margin-bottom: 10px;
+}
+
+.pricing-card p {
+  margin-bottom: 6px;
 }
