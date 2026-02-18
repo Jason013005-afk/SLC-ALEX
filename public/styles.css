@@ -1,5 +1,5 @@
 /* =========================
-   RESET
+   GLOBAL RESET
 ========================= */
 * {
   margin: 0;
@@ -9,12 +9,12 @@
 
 html, body {
   height: 100%;
-  font-family: Arial, sans-serif;
+  font-family: Arial, Helvetica, sans-serif;
   overflow-x: hidden;
 }
 
 /* =========================
-   BRIGHT BACKGROUND
+   BACKGROUND
 ========================= */
 body {
   background: url("images/hero-bg.png") center center / cover no-repeat fixed;
@@ -32,8 +32,10 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  z-index: 10;
 }
 
+/* LOGO SIZE */
 .site-header .logo {
   width: 320px;
   height: auto;
@@ -86,6 +88,7 @@ button {
   border-radius: 6px;
   cursor: pointer;
   transition: 0.3s ease;
+  margin-top: 10px;
 }
 
 button:hover {
@@ -99,8 +102,9 @@ input, textarea {
   padding: 10px;
   margin-bottom: 10px;
   font-size: 16px;
-  border: none;
   border-radius: 6px;
+  border: none;
+  color: black;
 }
 
 input {
@@ -125,7 +129,9 @@ textarea {
   gap: 10px;
 }
 
-/* RESULTS */
+/* =========================
+   RESULTS
+========================= */
 .results-box {
   margin-top: 20px;
   background: rgba(0,0,0,0.6);
@@ -134,11 +140,41 @@ textarea {
   font-size: 18px;
 }
 
-/* PRICING CARDS */
+/* =========================
+   PRICING PAGE LAYOUT
+========================= */
+.pricing-content {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+/* Row wrapper for horizontal cards */
+.pricing-row {
+  display: flex;
+  gap: 30px;
+  flex-wrap: wrap;
+  margin-top: 30px;
+}
+
+/* Individual pricing cards */
 .pricing-card {
-  background: rgba(0,0,0,0.6);
-  padding: 20px;
-  margin-bottom: 20px;
-  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 30px;
+  border-radius: 10px;
+  width: 310px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+  font-size: 18px;
+  color: #fff;
+}
+
+.pricing-card h2 {
+  margin-bottom: 15px;
+  font-size: 26px;
+}
+
+.pricing-card p {
+  margin: 8px 0;
+  line-height: 1.4;
   font-size: 18px;
 }
