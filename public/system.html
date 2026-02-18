@@ -1,70 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>ALEX™ System</title>
-<link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+  <title>ALEX™ System</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-<header>
-  <img src="images/slc-logo.png" class="logo" />
-  <nav>
-    <a href="index.html">Home</a>
-    <a href="system.html">System</a>
-    <a href="pricing.html">Pricing</a>
-    <a href="contact.html">Contact</a>
-  </nav>
-</header>
+<div class="hero">
 
-<section class="page">
-  <h1>ALEX™ System</h1>
+  <!-- HEADER -->
+  <div class="top-bar">
+    <img src="images/slc-logo.png" class="logo-small">
 
-  <input id="zip" type="text" placeholder="ZIP Code" />
-  <input type="text" placeholder="Property Address" />
-  <input type="text" placeholder="Interest Rate %" />
-
-  <button onclick="analyze()" class="gold-btn">Analyze Deal</button>
-
-  <div id="results" class="results" style="display:none;">
-    <h2>HUD SAFMR Data</h2>
-    <p><strong>Area:</strong> <span id="area"></span></p>
-    <p><strong>0BR:</strong> <span id="studio"></span></p>
-    <p><strong>1BR:</strong> <span id="one"></span></p>
-    <p><strong>2BR:</strong> <span id="two"></span></p>
-    <p><strong>3BR:</strong> <span id="three"></span></p>
-    <p><strong>4BR:</strong> <span id="four"></span></p>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="system.html">System</a>
+      <a href="pricing.html">Pricing</a>
+      <a href="contact.html">Contact</a>
+    </nav>
   </div>
-</section>
 
-<script>
-async function analyze() {
-  const zip = document.getElementById("zip").value.trim();
+  <!-- CONTENT -->
+  <div class="hero-content">
 
-  if (!zip) {
-    alert("Enter ZIP");
-    return;
-  }
+    <h1>ALEX™ System</h1>
 
-  const res = await fetch(`/api/analyze?zip=${zip}`);
+    <div class="form-row">
+      <input id="zip" placeholder="ZIP Code">
+      <input id="address" placeholder="Property Address">
+      <input id="rate" placeholder="Interest Rate %">
+      <button onclick="analyze()">Analyze Deal</button>
+    </div>
 
-  if (!res.ok) {
-    alert("ZIP not found");
-    return;
-  }
+    <div id="results" class="results-box"></div>
 
-  const data = await res.json();
+  </div>
 
-  document.getElementById("area").textContent = data.area;
-  document.getElementById("studio").textContent = data.studio;
-  document.getElementById("one").textContent = data.one;
-  document.getElementById("two").textContent = data.two;
-  document.getElementById("three").textContent = data.three;
-  document.getElementById("four").textContent = data.four;
+</div>
 
-  document.getElementById("results").style.display = "block";
-}
-</script>
-
+<script src="system.js"></script>
 </body>
 </html>

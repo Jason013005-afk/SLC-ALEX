@@ -1,85 +1,93 @@
-/* RESET */
-* {
+body, html {
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
-}
-
-html, body {
+  font-family: Arial, sans-serif;
   height: 100%;
-  font-family: Arial, Helvetica, sans-serif;
   color: white;
 }
 
-/* ===== FULL BRIGHT BACKGROUND ===== */
-body {
-  background: url("/images/hero-bg.png") no-repeat center center fixed;
-  background-size: cover;
+.hero {
+  height: 100vh;
+  background: url('images/hero-bg.png') center center / cover no-repeat;
+  position: relative;
 }
 
-/* ===== HEADER ===== */
-header {
+.top-bar {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  padding: 20px 40px;
+  top: 20px;
+  left: 40px;
+  right: 40px;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-/* LOGO 4in wide (~380px) */
-.logo {
-  width: 380px;
-  height: auto;
+.logo-small {
+  width: 384px;
+  max-width: 40vw;
 }
 
-/* NAV MENU */
 nav a {
-  color: #d4af37;
-  text-decoration: none;
   margin-left: 30px;
-  font-size: 18px;
+  text-decoration: none;
+  color: #c9a227;
   font-weight: bold;
-  transition: 0.3s ease;
+  font-size: 18px;
 }
 
-nav a:hover {
-  opacity: 0.7;
-}
-
-/* ===== HERO CONTENT ===== */
 .hero-content {
   position: absolute;
   bottom: 120px;
-  left: 60px;
+  left: 80px;
   max-width: 600px;
 }
 
 .hero-content h1 {
   font-size: 60px;
-  margin-bottom: 20px;
-}
-
-.hero-content p {
-  font-size: 20px;
   margin-bottom: 30px;
 }
 
-/* GOLD BUTTON */
-.gold-btn {
-  background-color: #d4af37;
-  color: black;
-  padding: 14px 30px;
-  font-size: 18px;
+button {
+  background: #c9a227;
   border: none;
-  border-radius: 6px;
+  padding: 14px 24px;
+  font-size: 18px;
   cursor: pointer;
   font-weight: bold;
-  transition: 0.3s ease;
+  margin-top: 10px;
 }
 
-.gold-btn:hover {
-  background-color: #b8952f;
+input, textarea {
+  padding: 10px;
+  margin-right: 10px;
+  margin-bottom: 10px;
+  font-size: 16px;
+  border: none;
+  width: 180px;
+}
+
+textarea {
+  width: 380px;
+  height: 100px;
+}
+
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.form-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.results-box {
+  margin-top: 20px;
+  background: rgba(0,0,0,0.6);
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.pricing-card {
+  margin-bottom: 20px;
 }
