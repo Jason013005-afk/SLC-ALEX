@@ -1,47 +1,70 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>ALEX™ System</title>
-    <link rel="stylesheet" href="styles.css">
+<meta charset="UTF-8">
+<title>ALEX™ System</title>
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
 <header>
-    <img src="images/slc-logo.png" alt="Silver Lining Consulting" class="logo">
-    <nav>
-        <a href="index.html">Home</a>
-        <a href="system.html">System</a>
-        <a href="pricing.html">Pricing</a>
-        <a href="contact.html">Contact</a>
-    </nav>
+  <img src="images/slc-logo.png" class="logo" />
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="system.html">System</a>
+    <a href="pricing.html">Pricing</a>
+    <a href="contact.html">Contact</a>
+  </nav>
 </header>
 
 <section class="page">
+  <h1>ALEX™ System</h1>
 
-    <h1 class="gold-title">ALEX™ System</h1>
+  <input id="zip" type="text" placeholder="ZIP Code" />
+  <input type="text" placeholder="Property Address" />
+  <input type="text" placeholder="Interest Rate %" />
 
-    <input id="zip" type="text" placeholder="ZIP Code" />
-    <input id="address" type="text" placeholder="Property Address" />
-    <input id="rate" type="text" placeholder="Interest Rate %" />
+  <button onclick="analyze()" class="gold-btn">Analyze Deal</button>
 
-    <button id="analyzeBtn" class="gold-btn">Analyze Deal</button>
-
-    <div id="results" class="results-box" style="display:none;">
-        <h2>HUD SAFMR Data</h2>
-        <p><strong>Area:</strong> <span id="area"></span></p>
-        <p><strong>0BR:</strong> $<span id="br0"></span></p>
-        <p><strong>1BR:</strong> $<span id="br1"></span></p>
-        <p><strong>2BR:</strong> $<span id="br2"></span></p>
-        <p><strong>3BR:</strong> $<span id="br3"></span></p>
-        <p><strong>4BR:</strong> $<span id="br4"></span></p>
-    </div>
-
-    <div id="error" class="error-box"></div>
-
+  <div id="results" class="results" style="display:none;">
+    <h2>HUD SAFMR Data</h2>
+    <p><strong>Area:</strong> <span id="area"></span></p>
+    <p><strong>0BR:</strong> <span id="studio"></span></p>
+    <p><strong>1BR:</strong> <span id="one"></span></p>
+    <p><strong>2BR:</strong> <span id="two"></span></p>
+    <p><strong>3BR:</strong> <span id="three"></span></p>
+    <p><strong>4BR:</strong> <span id="four"></span></p>
+  </div>
 </section>
 
-<script src="system.js"></script>
+<script>
+async function analyze() {
+  const zip = document.getElementById("zip").value.trim();
+
+  if (!zip) {
+    alert("Enter ZIP");
+    return;
+  }
+
+  const res = await fetch(`/api/analyze?zip=${zip}`);
+
+  if (!res.ok) {
+    alert("ZIP not found");
+    return;
+  }
+
+  const data = await res.json();
+
+  document.getElementById("area").textContent = data.area;
+  document.getElementById("studio").textContent = data.studio;
+  document.getElementById("one").textContent = data.one;
+  document.getElementById("two").textContent = data.two;
+  document.getElementById("three").textContent = data.three;
+  document.getElementById("four").textContent = data.four;
+
+  document.getElementById("results").style.display = "block";
+}
+</script>
 
 </body>
 </html>

@@ -1,45 +1,38 @@
-document.addEventListener("DOMContentLoaded", () => {
+document.getElementById("analyzeBtn").addEventListener("click", async () => {
+  const zip = document.getElementById("zip").value.trim();
+  const results = document.getElementById("results");
 
-  const button = document.querySelector(".gold-btn");
+  results.innerHTML = "Loading...";
 
-  button.addEventListener("click", async () => {
+  if (!zip) {
+    results.innerHTML = "<p style='color:red;'>ZIP required</p>";
+    return;
+  }
 
-    const zip = document.querySelectorAll("input")[0].value.trim();
+  try {
+    const response = await fetch(`/api/analyze?zip=${zip}`);
 
-    if (!zip) {
-      alert("Enter ZIP Code");
+    if (!response.ok) {
+      const err = await response.json();
+      results.innerHTML = `<p style="color:red;">${err.error}</p>`;
       return;
     }
 
-    try {
+    const data = await response.json();
 
-      const response = await fetch(`/api/analyze?zip=${zip}`);
-      const data = await response.json();
+    results.innerHTML = `
+      <div class="results-card">
+        <h2>HUD SAFMR Data</h2>
+        <p><strong>Area:</strong> ${data.area}</p>
+        <p><strong>Studio:</strong> ${data.studio}</p>
+        <p><strong>1BR:</strong> ${data.one}</p>
+        <p><strong>2BR:</strong> ${data.two}</p>
+        <p><strong>3BR:</strong> ${data.three}</p>
+        <p><strong>4BR:</strong> ${data.four}</p>
+      </div>
+    `;
 
-      if (!response.ok) {
-        document.getElementById("results").innerHTML =
-          `<p style="color:red;">${data.error}</p>`;
-        return;
-      }
-
-      document.getElementById("results").innerHTML = `
-        <div class="result-card">
-          <h2>HUD SAFMR Data</h2>
-          <p><strong>Area:</strong> ${data["HUD Metro Fair Market Rent Area Name"]}</p>
-          <p><strong>0BR:</strong> ${data["SAFMR 0BR"]}</p>
-          <p><strong>1BR:</strong> ${data["SAFMR 1BR"]}</p>
-          <p><strong>2BR:</strong> ${data["SAFMR 2BR"]}</p>
-          <p><strong>3BR:</strong> ${data["SAFMR 3BR"]}</p>
-          <p><strong>4BR:</strong> ${data["SAFMR 4BR"]}</p>
-        </div>
-      `;
-
-    } catch (err) {
-      console.error(err);
-      document.getElementById("results").innerHTML =
-        `<p style="color:red;">Server error</p>`;
-    }
-
-  });
-
+  } catch (error) {
+    results.innerHTML = "<p style='color:red;'>Server error</p>";
+  }
 });
