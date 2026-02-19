@@ -1,6 +1,6 @@
-/* =========================
+/* =======================================================
    GLOBAL RESET
-========================= */
+======================================================= */
 * {
   margin: 0;
   padding: 0;
@@ -9,21 +9,21 @@
 
 html, body {
   height: 100%;
-  font-family: Arial, sans-serif;
+  font-family: Arial, Helvetica, sans-serif;
   overflow-x: hidden;
 }
 
-/* =========================
+/* =======================================================
    BRIGHT BACKGROUND
-========================= */
+======================================================= */
 body {
   background: url("images/hero-bg.png") center center / cover no-repeat fixed;
   color: white;
 }
 
-/* =========================
+/* =======================================================
    HEADER (LOGO + NAV)
-========================= */
+======================================================= */
 .site-header {
   position: absolute;
   top: 20px;
@@ -35,13 +35,11 @@ body {
   z-index: 10;
 }
 
-/* LOGO SIZE */
 .site-header .logo {
   width: 320px;
   height: auto;
 }
 
-/* NAV LINKS */
 .site-nav a {
   margin-left: 30px;
   text-decoration: none;
@@ -55,29 +53,26 @@ body {
   opacity: 0.7;
 }
 
-/* =========================
-   HERO CONTENT (BOTTOM LEFT)
-========================= */
+/* =======================================================
+   HERO CONTENT
+======================================================= */
 .hero-content {
   position: absolute;
-  bottom: 100px;
+  bottom: 250px; /* push content up so cards are on bottom */
   left: 60px;
   max-width: 700px;
 }
 
-/* MAIN TITLES */
 .hero-content h1 {
   font-size: 58px;
   margin-bottom: 10px;
 }
 
-/* PARAGRAPHS */
 .hero-content p {
   font-size: 20px;
   margin-bottom: 15px;
 }
 
-/* BUTTONS */
 button {
   background: #d4af27;
   color: black;
@@ -95,96 +90,48 @@ button:hover {
   background: #b89725;
 }
 
-/* =========================
-   FORM INPUTS
-========================= */
-input, textarea {
-  padding: 10px;
-  margin-bottom: 10px;
-  font-size: 16px;
-  border-radius: 6px;
-  border: none;
-  color: black;
-}
-
-input {
-  width: 200px;
-}
-
-textarea {
-  width: 380px;
-  height: 100px;
-}
-
-/* FORM LAYOUT */
-.form-row {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.form-column {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-/* =========================
-   RESULTS
-========================= */
-.results-box {
-  margin-top: 20px;
-  background: rgba(0,0,0,0.6);
-  padding: 15px;
-  border-radius: 8px;
-  font-size: 18px;
-}
-
-/* =========================
-   PRICING PAGE SPECIFIC
-========================= */
-
-/* Pricing title below the header */
-.pricing-title {
-  font-size: 56px;
-  margin-bottom: 30px;
-  color: #ffffff;
-}
-
-/* Pricing row centered horizontally */
-.pricing-row {
+/* =======================================================
+   PRICING PAGE LAYOUT — THREE ACROSS THE BOTTOM
+======================================================= */
+.pricing-content {
+  position: absolute;
+  bottom: 60px; /* bottom of page */
+  left: 0;
+  right: 0;
   display: flex;
   justify-content: center;
-  gap: 40px;
-  flex-wrap: wrap;
-  margin-top: 30px;
+  gap: 45px;
+  padding: 0 60px;
+  align-items: flex-end;
 }
 
-/* Pricing card box */
+/* Card box */
 .pricing-card {
   background: rgba(0, 0, 0, 0.65);
-  padding: 30px;
+  padding: 28px;
   border-radius: 12px;
-  width: 300px;
+  width: 320px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
   font-size: 18px;
   color: #fff;
 }
 
 .pricing-card h2 {
-  margin-bottom: 15px;
-  font-size: 26px;
+  font-size: 28px;
+  margin-bottom: 14px;
 }
 
 .pricing-card p {
-  margin-bottom: 8px;
   font-size: 18px;
+  margin-bottom: 10px;
 }
 
-/* Responsive wrap for smaller screens */
-@media (max-width: 800px) {
-  .pricing-row {
+/* responsive fallback if screen too narrow */
+@media (max-width: 1024px) {
+  .pricing-content {
     flex-direction: column;
+    gap: 30px;
+    bottom: 40px;
     align-items: center;
   }
 }
