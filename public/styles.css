@@ -9,12 +9,12 @@
 
 html, body {
   height: 100%;
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: Arial, sans-serif;
   overflow-x: hidden;
 }
 
 /* =========================
-   BACKGROUND
+   BRIGHT BACKGROUND
 ========================= */
 body {
   background: url("images/hero-bg.png") center center / cover no-repeat fixed;
@@ -141,29 +141,32 @@ textarea {
 }
 
 /* =========================
-   PRICING PAGE LAYOUT
+   PRICING PAGE SPECIFIC
 ========================= */
-.pricing-content {
-  display: flex;
-  flex-direction: column;
-  gap: 40px;
+
+/* Pricing title below the header */
+.pricing-title {
+  font-size: 56px;
+  margin-bottom: 30px;
+  color: #ffffff;
 }
 
-/* Row wrapper for horizontal cards */
+/* Pricing row centered horizontally */
 .pricing-row {
   display: flex;
-  gap: 30px;
+  justify-content: center;
+  gap: 40px;
   flex-wrap: wrap;
   margin-top: 30px;
 }
 
-/* Individual pricing cards */
+/* Pricing card box */
 .pricing-card {
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.65);
   padding: 30px;
-  border-radius: 10px;
-  width: 310px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+  border-radius: 12px;
+  width: 300px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
   font-size: 18px;
   color: #fff;
 }
@@ -174,7 +177,14 @@ textarea {
 }
 
 .pricing-card p {
-  margin: 8px 0;
-  line-height: 1.4;
+  margin-bottom: 8px;
   font-size: 18px;
+}
+
+/* Responsive wrap for smaller screens */
+@media (max-width: 800px) {
+  .pricing-row {
+    flex-direction: column;
+    align-items: center;
+  }
 }
