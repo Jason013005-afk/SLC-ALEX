@@ -14,7 +14,7 @@ html, body {
 }
 
 /* =========================
-   BACKGROUND
+   BRIGHT BACKGROUND
 ========================= */
 body {
   background: url("images/hero-bg.png") center center / cover no-repeat fixed;
@@ -32,11 +32,12 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  z-index: 10;
+  z-index: 20;
 }
 
+/* LOGO — now significantly bigger */
 .site-header .logo {
-  width: 320px;
+  width: 464px; /* ~1.5 inches larger */
   height: auto;
 }
 
@@ -50,31 +51,32 @@ body {
 }
 
 .site-nav a:hover {
-  opacity: 0.7;
+  opacity: 0.8;
 }
 
 /* =========================
-   HERO TITLE
+   HERO TITLE STYLING
 ========================= */
 .hero-content {
   position: absolute;
-  top: 150px;
+  top: 160px;
   left: 60px;
+  max-width: 700px;
 }
 
 .hero-content h1 {
-  font-size: 58px;
-  margin-bottom: 10px;
+  font-size: 64px;
+  margin-bottom: 12px;
 }
 
 /* =========================
-   BUTTONS
+   BUTTON STYLES
 ========================= */
 button {
   background: #d4af27;
   color: black;
   border: none;
-  padding: 14px 30px;
+  padding: 14px 32px;
   font-size: 18px;
   font-weight: bold;
   border-radius: 6px;
@@ -83,7 +85,7 @@ button {
 }
 
 button:hover {
-  background: #b89725;
+  background: #b89625;
 }
 
 /* =========================
@@ -99,7 +101,7 @@ input, textarea {
 }
 
 input {
-  width: 200px;
+  width: 240px;
 }
 
 textarea {
@@ -119,6 +121,9 @@ textarea {
   gap: 10px;
 }
 
+/* =========================
+   RESULTS
+========================= */
 .results-box {
   margin-top: 20px;
   background: rgba(0,0,0,0.6);
@@ -127,9 +132,9 @@ textarea {
   font-size: 18px;
 }
 
-/* =========================
-   PRICING PAGE STYLE
-========================= */
+/* =======================================================
+   PRICING PAGE — HORIZONTAL BOTTOM LAYOUT
+======================================================= */
 .pricing-content {
   position: absolute;
   bottom: 60px;
@@ -140,21 +145,22 @@ textarea {
   gap: 45px;
   padding: 0 40px;
   align-items: center;
+  z-index: 10;
 }
 
 .pricing-card {
   background: rgba(0, 0, 0, 0.65);
   padding: 28px;
   border-radius: 12px;
-  width: 300px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.35);
-  color: white;
+  width: 320px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
   font-size: 18px;
+  color: white;
 }
 
 .pricing-card h2 {
   font-size: 28px;
-  margin-bottom: 15px;
+  margin-bottom: 14px;
 }
 
 .pricing-card p {
@@ -162,11 +168,12 @@ textarea {
   margin-bottom: 8px;
 }
 
+/* FORCING HORIZONTAL ALIGNMENT */
 @media (max-width: 1024px) {
   .pricing-content {
-    flex-direction: column;
-    gap: 30px;
-    bottom: 40px;
-    align-items: center;
+    flex-direction: row !important;
+    flex-wrap: wrap;
+    gap: 25px;
+    padding-bottom: 80px;
   }
 }
