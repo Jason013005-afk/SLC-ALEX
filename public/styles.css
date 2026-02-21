@@ -1,6 +1,6 @@
-/* =======================================================
+/* =========================
    GLOBAL RESET
-======================================================= */
+========================= */
 * {
   margin: 0;
   padding: 0;
@@ -13,17 +13,17 @@ html, body {
   overflow-x: hidden;
 }
 
-/* =======================================================
-   BRIGHT BACKGROUND
-======================================================= */
+/* =========================
+   BACKGROUND
+========================= */
 body {
   background: url("images/hero-bg.png") center center / cover no-repeat fixed;
   color: white;
 }
 
-/* =======================================================
+/* =========================
    HEADER (LOGO + NAV)
-======================================================= */
+========================= */
 .site-header {
   position: absolute;
   top: 20px;
@@ -53,14 +53,13 @@ body {
   opacity: 0.7;
 }
 
-/* =======================================================
-   HERO CONTENT
-======================================================= */
+/* =========================
+   HERO TITLE
+========================= */
 .hero-content {
   position: absolute;
-  bottom: 250px; /* push content up so cards are on bottom */
+  top: 150px;
   left: 60px;
-  max-width: 700px;
 }
 
 .hero-content h1 {
@@ -68,11 +67,9 @@ body {
   margin-bottom: 10px;
 }
 
-.hero-content p {
-  font-size: 20px;
-  margin-bottom: 15px;
-}
-
+/* =========================
+   BUTTONS
+========================= */
 button {
   background: #d4af27;
   color: black;
@@ -83,50 +80,88 @@ button {
   border-radius: 6px;
   cursor: pointer;
   transition: 0.3s ease;
-  margin-top: 10px;
 }
 
 button:hover {
   background: #b89725;
 }
 
-/* =======================================================
-   PRICING PAGE LAYOUT — THREE ACROSS THE BOTTOM
-======================================================= */
+/* =========================
+   FORM STYLES
+========================= */
+input, textarea {
+  padding: 10px;
+  margin-bottom: 10px;
+  font-size: 16px;
+  border-radius: 6px;
+  border: none;
+  color: black;
+}
+
+input {
+  width: 200px;
+}
+
+textarea {
+  width: 380px;
+  height: 100px;
+}
+
+.form-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.form-column {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.results-box {
+  margin-top: 20px;
+  background: rgba(0,0,0,0.6);
+  padding: 15px;
+  border-radius: 8px;
+  font-size: 18px;
+}
+
+/* =========================
+   PRICING PAGE STYLE
+========================= */
 .pricing-content {
   position: absolute;
-  bottom: 60px; /* bottom of page */
+  bottom: 60px;
   left: 0;
   right: 0;
   display: flex;
   justify-content: center;
   gap: 45px;
-  padding: 0 60px;
-  align-items: flex-end;
+  padding: 0 40px;
+  align-items: center;
 }
 
-/* Card box */
 .pricing-card {
   background: rgba(0, 0, 0, 0.65);
   padding: 28px;
   border-radius: 12px;
-  width: 320px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  width: 300px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+  color: white;
   font-size: 18px;
-  color: #fff;
 }
 
 .pricing-card h2 {
   font-size: 28px;
-  margin-bottom: 14px;
+  margin-bottom: 15px;
 }
 
 .pricing-card p {
   font-size: 18px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
-/* responsive fallback if screen too narrow */
 @media (max-width: 1024px) {
   .pricing-content {
     flex-direction: column;
