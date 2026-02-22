@@ -20,8 +20,23 @@
 <div class="hero-content">
   <h1>ALEX™</h1>
   <p>AI-Powered Real Estate Deal Analyzer</p>
-  <button onclick="location.href='system.html'">Start Analyzing</button>
+  <button onclick="document.getElementById('tool-section').scrollIntoView({ behavior: 'smooth' })">
+    Start Analyzing
+  </button>
 </div>
 
+<!-- ===== TOOL SECTION ===== -->
+<section id="tool-section" class="tool-section">
+  <h2>Analyze a Property</h2>
+  <div class="form-row">
+    <input id="zip" placeholder="ZIP Code">
+    <input id="address" placeholder="Property Address">
+    <input id="rate" placeholder="Interest Rate %">
+    <button onclick="analyze()">Analyze Deal</button>
+  </div>
+  <div id="results" class="results-box"></div>
+</section>
+
+<script src="system.js"></script>
 </body>
 </html>
