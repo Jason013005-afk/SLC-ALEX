@@ -4,32 +4,24 @@ document.addEventListener("DOMContentLoaded", () => {
   const resultsBox = document.getElementById("results");
 
   analyzeBtn.addEventListener("click", async () => {
+    // Clear old results
     resultsBox.innerHTML = "";
 
     const zip = document.getElementById("zip").value.trim();
-    const address = document.getElementById("address").value.trim();
-    const rate = document.getElementById("rate").value.trim();
-
-    if (!zip || !address || !rate) {
-      resultsBox.innerHTML = "<p style='color:red;'>Fill in all fields</p>";
+    if (!zip) {
+      resultsBox.innerHTML = "<p style='color:red;'>ZIP is required</p>";
       return;
     }
 
     resultsBox.innerHTML = "<p>Analyzing…</p>";
 
     try {
-      // Actually POST to the correct running backend
-      const response = await fetch("http://localhost:8080/api/analyze", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ zip, address, rate: parseFloat(rate) })
-      });
+      const response = await fetch(
+        `/api/analyze?zip=${encodeURIComponent(zip)}`
+      );
 
       if (!response.ok) {
-        const errJson = await response.json().catch(() => ({}));
-        resultsBox.innerHTML = `<p style="color:red;">${errJson.error || "Analysis failed"}</p>`;
+        resultsBox.innerHTML = "<p style='color:red;'>Analysis failed</p>";
         return;
       }
 
@@ -48,7 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
       `;
     } catch (err) {
       console.error(err);
-      resultsBox.innerHTML = "<p style='color:red;'>Server error — check backend</p>";
+      resultsBox.innerHTML = "<p style='color:red;'>Server error</p>";
     }
   });
 });

@@ -1,52 +1,111 @@
-// public/system.js
-document.addEventListener("DOMContentLoaded", () => {
-  const analyzeBtn = document.getElementById("analyzeBtn");
-  const resultsBox = document.getElementById("results");
+/* GLOBAL RESET */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
-  analyzeBtn.addEventListener("click", async () => {
+html, body {
+  height: 100%;
+  font-family: Arial, sans-serif;
+}
 
-    const zip = document.getElementById("zip").value.trim();
-    const address = document.getElementById("address").value.trim();
-    const rate = document.getElementById("rate").value.trim();
+/* BACKGROUND */
+body {
+  background: url("images/hero-bg.png") center center / cover no-repeat fixed;
+  color: white;
+}
 
-    // clear previous
-    resultsBox.innerHTML = "";
+/* HEADER */
+.site-header {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  right: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 99;
+}
 
-    if (!zip) {
-      resultsBox.innerHTML = "<p style='color:red;'>ZIP is required</p>";
-      return;
-    }
+.site-header .logo {
+  width: 440px;
+}
 
-    resultsBox.innerHTML = "<p>Analyzing…</p>";
+.site-nav a {
+  margin-left: 30px;
+  text-decoration: none;
+  color: #d4af27;
+  font-size: 18px;
+  font-weight: bold;
+}
 
-    try {
-      // Use GET since your backend doesn’t accept POST
-      const response = await fetch(
-        `http://localhost:8080/api/analyze?zip=${encodeURIComponent(zip)}`
-      );
+/* HERO */
+.hero-content {
+  position: relative;
+  margin-top: 160px;
+  text-align: center;
+  width: 90%;
+  max-width: 900px;
+  margin: auto;
+}
 
-      if (!response.ok) {
-        resultsBox.innerHTML = "<p style='color:red;'>Analysis failed</p>";
-        return;
-      }
+.hero-content h1 {
+  font-size: 60px;
+  text-shadow: 2px 2px 8px rgba(0,0,0,0.6);
+  margin-bottom: 8px;
+}
 
-      const data = await response.json();
+.hero-content p {
+  font-size: 22px;
+  text-shadow: 2px 2px 6px rgba(0,0,0,0.5);
+  margin-bottom: 20px;
+}
 
-      resultsBox.innerHTML = `
-        <div class="results-card">
-          <h3>Analysis Results</h3>
-          <p><strong>Area:</strong> ${data.area || "n/a"}</p>
-          <p><strong>Studio:</strong> ${data.studio || "n/a"}</p>
-          <p><strong>1BR:</strong> ${data.one || "n/a"}</p>
-          <p><strong>2BR:</strong> ${data.two || "n/a"}</p>
-          <p><strong>3BR:</strong> ${data.three || "n/a"}</p>
-          <p><strong>4BR:</strong> ${data.four || "n/a"}</p>
-        </div>
-      `;
-    } catch (err) {
-      console.error(err);
-      resultsBox.innerHTML = "<p style='color:red;'>Server error</p>";
-    }
-  });
+/* TOOL */
+.tool-section {
+  margin-top: 190px;
+  background: rgba(255,255,255,0.9);
+  padding: 40px 50px;
+  max-width: 920px;
+  margin: auto;
+  border-radius: 10px;
+  color: #111;
+}
 
-});
+.tool-section h2 {
+  font-size: 32px;
+  margin-bottom: 16px;
+}
+
+input {
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  margin-right: 8px;
+}
+
+.results-box {
+  margin-top: 18px;
+  background: rgba(255,255,255,0.95);
+  padding: 18px;
+  border-radius: 8px;
+  color: #111;
+  font-size: 18px;
+}
+
+.results-card {
+  background: rgba(255,255,255,0.98);
+  padding: 18px 24px;
+  border-radius: 10px;
+  margin-top: 10px;
+  border: 1px solid #ccc;
+  color: #111;
+}
+
+/* RESPONSIVE */
+@media (max-width: 1024px) {
+  .hero-content h1 { font-size: 48px; }
+  .hero-content p { font-size: 20px; }
+}
