@@ -1,51 +1,52 @@
-import express from "express";
-import cors from "cors";
-import path from "path";
-import { fileURLToPath } from "url";
+const express = require("express");
+const cors = require("cors");
+const path = require("path");
+const fs = require("fs");
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Load your SAFMR data
+const safmrData = {};
+fs.readFileSync("fy2024_safmrs_clean.csv", "utf8")
+  .split("\n")
+  .forEach((line) => {
+    const parts = line.split(",");
+    const zip = parts[0]?.trim();
+    if (zip) safmrData[zip] = {
+      area: parts[1],
+      studio: parts[2],
+      one: parts[3],
+      two: parts[4],
+      three: parts[5],
+      four: parts[6],
+    };
+  });
 
 const app = express();
-
-// Enable CORS so your frontend can call the API
 app.use(cors());
-app.use(express.json());
 
-// Serve static frontend files from public/
+// Serve frontend static files
 app.use(express.static(path.join(__dirname, "public")));
 
-// Your API routes
-// Example analyze endpoint (adjust if different)
-app.get("/api/analyze", async (req, res) => {
-  try {
-    const zip = req.query.zip;
-    if (!zip) {
-      return res.status(400).json({ error: "ZIP is required" });
-    }
-    // Simulated backend logic (return your real data here)
-    const sampleData = {
-      area: "Providence-Fall River, RI-MA HUD Metro FMR Area",
-      studio: "$1,100",
-      one: "$1,200",
-      two: "$1,450",
-      three: "$1,750",
-      four: "$2,170"
-    };
-    return res.json(sampleData);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal Server Error" });
+// Your analyze API (GET)
+app.get("/api/analyze", (req, res) => {
+  const zip = req.query.zip;
+  if (!zip) {
+    return res.status(400).json({ error: "ZIP required" });
   }
+
+  const data = safmrData[zip];
+  if (!data) {
+    return res.status(404).json({ error: "ZIP not found" });
+  }
+
+  res.json(data);
 });
 
-// All other non-API requests will get your index.html
+// Fallback to index.html so frontend routing works
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// Start server
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
+  console.log(`🚀 ALEX running at http://localhost:${PORT}`);
 });
