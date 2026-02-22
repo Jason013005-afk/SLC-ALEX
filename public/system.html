@@ -19,15 +19,22 @@
 
 <div class="hero-content">
   <h1>ALEX™ System</h1>
-  <div class="form-row">
-    <input id="zip" placeholder="ZIP Code">
-    <input id="address" placeholder="Property Address">
-    <input id="rate" placeholder="Interest Rate %">
-    <button onclick="analyze()">Analyze Deal</button>
-  </div>
-  <div id="results" class="results-box"></div>
 </div>
 
+<section class="tool-section">
+  <h2>Analyze a Property</h2>
+
+  <div class="form-row">
+    <input id="zip" type="text" placeholder="ZIP Code">
+    <input id="address" type="text" placeholder="Property Address">
+    <input id="rate" type="text" placeholder="Interest Rate %">
+    <button onclick="analyze()">Analyze Deal</button>
+  </div>
+
+  <div id="results" class="results-box"></div>
+</section>
+
 <script src="system.js"></script>
+
 </body>
 </html>
