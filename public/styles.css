@@ -36,8 +36,7 @@ body {
 }
 
 .site-header .logo {
-  width: 440px;  /* Larger logo ~1.5in */
-  max-width: 50vw;
+  width: 440px;
   height: auto;
 }
 
@@ -55,29 +54,28 @@ body {
 }
 
 /* =========================
-   HERO TITLES
+   HERO TITLE CENTER
 ========================= */
 .hero-content {
   position: absolute;
-  top: 180px;
+  top: 170px;
   left: 50%;
   transform: translateX(-50%);
   text-align: center;
-  width: 90%;
   max-width: 900px;
-  z-index: 20;
 }
 
 .hero-content h1 {
-  font-size: 62px;
-  margin-bottom: 12px;
+  font-size: 60px;
   color: white;
+  margin-bottom: 12px;
+  text-shadow: 2px 2px 8px rgba(0,0,0,0.6);
 }
 
 .hero-content p {
   font-size: 22px;
-  margin-bottom: 20px;
-  color: white;
+  margin-bottom: 18px;
+  text-shadow: 2px 2px 6px rgba(0,0,0,0.5);
 }
 
 /* =========================
@@ -87,7 +85,7 @@ button {
   background: #d4af27;
   color: black;
   border: none;
-  padding: 14px 32px;
+  padding: 14px 28px;
   font-size: 18px;
   font-weight: bold;
   border-radius: 6px;
@@ -102,33 +100,20 @@ button:hover {
 /* =========================
    FORM INPUTS
 ========================= */
-input, textarea {
+input {
   padding: 10px;
   font-size: 16px;
   border-radius: 6px;
   border: none;
   color: black;
-}
-
-input {
-  width: 240px;
-}
-
-textarea {
-  width: 380px;
-  height: 100px;
+  width: 220px;
 }
 
 .form-row {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
-}
-
-.form-column {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  margin-bottom: 20px;
 }
 
 /* =========================
@@ -136,42 +121,43 @@ textarea {
 ========================= */
 .results-box {
   margin-top: 20px;
-  background: rgba(0,0,0,0.6);
-  padding: 15px;
+  background: rgba(255,255,255,0.9);
+  padding: 18px;
   border-radius: 8px;
+  color: #111;
   font-size: 18px;
 }
 
+.results-card {
+  background: rgba(255,255,255,0.95);
+  padding: 18px 24px;
+  border-radius: 8px;
+  margin-top: 15px;
+  font-size: 18px;
+  color: #111;
+}
+
+.results-card h3 {
+  font-size: 26px;
+  margin-bottom: 10px;
+}
+
 /* =========================
-   TOOL SECTION (SYSTEM PAGE)
+   TOOL SECTION
 ========================= */
 .tool-section {
-  margin-top: 220px;
+  margin-top: 260px;
   padding: 40px 60px;
   max-width: 920px;
   margin-left: auto;
   margin-right: auto;
   background: rgba(255,255,255,0.85);
-  border-radius: 10px;
+  border-radius: 12px;
   color: #111;
-  z-index: 15;
-}
-
-.tool-section h2 {
-  font-size: 32px;
-  margin-bottom: 20px;
-}
-
-.tool-section .form-row {
-  margin-bottom: 30px;
-}
-
-.tool-section input {
-  width: 230px;
 }
 
 /* =========================
-   PRICING PAGE LAYOUT
+   PRICING LAYOUT
 ========================= */
 .pricing-content {
   position: absolute;
@@ -203,7 +189,6 @@ textarea {
 
 .pricing-card p {
   font-size: 18px;
-  margin-bottom: 10px;
 }
 
 /* =========================
