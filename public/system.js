@@ -4,24 +4,24 @@ document.addEventListener("DOMContentLoaded", () => {
   const resultsBox = document.getElementById("results");
 
   analyzeBtn.addEventListener("click", async () => {
-    // Clear old results
     resultsBox.innerHTML = "";
 
-    const zip = document.getElementById("zip").value.trim();
-    if (!zip) {
-      resultsBox.innerHTML = "<p style='color:red;'>ZIP is required</p>";
+    const zipInput = document.getElementById("zip").value.trim();
+
+    // Frontend expects ZIP exactly as in your dataset
+    if (!zipInput) {
+      resultsBox.innerHTML = "<p style='color:red;'>Enter a ZIP code</p>";
       return;
     }
 
     resultsBox.innerHTML = "<p>Analyzing…</p>";
 
     try {
-      const response = await fetch(
-        `/api/analyze?zip=${encodeURIComponent(zip)}`
-      );
+      const response = await fetch(`/api/analyze?zip=${encodeURIComponent(zipInput)}`);
 
       if (!response.ok) {
-        resultsBox.innerHTML = "<p style='color:red;'>Analysis failed</p>";
+        const err = await response.json().catch(() => ({}));
+        resultsBox.innerHTML = `<p style="color:red;">${err.error || "Analysis failed"}</p>`;
         return;
       }
 
